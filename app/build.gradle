@@ -1,0 +1,88 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+    defaultConfig {
+        applicationId "com.sanardev.instagrammqtt"
+        minSdkVersion 22
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/io.netty.versions.properties'
+    }
+    dataBinding {
+        enabled = true
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.core:core-ktx:1.2.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+
+
+    // view
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+
+    // material
+    implementation 'com.google.android.material:material:1.1.0'
+
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0"
+
+    /* Android Architecture Component - Room Persistance Lib  */
+    implementation 'android.arch.persistence.room:runtime:1.1.1'
+    annotationProcessor 'android.arch.persistence.room:compiler:1.1.1'
+    kapt "android.arch.persistence.room:compiler:1.1.1"
+    implementation 'com.google.android.material:material:1.2.0-alpha04'
+    implementation 'androidx.room:room-rxjava2:2.2.4'
+
+
+    implementation 'com.kyleduo.switchbutton:library:2.0.0'
+    implementation 'com.github.tylersuehr7:chips-input-layout:2.3'
+
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+
+    /* Dagger2 - We are going to use dagger.android which includes
+ * support for Activity and fragment injection so we need to include
+ * the following dependencies */
+    implementation 'com.google.dagger:dagger-android:2.17'
+    implementation 'com.google.dagger:dagger-android-support:2.17'
+    kapt 'com.google.dagger:dagger-android-processor:2.17'
+    /* Dagger2 - default dependency */
+    kapt 'com.google.dagger:dagger-compiler:2.17'
+
+
+
+
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.4'
+    implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
+
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
+    implementation 'com.microsoft.thrifty:thrifty-runtime:1.0.0'
+}
