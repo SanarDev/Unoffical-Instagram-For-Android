@@ -1,9 +1,12 @@
-package com.sanardev.anemanagement.di.module
+package com.sanardev.instagrammqtt.di.module
 
 import android.app.Application
 import android.content.Context
 import android.os.Handler
-import androidx.room.Room
+import com.google.gson.Gson
+import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
+import com.sanardev.instagrammqtt.repository.InstagramRepository
+import com.sanardev.instagrammqtt.usecase.UseCase
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -31,5 +34,16 @@ class AppModule {
     @Singleton
     fun provideHandler(): Handler {
         return Handler()
+    }
+
+    @Provides
+    @Singleton
+    fun provideInstagramRepository(mInstagramRemote: InstagramRemote):InstagramRepository{
+        return InstagramRepository(mInstagramRemote)
+    }
+
+    @Provides
+    fun provideUseCase(application: Application,mInstagramRepository: InstagramRepository,gson: Gson): UseCase {
+        return UseCase(application,mInstagramRepository,gson)
     }
 }

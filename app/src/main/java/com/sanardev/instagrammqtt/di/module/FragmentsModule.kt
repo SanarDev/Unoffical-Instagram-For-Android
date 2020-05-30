@@ -1,4 +1,4 @@
-package com.sanardev.anemanagement.di.module
+package com.sanardev.instagrammqtt.di.module
 
 import dagger.Module
 

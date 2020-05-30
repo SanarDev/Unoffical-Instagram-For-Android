@@ -1,4 +1,4 @@
-package com.sanardev.anemanagement.base
+package com.sanardev.instagrammqtt.base
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

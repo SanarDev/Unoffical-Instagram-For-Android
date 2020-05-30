@@ -1,4 +1,4 @@
-package com.sanardev.anemanagement.base
+package com.sanardev.instagrammqtt.base
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -6,7 +6,8 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.sanardev.anemanagement.di.DaggerViewModelFactory
+import com.sanardev.instagrammqtt.di.DaggerViewModelFactory
+import com.sanardev.instagrammqtt.BR
 import dagger.android.AndroidInjection
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bind="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="obj"
+            type="com.sanardev.instagrammqtt.datasource.model.DialogModel" />
+    </data>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layoutDirection="rtl"
+        android:background="@color/theme_background"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:textSize="15sp"
+            android:fontFamily="sans-serif-medium"
+            tools:text="Error"
+            android:textColor="@color/text_light"
+            android:text="@{obj.title}"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="15dp"
+            android:gravity="center"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="10dp"
+            android:textSize="14sp"
+            tools:text="Your password is incorrect"
+            android:textColor="@color/text_light"
+            android:text="@{obj.message}"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnNegative"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textAllCaps="false"
+                android:textColor="@color/text_light"
+                android:textSize="14sp"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="@color/theme_button"
+                bind:visible="@{(obj.negativeText == null)?false:true}"
+                android:text="@{obj.negativeText}"/>
+
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnPositive"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textAllCaps="false"
+                android:textColor="@color/text_highlight"
+                android:textSize="14sp"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                bind:visible="@{(obj.positiveText == null)?false:true}"
+                android:background="@color/theme_button"
+                android:text="@{obj.positiveText}"/>
+
+
+        </LinearLayout>
+    </LinearLayout>
+</layout>

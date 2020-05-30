@@ -1,4 +1,4 @@
-package com.sanardev.anemanagement.di
+package com.sanardev.instagrammqtt.di
 
 import androidx.lifecycle.ViewModel
 import dagger.MapKey

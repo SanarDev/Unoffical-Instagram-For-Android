@@ -1,3 +1,14 @@
 <resources>
-    <string name="app_name">instagram mqtt</string>
+    <string name="app_name">Instagram For Business</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="phone_number_or_username_or_email_address">Phone number, username or email address</string>
+    <string name="forget_login_detail">Forget your login details? Get help sing in</string>
+    <string name="captal_or">OR</string>
+    <string name="two_factor_auth">Two Factor Authentication</string>
+    <string name="verify">Verify</string>
+    <string name="codeSendedToNumber">Text code send to ****%s</string>
+    <string name="resendCodeAt">Resend code 04:55</string>
+    <string name="time_to_resend_code">Resend code %s:%s</string>
 </resources>
