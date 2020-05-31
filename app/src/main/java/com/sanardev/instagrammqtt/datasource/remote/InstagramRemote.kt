@@ -30,12 +30,13 @@ interface InstagramRemote {
               login_attempt_account :Int = 0
  */
     @POST("accounts/login/")
-    fun login(@HeaderMap header:Map<String,String>, @Body payload: RequestBody): Call<InstagramLoginResult>
+    fun login(@HeaderMap header:Map<String,String>, @Body payload: RequestBody): Call<ResponseBody>
 
     @GET("/")
     fun getToken():Call<ResponseBody>
 
     @POST("accounts/two_factor_login/")
     fun twoFactorLogin(@HeaderMap header:Map<String,String>,@Body payload: RequestBody):Call<InstagramLoginResult>
+
 
 }

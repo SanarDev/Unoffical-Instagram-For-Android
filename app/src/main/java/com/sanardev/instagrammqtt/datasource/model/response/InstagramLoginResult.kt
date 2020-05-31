@@ -10,7 +10,7 @@ class InstagramLoginResult : StatusResult(){
     @SerializedName("two_factor_required")
     var twoFactorRequired : Boolean = false
     @SerializedName("logged_in_user")
-    var logged_in_user: InstagramLoggedUser? = null
+    var loggedInUser: InstagramLoggedUser? = null
     @SerializedName("two_factor_info")
     var two_factor_info: InstagramTwoFactorInfo? = null
     @SerializedName("challenge")

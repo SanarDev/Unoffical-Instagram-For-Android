@@ -1,6 +1,7 @@
 package com.sanardev.instagrammqtt.datasource.model.payload
 
 import com.google.gson.annotations.SerializedName
+import com.sanardev.instagrammqtt.datasource.model.Cookie
 
 class InstagramLoginTwoFactorPayload {
     @SerializedName("username")
@@ -23,4 +24,19 @@ class InstagramLoginTwoFactorPayload {
     var password: String? = null
     @SerializedName("login_attempt_account")
     var login_attempt_account = 0
+
+    companion object{
+        fun fromCookie(cookie:Cookie):InstagramLoginTwoFactorPayload{
+            val instagramLoginTwoFactorPayload = InstagramLoginTwoFactorPayload().apply {
+                phone_id = cookie.phoneID
+                csrftoken = cookie.csrftoken
+                adid = cookie.adid
+                guid = cookie.guid
+                username = cookie.username
+                password = cookie.password
+                device_id = cookie.deviceID
+            }
+            return instagramLoginTwoFactorPayload
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.sanardev.instagrammqtt.extensions
 
+import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.view.View
 import android.view.ViewGroup
@@ -13,7 +14,7 @@ import androidx.transition.TransitionManager
 fun ConstraintLayout.changePosition(constraintSet: ConstraintSet){
     val transition = ChangeBounds()
     transition.duration = 300
-    transition.interpolator = AccelerateDecelerateInterpolator()
+    transition.interpolator = AccelerateDecelerateInterpolator() as TimeInterpolator?
 
     TransitionManager.beginDelayedTransition(this,transition)
     constraintSet.applyTo(this)

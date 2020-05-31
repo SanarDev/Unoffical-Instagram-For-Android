@@ -11,4 +11,9 @@
     <string name="codeSendedToNumber">Text code send to ****%s</string>
     <string name="resendCodeAt">Resend code 04:55</string>
     <string name="time_to_resend_code">Resend code %s:%s</string>
+    <string name="error">Error</string>
+    <string name="incorrect_password">Your password is incorrect</string>
+    <string name="try_again">Try Again</string>
+    <string name="invalid_two_factor_code">Your code is not valid. Please try again to get a new code</string>
+    <string name="Ok">Ok</string>
 </resources>

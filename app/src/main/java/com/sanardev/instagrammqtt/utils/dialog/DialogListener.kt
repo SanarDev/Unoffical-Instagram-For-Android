@@ -1,4 +1,4 @@
-package com.sanardev.instagrammqtt.helper.dialog
+package com.sanardev.instagrammqtt.utils.dialog
 
 interface DialogListener {
 

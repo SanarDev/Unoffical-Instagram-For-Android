@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.repository.InstagramRepository
 import com.sanardev.instagrammqtt.usecase.UseCase
+import com.sanardev.instagrammqtt.utils.CookieUtils
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -42,8 +43,16 @@ class AppModule {
         return InstagramRepository(mInstagramRemote)
     }
 
+
     @Provides
-    fun provideUseCase(application: Application,mInstagramRepository: InstagramRepository,gson: Gson): UseCase {
-        return UseCase(application,mInstagramRepository,gson)
+    @Singleton
+    fun provideCookieUtils(application: Application): CookieUtils {
+        return CookieUtils(application)
+    }
+
+
+    @Provides
+    fun provideUseCase(application: Application,mInstagramRepository: InstagramRepository,cookieUtils: CookieUtils,gson: Gson): UseCase {
+        return UseCase(application,mInstagramRepository,cookieUtils,gson)
     }
 }

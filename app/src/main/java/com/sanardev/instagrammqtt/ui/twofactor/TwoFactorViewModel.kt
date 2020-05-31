@@ -3,17 +3,16 @@ package com.sanardev.instagrammqtt.ui.twofactor
 import android.app.Application
 import android.view.View
 import androidx.databinding.ObservableField
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
+import com.google.gson.Gson
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.base.BaseViewModel
 import com.sanardev.instagrammqtt.core.BaseApplication
-import com.sanardev.instagrammqtt.datasource.model.ErrorModel
-import com.sanardev.instagrammqtt.datasource.model.SuccessModel
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramTwoFactorInfo
-import com.sanardev.instagrammqtt.helper.Resource
+import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.usecase.UseCase
 import java.lang.StringBuilder
 import javax.inject.Inject
@@ -22,7 +21,24 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
     BaseViewModel(application) {
 
     val isLoading = MutableLiveData<Boolean>(false)
-    val result = MutableLiveData<Resource<InstagramLoginResult>>()
+
+    private val _result = MediatorLiveData<Resource<InstagramLoginResult>>()
+    val result = Transformations.map(_result) {
+        if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
+            mUseCase.saveCookie(it.data?.headers)
+        }
+
+        if (it.apiError?.data == null)
+            return@map it
+        if(it.status == Resource.Status.ERROR) {
+            val gson = Gson()
+            val instagramLoginResult =
+                gson.fromJson(it.apiError.data!!.string(), InstagramLoginResult::class.java)
+            it.data = instagramLoginResult
+        }
+
+        return@map it
+    }
 
     val isEnableResendButton = ObservableField<Boolean>(false)
     val endOfPhoneNumber = ObservableField<String>("")
@@ -43,13 +59,15 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
     val textCodeThree = ObservableField<String>()
 
     var timer: Int = 0
-    lateinit var instagramTwoFactorInfo:InstagramTwoFactorInfo
+    lateinit var instagramTwoFactorInfo: InstagramTwoFactorInfo
 
     fun initData(instagramTwoFactorInfo: InstagramTwoFactorInfo) {
         this@TwoFactorViewModel.instagramTwoFactorInfo = instagramTwoFactorInfo
         endOfPhoneNumber.set(instagramTwoFactorInfo.obfuscatedPhoneNumber)
-        timer = instagramTwoFactorInfo.phoneVerificationSettings!!.resendSmsDelaySec
-        startTimer()
+        if (instagramTwoFactorInfo.phoneVerificationSettings != null) {
+            timer = instagramTwoFactorInfo.phoneVerificationSettings!!.resendSmsDelaySec
+            startTimer()
+        }
     }
 
     private fun startTimer() {
@@ -106,7 +124,7 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
             .append(textCodeFive)
             .append(textCodeSix)
             .toString()
-        mUseCase.checkTwoFactorCode(result,instagramTwoFactorInfo,code)
+        mUseCase.checkTwoFactorCode(_result, instagramTwoFactorInfo, code)
     }
 
     fun edtOneTextChange(s: CharSequence, start: Int, before: Int, count: Int) {

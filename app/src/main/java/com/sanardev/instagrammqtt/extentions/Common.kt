@@ -1,9 +1,11 @@
 package run.tripa.android.extensions
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.res.Resources
 import android.os.Bundle
 import android.view.View
@@ -19,6 +21,10 @@ import android.os.Vibrator
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
+import android.app.Activity
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.view.inputmethod.InputMethodManager
 
 
 fun Context.toast(message: CharSequence) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -88,7 +94,22 @@ fun dpToPx(dp: Float, context: Context): Int {
     return dpToPx(dp, context.resources)
 }
 
+fun Activity.hideKeyboard(){
+    val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    //Find the currently focused view, so we can grab the correct window token from it.
+    var view = currentFocus
+    //If no view currently has focus, create a new one, just so we can grab a window token from it
+    if (view == null) {
+        view = View(this)
+    }
+    imm.hideSoftInputFromWindow(view!!.windowToken, 0)
+}
+
 fun dpToPx(dp: Float, resources: Resources): Int {
     val px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, resources.displayMetrics)
     return px.toInt()
+}
+
+fun Application.openSharedPref(name:String): SharedPreferences? {
+    return getSharedPreferences(name, Context.MODE_PRIVATE)
 }

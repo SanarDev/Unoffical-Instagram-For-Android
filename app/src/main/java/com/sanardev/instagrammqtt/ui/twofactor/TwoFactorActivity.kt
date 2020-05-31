@@ -5,11 +5,11 @@ import android.view.View
 import androidx.lifecycle.Observer
 import com.sanardev.instagrammqtt.base.BaseActivity
 import com.sanardev.instagrammqtt.R
-import com.sanardev.instagrammqtt.constants.AppConstants
+import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.databinding.ActivityTwoFactorBinding
-import com.sanardev.instagrammqtt.datasource.model.ErrorModel
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramTwoFactorInfo
-import com.sanardev.instagrammqtt.helper.Resource
+import com.sanardev.instagrammqtt.utils.Resource
+import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
 
 class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding,TwoFactorViewModel>() {
     override fun layoutRes(): Int {
@@ -23,15 +23,27 @@ class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding,TwoFactorViewMod
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (intent.extras != null && intent.extras!!.getSerializable("two_factor_info")!= null) {
-            viewModel.initData(intent.extras!!.getSerializable("two_factor_info") as InstagramTwoFactorInfo)
+        if (intent.extras != null && intent.extras!!.getParcelable<InstagramTwoFactorInfo>("two_factor_info")!= null) {
+            viewModel.initData(intent.extras!!.getParcelable("two_factor_info")!!)
         }else{
             finish()
         }
 
        viewModel.result.observe(this, Observer {
            if(it.status == Resource.Status.ERROR){
-
+               if(it.data?.error_type == InstagramConstants.Error.INVALID_TWO_FACTOR_CODE.msg){
+                   DialogHelper.createDialog(
+                       this@TwoFactorActivity,
+                       layoutInflater,
+                       getString(R.string.error),
+                       getString(R.string.invalid_two_factor_code),
+                       positiveText = getString(R.string.try_again),
+                       positiveFun = {
+                           this@TwoFactorActivity.finish()
+                       }
+                   )
+                   return@Observer
+                }
            }
        })
         viewModel.isLoading.observe(this, Observer {

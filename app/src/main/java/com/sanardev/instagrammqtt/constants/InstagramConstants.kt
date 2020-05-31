@@ -109,5 +109,11 @@ class InstagramConstants {
         )
     }
 
+    enum class Error(var msg:String){
+        BAD_PASSWORD("bad_password"),
+        INVALID_TWO_FACTOR_CODE("invalid_nonce"),
+        RATE_LIMIT("rate_limit_error")
+    }
+
 
 }
