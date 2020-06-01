@@ -15,5 +15,4 @@ class InstagramLoginResult : StatusResult(){
     var two_factor_info: InstagramTwoFactorInfo? = null
     @SerializedName("challenge")
     var challenge: InstagramChallenge? = null
-    var headers:Headers?=null
 }

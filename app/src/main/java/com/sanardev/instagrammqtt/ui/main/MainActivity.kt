@@ -8,24 +8,23 @@ import com.sanardev.instagrammqtt.base.BaseActivity
 
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
-
-import org.eclipse.paho.android.service.MqttAndroidClient
-import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions
-import org.eclipse.paho.client.mqttv3.IMqttActionListener
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
-import org.eclipse.paho.client.mqttv3.IMqttToken
-import org.eclipse.paho.client.mqttv3.MqttCallback
-import org.eclipse.paho.client.mqttv3.MqttClient
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions
-import org.eclipse.paho.client.mqttv3.MqttDeliveryToken
-import org.eclipse.paho.client.mqttv3.MqttException
-import org.eclipse.paho.client.mqttv3.MqttMessage
+import net.igenius.mqttservice.MQTTServiceCommand
+import org.eclipse.paho.client.mqttv3.*
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 
-import java.util.UUID
-import java.util.logging.Logger
+import javax.net.ssl.SSLContext
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import net.igenius.mqttservice.MQTTServiceReceiver
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.content.Context
+import net.igenius.mqttservice.MQTTService
+import net.igenius.mqttservice.MQTTServiceLogger
 
-class MainActivity : BaseActivity<ActivityMainBinding,MainViewModel>() {
+class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
+
     override fun layoutRes(): Int {
         return R.layout.activity_main
     }
@@ -34,6 +33,7 @@ class MainActivity : BaseActivity<ActivityMainBinding,MainViewModel>() {
         return MainViewModel::class.java
     }
 
+    private lateinit var client: MqttClient
     private var broker: String? = null
     private var mqttClient: MqttClient? = null
 
@@ -47,68 +47,37 @@ class MainActivity : BaseActivity<ActivityMainBinding,MainViewModel>() {
 
     }
 
+    private val DEFAULT_HOST = "edge-mqtt.facebook.com"
+    private val DEFAULT_PORT = 443
     @Throws(Exception::class)
     fun connect(protogle: String) {
+        MQTTServiceCommand.connect(this, "ssl://edge-mqtt.facebook.com:443",
+            "882bf180-b865-445e-7", null,
+            null)
 
-        this.broker = "$protogle://$HOSTNAME"
-        this.mqttClient = MqttClient(broker, "567310203415052", MemoryPersistence())
-
-        val connOpts = MqttConnectOptions()
-        connOpts.keepAliveInterval = 100
-        connOpts.isCleanSession = true
-        Log.i("TEST_APP_1", "Connecting to broker: " + broker!!)
-        Log.i("TEST_APP_1", "isConnected:" + mqttClient!!.isConnected)
-        try {
-            val cn = mqttClient!!.connectWithResult(connOpts)
-            Log.i("TEST_APP_1", "connected")
-        } catch (me: MqttException) {
-            Log.i("TEST_APP_1", "reason " + me.reasonCode)
-            Log.i("TEST_APP_1", "msg " + me.message)
-            Log.i("TEST_APP_1", "loc " + me.localizedMessage!!)
-            Log.i("TEST_APP_1", "cause " + me.cause)
-            Log.i("TEST_APP_1", "excep $me")
-            return
-        }
-
-
-        this.mqttClient!!.setCallback(object : MqttCallback {
-            override fun connectionLost(me: Throwable) {
-                Log.i("TEST_APP_1", "Connection lost")
-                Log.i("TEST_APP_1", "msg " + me.message)
-                Log.i("TEST_APP_1", "loc " + me.localizedMessage!!)
-                Log.i("TEST_APP_1", "cause " + me.cause)
-                Log.i("TEST_APP_1", "excep $me")
+        MQTTServiceLogger.setLoggerDelegate(object : MQTTServiceLogger.LoggerDelegate {
+            override fun error(tag: String, message: String) {
+                //your own implementation here
             }
 
-            @Throws(Exception::class)
-            override fun messageArrived(s: String, mqttMessage: MqttMessage) {
-                Log.i("TEST_APP_1", "message Arrived")
+            override fun error(tag: String, message: String, exception: Throwable) {
+                //your own implementation here
             }
 
-            override fun deliveryComplete(iMqttDeliveryToken: IMqttDeliveryToken) {
-                Log.i("TEST_APP_1", "deliverd--------")
-                try {
-                    val token = iMqttDeliveryToken as MqttDeliveryToken
-                    val h = token.message.toString()
-                    Log.i("TEST_APP_1", "deliverd message :$h")
-                } catch (me: MqttException) {
-                    Log.i("TEST_APP_1", "reason " + me.reasonCode)
-                    Log.i("TEST_APP_1", "msg " + me.message)
-                    Log.i("TEST_APP_1", "loc " + me.localizedMessage!!)
-                    Log.i("TEST_APP_1", "cause " + me.cause)
-                    Log.i("TEST_APP_1", "excep $me")
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+            override fun debug(tag: String, message: String) {
+                MQTTServiceCommand.getBroadcastAction()
+                //your own implementation here
+            }
 
+            override fun info(tag: String, message: String) {
+                //your own implementation here
             }
         })
-
     }
 
     companion object {
 
-        private val HOSTNAME = "edge-mqtt.facebook.com:443"
+        private val HOSTNAME = "mqtt-mini.facebook.com:443"
         private val USER_AGENT =
             "[FBAN/MQTT;FBAV/130.0.0.31.121;FBBV/200396014;FBDM/{density=3.0,width=1080,height=1920};FBLC/en_GB;FBCR/;FBMF/Xiaomi;FBBD/Xiaomi;FBPN/com.instagram.android;FBDV/Mi 8;FBSV/10;FBLR/0;FBBK/1;FBCA/arm64-v8a:;]"
 

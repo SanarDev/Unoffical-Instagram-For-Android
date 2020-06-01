@@ -18,7 +18,6 @@ import com.sanardev.instagrammqtt.utils.InstagramHashUtils
 import com.sanardev.instagrammqtt.utils.StorageUtils
 import okhttp3.Headers
 import okhttp3.RequestBody
-import run.tripa.android.extensions.openSharedPref
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.*
@@ -153,6 +152,7 @@ class UseCase(
                     deviceId,
                     password
                 )
+            StorageUtils.saveLastLoginData(application,instagramLoginPayload)
             mInstagramRepository.login(
                 result,
                 instagramLoginPayload,
@@ -163,8 +163,8 @@ class UseCase(
     }
 
     fun isLogged(): Boolean {
-        val sessionId = application.openSharedPref("user_login_data")!!.getString("sessionid", null)
-        return sessionId != null
+        val user = StorageUtils.getUserData(application)
+        return user != null
     }
 
 
@@ -203,14 +203,23 @@ class UseCase(
         cookieUtils.saveCookie(headers)
     }
 
-    fun saveUserData(loggedInUser: InstagramLoggedUser?) {
+    fun saveUserData(
+        loggedInUser: InstagramLoggedUser?,
+        headers: Headers?
+    ) {
         if(loggedInUser == null)
             return
+        val instagramLoginPayload = StorageUtils.getLastLoginData(application)
+        loggedInUser.cookie = cookieUtils.getCookieFromHeadersAndLocalData(headers!!)
+        loggedInUser.password = instagramLoginPayload!!.password
         StorageUtils.saveLoggedInUserData(application,loggedInUser)
     }
 
-    fun getUserData():InstagramLoggedUser{
+    fun getUserData():InstagramLoggedUser?{
         return StorageUtils.getUserData(application)
     }
 
+    fun getLastLoginData():InstagramLoginPayload?{
+        return StorageUtils.getLastLoginData(application)
+    }
 }

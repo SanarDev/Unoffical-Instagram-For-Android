@@ -25,7 +25,7 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
     private val _result = MediatorLiveData<Resource<InstagramLoginResult>>()
     val result = Transformations.map(_result) {
         if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
-            mUseCase.saveCookie(it.data?.headers)
+            mUseCase.saveUserData(it.data?.loggedInUser,it.headers)
         }
 
         if (it.apiError?.data == null)

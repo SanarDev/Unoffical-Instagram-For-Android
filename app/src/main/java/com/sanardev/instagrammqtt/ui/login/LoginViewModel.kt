@@ -9,15 +9,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.sanardev.instagrammqtt.base.BaseViewModel
 import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.ui.main.MainActivity
 import com.sanardev.instagrammqtt.usecase.UseCase
-import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
 import run.tripa.android.extensions.toast
 import javax.inject.Inject
 import kotlin.reflect.KClass
@@ -35,8 +32,7 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
 
     val result: LiveData<Resource<InstagramLoginResult>> = Transformations.map(_result) {
         if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
-            mUseCase.saveUserData(it.data?.loggedInUser)
-            mUseCase.saveCookie(it.data?.headers)
+            mUseCase.saveUserData(it.data?.loggedInUser,it.headers)
         }
 
         if (it.apiError?.data == null)

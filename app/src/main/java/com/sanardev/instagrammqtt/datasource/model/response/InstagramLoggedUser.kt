@@ -2,7 +2,7 @@ package com.sanardev.instagrammqtt.datasource.model.response
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
-
+import com.sanardev.instagrammqtt.datasource.model.Cookie
 
 
 class InstagramLoggedUser {
@@ -82,5 +82,9 @@ class InstagramLoggedUser {
     @SerializedName("phone_number")
     @Expose
     var phoneNumber: String? = null
-
+    @SerializedName("password")
+    @Expose
+    var password: String? = null
+    @SerializedName("cookie")
+    var cookie:Cookie?=null
 }

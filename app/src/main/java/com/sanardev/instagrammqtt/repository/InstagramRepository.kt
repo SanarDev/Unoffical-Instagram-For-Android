@@ -30,16 +30,14 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         encrypter: (InstagramLoginPayload) -> RequestBody
     ) {
         liveData.addSource(
-            NetworkCall<ResponseBody>().makeCall(
+            NetworkCall<InstagramLoginResult>().makeCall(
                 mInstagramRemote.login(
                     headersGenerater.invoke(),
                     encrypter.invoke(instagramLoginPayload)
                 )
             )
         ) {
-            val str = it.data?.string()
-            Log.i("TEST_APPLICATION","$str")
-            liveData.postValue(it as Resource<InstagramLoginResult>)
+            liveData.postValue(it)
         }
     }
 

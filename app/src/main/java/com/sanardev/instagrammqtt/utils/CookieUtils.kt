@@ -3,16 +3,37 @@ package com.sanardev.instagrammqtt.utils
 import android.app.Application
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.Cookie
+import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import okhttp3.Headers
 import run.tripa.android.extensions.openSharedPref
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class CookieUtils(var application: Application) {
 
-    fun getCookie(headers: Headers): MutableList<Pair<String, String>> {
+    fun getCookieFromHeadersAndLocalData(
+        headers: Headers
+    ): Cookie {
+        val data = getCookie(headers)
+        val localCookie = getLocalCookie()
+        val cookie = Cookie(
+            sessionID = if(data["sessionid"] == null) localCookie.sessionID else data["sessionid"]!!,
+            rur = if(data["rur"] == null) localCookie.rur else data["rur"]!!,
+            mid = if(data["mid"] == null) localCookie.mid else data["mid"]!!,
+            phoneID = if(data["phone_id"] == null) localCookie.phoneID else data["phone_id"]!!,
+            csrftoken = if(data["csrftoken"] == null) localCookie.csrftoken else data["csrftoken"]!!,
+            deviceID = if(data["device_id"] == null) localCookie.deviceID else data["device_id"]!!,
+            guid = if(data["guid"] == null) localCookie.guid else data["guid"]!!,
+            adid = if(data["adid"] == null) localCookie.adid else data["adid"]!!
+        )
+
+        return cookie
+    }
+
+    fun getCookie(headers: Headers): HashMap<String,String> {
         val cookies = headers.values("set-cookie")
-        val list = ArrayList<Pair<String, String>>().toMutableList()
+        val map= HashMap<String,String>()
         for (cookie in cookies) {
             val items = cookie.split(";")
             for (item in items) {
@@ -20,11 +41,11 @@ class CookieUtils(var application: Application) {
                 if (split.size == 2) {
                     val key = split[0].trim()
                     val value = split[1].trim()
-                    list.add(Pair(key, value))
+                    map.put(key,value)
                 }
             }
         }
-        return list
+        return map
     }
 
     fun findCookie(headers: Headers, s: String): String? {
@@ -82,43 +103,43 @@ class CookieUtils(var application: Application) {
     fun getHeaders(): HashMap<String, String> {
         val cookie = getLocalCookie()
         val map = HashMap<String, String>()
-        map["X-DEVICE-ID"] = cookie.deviceID
-        map["X-IG-App-Locale"] = "en_US"
-        map["X-IG-Device-Locale"] = "en_US"
-        map["X-IG-Mapped-Locale"] = "en_US"
-        map["X-Pigeon-Session-Id"] = cookie.sessionID
-        map["X-Pigeon-Rawclienttime"] = System.currentTimeMillis().toString()
-        map["X-IG-Connection-Speed"] = "-1kbps"
-        map["X-IG-Bandwidth-Speed-KBPS"] = "1665"
-        map["X-IG-Bandwidth-TotalBytes-B"] = "465691"
-        map["X-IG-Bandwidth-TotalTime-MS"] = "3322"
-        map["X-IG-App-Startup-Country"] = "IR"
-        map["X-Bloks-Version-Id"] = InstagramConstants.BLOKS_VERSION_ID
-        map["X-IG-WWW-Claim"] = 0.toString()
-        map["X-Bloks-Is-Layout-RTL"] = false.toString()
-        map["X-Bloks-Enable-RenderCore"] = false.toString()
-        map["X-IG-Device-ID"] = cookie.deviceID
-        map["X-IG-Android-ID"] = "android-2d397713fddd2a9d"
-        map["X-IG-Connection-Type"] = "WIFI"
-        map["X-IG-Capabilities"] = InstagramConstants.DEVICE_CAPABILITIES
-        map["X-IG-App-ID"] = InstagramConstants.APP_ID
-        map["User-Agent"] =
+        map[InstagramConstants.X_DEVICE_ID] = cookie.deviceID
+        map[InstagramConstants.X_DEVICE_ID] = "en_US"
+        map[InstagramConstants.X_IG_DEVICE_LOCALE] = "en_US"
+        map[InstagramConstants.X_IG_MAPPED_LOCALE] = "en_US"
+        map[InstagramConstants.X_PIGEON_SESSION_ID] = cookie.sessionID
+        map[InstagramConstants.X_PIGEON_RAWCLIENT_TIEM] = System.currentTimeMillis().toString()
+        map[InstagramConstants.X_IG_CONNECTION_SPEED] = "-1kbps"
+        map[InstagramConstants.X_IG_BANDWIDTH_SPEED_KBPS] = "1665"
+        map[InstagramConstants.X_IG_BANDWIDTH_TOTALBYTES_B] = "465691"
+        map[InstagramConstants.X_IG_BAND_WIDTH_TOTALTIME_MS] = "3322"
+        map[InstagramConstants.X_IG_APP_STARTUP_COUNTRY] = "IR"
+        map[InstagramConstants.X_BLOKS_VERSION_ID] = InstagramConstants.BLOKS_VERSION_ID
+        map[InstagramConstants.X_IG_WWW_CLAIM] = 0.toString()
+        map[InstagramConstants.X_BLOKS_IS_LAYOUT_RTL] = false.toString()
+        map[InstagramConstants.X_BLOKS_ENABLE_RENDER_CORE] = false.toString()
+        map[InstagramConstants.X_IG_DEVICE_ID] = cookie.deviceID
+        map[InstagramConstants.X_IG_ANDROID_ID] = "android-2d397713fddd2a9d"
+        map[InstagramConstants.X_IG_CONNECTION_TYPE] = "WIFI"
+        map[InstagramConstants.X_IG_CAPABILITIES] = InstagramConstants.DEVICE_CAPABILITIES
+        map[InstagramConstants.X_IG_APP_ID] = InstagramConstants.APP_ID
+        map[InstagramConstants.X_USER_AGENT] =
             "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; 1080x2038; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
-        map["Accept-Language"] = "en-US"
-        map["Cookie"] = "mid=${cookie.mid}; csrftoken=${cookie.csrftoken}"
-        map["Content-Type"] = "application/x-www-form-urlencoded; charset=UTF-8"
-        map["Accept-Encoding"] = "gzip, deflate"
-        map["Host"] = "i.instagram.com"
-        map["X-FB-HTTP-Engine"] = "Liger"
-        map["Connection"] = "keep-alive"
+        map[InstagramConstants.ACCEPT_LANGUAGE] = "en-US"
+        map[InstagramConstants.COOKIE] = "mid=${cookie.mid}; csrftoken=${cookie.csrftoken}"
+        map[InstagramConstants.ACCEPT] = "application/json"
+        map[InstagramConstants.CONTENT_TYPE] = "application/x-www-form-urlencoded; charset=UTF-8"
+        map[InstagramConstants.HOST] = "i.instagram.com"
+        map[InstagramConstants.X_FB_HTTP_ENGINE] = "Liger"
+        map[InstagramConstants.CONNECTION] = "keep-alive"
         return map
     }
 
     fun saveCookie(headers: Headers) {
         val cookies = getCookie(headers)
         application.openSharedPref("user_login_data")!!.edit().apply {
-            for (cookie in cookies){
-                putString(cookie.first,cookie.second)
+            for (cookie in cookies) {
+                putString(cookie.key, cookie.value)
             }
         }.apply()
     }

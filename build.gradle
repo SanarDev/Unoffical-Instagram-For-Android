@@ -23,8 +23,10 @@ allprojects {
         mavenCentral()
 
         // For snapshot builds
+        maven {
+            url "https://repo.eclipse.org/content/repositories/paho-snapshots/"
+        }
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-        maven {url "https://repo.eclipse.org/content/repositories/paho-snapshots/"}
         maven { url 'https://jitpack.io' }
     }
 }
