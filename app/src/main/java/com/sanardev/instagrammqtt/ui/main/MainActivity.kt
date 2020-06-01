@@ -1,8 +1,10 @@
 package com.sanardev.instagrammqtt.ui.main
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.sanardev.instagrammqtt.base.BaseActivity
 
@@ -14,6 +16,7 @@ import org.eclipse.paho.client.mqttv3.MqttException
 import com.kozaris.android.k_mqtt.*
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import javax.net.SocketFactory
 
 
 class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() ,Connection.IReceivedMessageListener{
@@ -46,11 +49,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() ,Connect
         super.onPause()
     }
 
-    private val DEFAULT_HOST = "edge-mqtt.facebook.com"
+    private val DEFAULT_HOST = "69.171.250.34"
     private val DEFAULT_PORT = 443
     @Throws(Exception::class)
     fun connect(protogle: String) {
-        val ClientId = "TestMQTTClient"
+        val ClientId = "882rf140-b275-447e-8"
         val Qos = 0
         val ServerHostName = DEFAULT_HOST
         val ServerPort = DEFAULT_PORT
@@ -59,14 +62,17 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() ,Connect
         val mqttConnection =
             Connection.createConnection(ClientId, ServerHostName, ServerPort, this, TlsConnection)
         val conOptions = MqttConnectOptions()
-        conOptions.setConnectionTimeout(10)
+        conOptions.setConnectionTimeout(60)
         conOptions.setKeepAliveInterval(200)
         conOptions.setCleanSession(true)
+        conOptions.isAutomaticReconnect = true
+        conOptions.mqttVersion = MqttConnectOptions.MQTT_VERSION_3_1
         mqttConnection.addConnectionOptions(conOptions)
 //Property changed Listener
-        mqttConnection.registerChangeListener(object:PropertyChangeListener{
+        mqttConnection.registerChangeListener(@RequiresApi(Build.VERSION_CODES.CUPCAKE)
+        object:PropertyChangeListener{
             override fun propertyChange(evt: PropertyChangeEvent?) {
-
+                Log.i("TEST_APPLICATION","${evt}")
             }
         })
         mqttConnection.changeConnectionStatus(Connection.ConnectionStatus.CONNECTING)
