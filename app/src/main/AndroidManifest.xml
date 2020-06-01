@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <application
         android:name=".core.BaseApplication"
@@ -30,6 +31,8 @@
         <activity android:name=".ui.twofactor.TwoFactorActivity">
 
         </activity>
+        <service android:name="com.sanardev.instagrammqtt.service.MqttService"
+            android:enabled="true"/>
     </application>
 
 </manifest>

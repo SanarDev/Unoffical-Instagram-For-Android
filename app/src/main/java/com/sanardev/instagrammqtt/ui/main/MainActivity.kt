@@ -1,12 +1,15 @@
 package com.sanardev.instagrammqtt.ui.main
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.kozaris.android.k_mqtt.Connection
 import com.kozaris.android.k_mqtt.ReceivedMessage
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.base.BaseActivity
 import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
+import org.eclipse.paho.android.service.MqttService
 import org.fusesource.hawtbuf.Buffer
 import org.fusesource.hawtbuf.UTF8Buffer
 import org.fusesource.mqtt.client.Callback
@@ -48,37 +51,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() ,Connect
     private val DEFAULT_PORT = 443
     @Throws(Exception::class)
     fun connect(protogle: String) {
-        val mqtt = MQTT()
-        mqtt.setClientId("dSCSsdcd-dsa895")
-        mqtt.isCleanSession = true
-        mqtt.setHost("tls://$DEFAULT_HOST:$DEFAULT_PORT")
-        val connection = mqtt.callbackConnection()
-        connection.listener(object :Listener{
-            override fun onFailure(value: Throwable?) {
-                Log.i("TEST_APPLICATION","onFailure")
-            }
-
-            override fun onPublish(topic: UTF8Buffer?, body: Buffer?, ack: Runnable?) {
-                Log.i("TEST_APPLICATION","onPublish")
-            }
-
-            override fun onConnected() {
-                Log.i("TEST_APPLICATION","onConnect")
-            }
-
-            override fun onDisconnected() {
-                Log.i("TEST_APPLICATION","onDisconnected")
-            }
-        })
-        connection.connect(object :Callback<Void>{
-            override fun onSuccess(value: Void?) {
-                Log.i("TEST_APPLICATION","onSuccess")
-            }
-
-            override fun onFailure(value: Throwable?) {
-                Log.i("TEST_APPLICATION","onFailure")
-            }
-        })
+        ContextCompat.startForegroundService(this@MainActivity,Intent(this@MainActivity, MqttService::class.java))
     }
 
     companion object {
