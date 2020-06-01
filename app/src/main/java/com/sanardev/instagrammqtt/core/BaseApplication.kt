@@ -8,7 +8,6 @@ import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
 import dagger.android.HasServiceInjector
-import net.igenius.mqttservice.MQTTService
 import javax.inject.Inject
 
 class BaseApplication : Application() , HasActivityInjector, HasServiceInjector {
@@ -34,9 +33,6 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector 
             .build()
             .inject(this)
 
-        MQTTService.NAMESPACE = "com.sanardev.instagrammqtt.receiver"; //or BuildConfig.APPLICATION_ID;
-        MQTTService.KEEP_ALIVE_INTERVAL = 60; //in seconds
-        MQTTService.CONNECT_TIMEOUT = 30; //in seconds
     }
 
 }

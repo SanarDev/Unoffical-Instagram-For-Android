@@ -8,22 +8,18 @@ import com.sanardev.instagrammqtt.base.BaseActivity
 
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
-import net.igenius.mqttservice.MQTTServiceCommand
-import org.eclipse.paho.client.mqttv3.*
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import com.kozaris.android.k_mqtt.Connection.ConnectionStatus
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttException
+import com.kozaris.android.k_mqtt.*
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 
-import javax.net.ssl.SSLContext
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import net.igenius.mqttservice.MQTTServiceReceiver
-import androidx.core.app.ComponentActivity.ExtraData
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
-import android.content.Context
-import net.igenius.mqttservice.MQTTService
-import net.igenius.mqttservice.MQTTServiceLogger
 
-class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
+class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() ,Connection.IReceivedMessageListener{
+    override fun onMessageReceived(message: ReceivedMessage?) {
+
+    }
 
     override fun layoutRes(): Int {
         return R.layout.activity_main
@@ -33,9 +29,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         return MainViewModel::class.java
     }
 
-    private lateinit var client: MqttClient
     private var broker: String? = null
-    private var mqttClient: MqttClient? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,32 +41,58 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 
     }
 
+    override fun onPause() {
+        Log.i("t","t")
+        super.onPause()
+    }
+
     private val DEFAULT_HOST = "edge-mqtt.facebook.com"
     private val DEFAULT_PORT = 443
     @Throws(Exception::class)
     fun connect(protogle: String) {
-        MQTTServiceCommand.connect(this, "ssl://edge-mqtt.facebook.com:443",
-            "882bf180-b865-445e-7", null,
-            null)
+        val ClientId = "TestMQTTClient"
+        val Qos = 0
+        val ServerHostName = DEFAULT_HOST
+        val ServerPort = DEFAULT_PORT
+        val TlsConnection = true
+//Initialize Connection object
+        val mqttConnection =
+            Connection.createConnection(ClientId, ServerHostName, ServerPort, this, TlsConnection)
+        val conOptions = MqttConnectOptions()
+        conOptions.setConnectionTimeout(10)
+        conOptions.setKeepAliveInterval(200)
+        conOptions.setCleanSession(true)
+        mqttConnection.addConnectionOptions(conOptions)
+//Property changed Listener
+        mqttConnection.registerChangeListener(object:PropertyChangeListener{
+            override fun propertyChange(evt: PropertyChangeEvent?) {
 
-        MQTTServiceLogger.setLoggerDelegate(object : MQTTServiceLogger.LoggerDelegate {
-            override fun error(tag: String, message: String) {
-                //your own implementation here
-            }
-
-            override fun error(tag: String, message: String, exception: Throwable) {
-                //your own implementation here
-            }
-
-            override fun debug(tag: String, message: String) {
-                MQTTServiceCommand.getBroadcastAction()
-                //your own implementation here
-            }
-
-            override fun info(tag: String, message: String) {
-                //your own implementation here
             }
         })
+        mqttConnection.changeConnectionStatus(Connection.ConnectionStatus.CONNECTING)
+        mqttConnection.getClient().setTraceCallback(MqttClient.MqttTraceCallback())
+//Register the Activity as a Message Receiver if required (only if it receives mqtt messages)
+        mqttConnection.addReceivedMessageListener(this)
+
+        MqttClient.getInstance(this).setConnection(this,mqttConnection)
+
+        //Retrieve the Connection Object
+        val con = MqttClient.getInstance(this).connection
+//connect
+        if (con != null) {
+            val callback = ActionListener(this, ActionListener.Action.CONNECT, con)
+            con.client.setCallback(MqttCallbackHandler(this))
+            try {
+                con.client.connect(con.connectionOptions, null, callback)
+            } catch (e: MqttException) {
+                Log.e(
+                    this.javaClass.canonicalName,
+                    "MqttException occurred", e
+                )
+                mqttConnection.changeConnectionStatus(Connection.ConnectionStatus.ERROR)
+            }
+
+        }
     }
 
     companion object {

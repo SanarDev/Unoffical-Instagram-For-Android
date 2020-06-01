@@ -30,14 +30,6 @@
         <activity android:name=".ui.twofactor.TwoFactorActivity">
 
         </activity>
-        <receiver
-            android:name=".receiver.MQTTReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.sanardev.instagrammqtt.receiver.mqtt.broadcast" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>
