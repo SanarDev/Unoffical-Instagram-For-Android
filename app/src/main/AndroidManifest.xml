@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:name=".core.BaseApplication"
@@ -17,7 +17,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        tools:ignore="GoogleAppIndexingWarning,HardcodedDebugMode">
+        tools:ignore="GoogleAppIndexingWarning,HardcodedDebugMode"
+        tools:replace="android:label">
         <activity android:name=".ui.main.MainActivity">
 
         </activity>
@@ -31,8 +32,12 @@
         <activity android:name=".ui.twofactor.TwoFactorActivity">
 
         </activity>
-        <service android:name="com.sanardev.instagrammqtt.service.MqttService"
-            android:enabled="true"/>
+
+        <service android:name="com.sanardev.instagrammqtt.service.MqttService">
+            <intent-filter>
+                <action android:name="com.sanardev.instagrammqtt.ACTION_CONNECT" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
