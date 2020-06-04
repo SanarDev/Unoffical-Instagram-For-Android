@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".core.BaseApplication"
@@ -33,7 +35,7 @@
 
         </activity>
 
-        <service android:name="com.sanardev.instagrammqtt.service.MqttService">
+        <service android:name=".mqtt.service.NettyService">
             <intent-filter>
                 <action android:name="com.sanardev.instagrammqtt.ACTION_CONNECT" />
             </intent-filter>
