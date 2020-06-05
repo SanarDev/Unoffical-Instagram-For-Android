@@ -1,5 +1,6 @@
 package com.sanardev.instagrammqtt.di.module
 
+import com.sanardev.instagrammqtt.ui.direct.DirectActivity
 import com.sanardev.instagrammqtt.ui.login.LoginActivity
 import com.sanardev.instagrammqtt.ui.main.MainActivity
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorActivity
@@ -17,4 +18,7 @@ abstract class ActivityModule {
 
     @ContributesAndroidInjector
     abstract fun contributeTwoFactorActivity(): TwoFactorActivity
+
+    @ContributesAndroidInjector
+    abstract fun contributeDirectActivity(): DirectActivity
 }

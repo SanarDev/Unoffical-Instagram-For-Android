@@ -100,4 +100,13 @@ dependencies {
     implementation 'io.netty:netty-all:4.0.33.Final'
     implementation 'org.apache.thrift:libthrift:0.10.0'
 
+    implementation 'com.hovans.netty:library:3.8.0'
+
+    implementation 'com.hovans.android:library:0.9.5'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    // emoji
+    implementation 'com.vanniktech:emoji-ios:0.6.0'
+    implementation 'com.gauravk.audiovisualizer:audiovisualizer:0.9.2'
+
 }
+

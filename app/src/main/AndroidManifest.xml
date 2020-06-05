@@ -34,12 +34,19 @@
         <activity android:name=".ui.twofactor.TwoFactorActivity">
 
         </activity>
+        <activity android:name=".ui.direct.DirectActivity">
+
+        </activity>
 
         <service android:name=".mqtt.service.NettyService">
             <intent-filter>
-                <action android:name="com.sanardev.instagrammqtt.ACTION_CONNECT" />
+                <action android:name="com.sanardev.instagrammqtt.ACTION_CHECK_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.ACTION_HEARTBEAT" />
+                <action android:name="com.sanardev.instagrammqtt.ACTION_CONNECT_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.ACTION_DISCONNECT_SESSION" />
             </intent-filter>
         </service>
+
     </application>
 
 </manifest>

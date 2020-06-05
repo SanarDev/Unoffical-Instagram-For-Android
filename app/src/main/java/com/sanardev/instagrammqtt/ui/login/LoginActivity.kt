@@ -1,5 +1,6 @@
 package com.sanardev.instagrammqtt.ui.login
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -20,6 +21,11 @@ import run.tripa.android.extensions.hideKeyboard
 
 class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
 
+    companion object{
+        fun open(context: Context){
+            context.startActivity(Intent(context,LoginActivity::class.java))
+        }
+    }
     override fun layoutRes(): Int {
         return R.layout.activity_login
     }

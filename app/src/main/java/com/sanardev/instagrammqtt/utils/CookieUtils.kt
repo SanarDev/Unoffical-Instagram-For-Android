@@ -1,6 +1,7 @@
 package com.sanardev.instagrammqtt.utils
 
 import android.app.Application
+import android.os.Build
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.Cookie
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
@@ -142,6 +143,10 @@ class CookieUtils(var application: Application) {
                 putString(cookie.key, cookie.value)
             }
         }.apply()
+    }
+
+    fun removeCookie() {
+        application.openSharedPref("user_login_data")!!.edit().clear().apply()
     }
 
 }

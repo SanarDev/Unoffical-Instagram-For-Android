@@ -16,4 +16,5 @@
     <string name="try_again">Try Again</string>
     <string name="invalid_two_factor_code">Your code is not valid. Please try again to get a new code</string>
     <string name="Ok">Ok</string>
+    <string name="message">Message...</string>
 </resources>

@@ -9,6 +9,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
+import com.sanardev.instagrammqtt.datasource.model.response.InstagramInbox
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.utils.Resource
@@ -67,6 +68,21 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         ), Observer {
             liveData.postValue(it)
         })
+    }
+
+    fun getDirectInbox(
+        responseLiveData: MediatorLiveData<Resource<InstagramInbox>>,
+        headersGenerater: () -> Map<String, String>
+    ) {
+        responseLiveData.addSource(
+            NetworkCall<InstagramInbox>().makeCall(
+                mInstagramRemote.getDirectIndex(
+                    headersGenerater.invoke()
+                )
+            ), Observer {
+                responseLiveData.postValue(it)
+            }
+        )
     }
 
 

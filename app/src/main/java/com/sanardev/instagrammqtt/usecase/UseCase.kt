@@ -8,6 +8,7 @@ import androidx.lifecycle.Transformations
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
+import com.sanardev.instagrammqtt.datasource.model.response.InstagramInbox
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramTwoFactorInfo
@@ -18,6 +19,7 @@ import com.sanardev.instagrammqtt.utils.InstagramHashUtils
 import com.sanardev.instagrammqtt.utils.StorageUtils
 import okhttp3.Headers
 import okhttp3.RequestBody
+import okhttp3.ResponseBody
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.*
@@ -29,15 +31,8 @@ class UseCase(
     var gson: Gson
 ) {
     val XLATE = "0123456789abcdef"
-    /**
-     * Digest a string using the given codec and input
-     *
-     * @param codec
-     * Codec to use
-     * @param source
-     * Source to use
-     * @return
-     */
+
+
     protected fun digest(codec: String, source: String): String {
         try {
             val digest = MessageDigest.getInstance(codec)
@@ -48,26 +43,10 @@ class UseCase(
         }
     }
 
-    /**
-     * Get the MD5 (in hexadecimal presentation) for the given source
-     *
-     * @param source
-     * The string to hash
-     * @return MD5 hex presentation
-     */
     fun md5hex(source: String): String {
         return digest("MD5", source)
     }
 
-    /**
-     * Convert the byte array to a hexadecimal presentation (String)
-     *
-     * @param bytes
-     * byte array
-     * @param initialCount
-     * count (length) of the input
-     * @return
-     */
     protected fun hexlate(bytes: ByteArray, initialCount: Int): String {
         if (bytes == null) {
             return ""
@@ -85,27 +64,11 @@ class UseCase(
         return String(chars)
     }
 
-    /**
-     * Generates Instagram Device ID
-     *
-     * @param username
-     * Username to generate
-     * @param password
-     * Password to generate
-     * @return device id
-     */
     private fun generateDeviceId(username: String, password: String): String {
         val seed = md5hex(username + password)
         val volatileSeed = "12345"
         return "android-" + md5hex(seed + volatileSeed).substring(0, 16)
     }
-
-    /**
-     * Generate a Hmac SHA-256 hash
-     * @param key key
-     * @param string value
-     * @return hashed
-     */
 
 
     private fun generateUuid(dash: Boolean): String {
@@ -219,7 +182,15 @@ class UseCase(
         return StorageUtils.getUserData(application)
     }
 
+    fun getDirectInbox(responseLiveData: MediatorLiveData<Resource<InstagramInbox>>){
+        mInstagramRepository.getDirectInbox(responseLiveData) {cookieUtils.getHeaders()}
+    }
     fun getLastLoginData():InstagramLoginPayload?{
         return StorageUtils.getLastLoginData(application)
+    }
+
+    fun resetUserData() {
+        StorageUtils.removeLoggedData(application)
+        cookieUtils.removeCookie()
     }
 }

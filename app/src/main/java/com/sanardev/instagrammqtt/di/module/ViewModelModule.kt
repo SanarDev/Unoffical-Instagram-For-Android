@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.sanardev.instagrammqtt.di.DaggerViewModelFactory
 import com.sanardev.instagrammqtt.di.ViewModelKey
+import com.sanardev.instagrammqtt.ui.direct.DirectViewModel
 import com.sanardev.instagrammqtt.ui.login.LoginViewModel
 import com.sanardev.instagrammqtt.ui.main.MainViewModel
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorActivity
@@ -31,5 +32,10 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(TwoFactorViewModel::class)
     abstract fun twoFactorViewModel(twoFactorViewModel: TwoFactorViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(DirectViewModel::class)
+    abstract fun directViewModel(directViewModel: DirectViewModel):ViewModel
 
 }

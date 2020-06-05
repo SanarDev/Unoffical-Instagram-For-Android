@@ -68,5 +68,14 @@ class StorageUtils {
             val user = gson.fromJson(inputString,clazz)
             return user
         }
+        private fun removeFile(context: Context,filename: String){
+            val file = File("${context.filesDir.path}/$filename")
+            file.delete()
+        }
+
+        fun removeLoggedData(context: Context) {
+            removeFile(context, USER_DATA_FILE_NAME)
+            removeFile(context, LAST_LOGIN_DATA_FILE_NAME)
+        }
     }
 }
