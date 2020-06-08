@@ -1,29 +1,31 @@
 package com.sanardev.instagrammqtt.repository
 
-import android.util.Log
+import android.os.Handler
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.Transformations
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramInbox
+import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
+import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.utils.Resource
-import okhttp3.Headers
-import okhttp3.ResponseBody
+import okhttp3.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import okhttp3.RequestBody
+import retrofit2.adapter.rxjava2.Result.response
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.util.*
 
 
 class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
 
 
+    private val mHandler = Handler()
     fun login(
         liveData: MediatorLiveData<Resource<InstagramLoginResult>>,
         instagramLoginPayload: InstagramLoginPayload,
@@ -71,11 +73,11 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
     }
 
     fun getDirectInbox(
-        responseLiveData: MediatorLiveData<Resource<InstagramInbox>>,
+        responseLiveData: MediatorLiveData<Resource<InstagramDirects>>,
         headersGenerater: () -> Map<String, String>
     ) {
         responseLiveData.addSource(
-            NetworkCall<InstagramInbox>().makeCall(
+            NetworkCall<InstagramDirects>().makeCall(
                 mInstagramRemote.getDirectIndex(
                     headersGenerater.invoke()
                 )
@@ -83,6 +85,44 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
                 responseLiveData.postValue(it)
             }
         )
+    }
+
+    fun getChats(
+        responseLiveData: MediatorLiveData<Resource<InstagramChats>>,
+        threadId: String,
+        limit: Int,
+        seqID: Int,
+        function: () -> HashMap<String, String>
+    ) {
+        responseLiveData.value = Resource.loading(null)
+        responseLiveData.addSource(
+            NetworkCall<InstagramChats>().makeCall(
+                mInstagramRemote.getChats(
+                    function.invoke(),
+                    threadId = threadId,
+                    limit = limit,
+                    seqID = seqID
+                )
+            ), Observer {
+                responseLiveData.postValue(it)
+            })
+    }
+
+    fun downloadAudio(result: MutableLiveData<InputStream>, audioSrc: String) {
+        Thread {
+            val client = OkHttpClient()
+            val request = Request.Builder().url(audioSrc)
+                .addHeader("Content-Type", "application/json")
+                .build()
+            val response = client.newCall(request).execute()
+
+            val `in`: InputStream = response.body()!!.byteStream()
+
+            mHandler.post {
+                result.value = `in`
+            }
+            response.body()!!.close()
+        }.start()
     }
 
 

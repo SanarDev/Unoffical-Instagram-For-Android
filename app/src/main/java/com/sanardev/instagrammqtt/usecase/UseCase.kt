@@ -1,28 +1,33 @@
 package com.sanardev.instagrammqtt.usecase
 
 import android.app.Application
+import android.media.MediaPlayer
+import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
+import com.sanardev.instagrammqtt.R
+import com.sanardev.instagrammqtt.constants.InstagramConstants
+import com.sanardev.instagrammqtt.datasource.model.Cookie
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramInbox
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramTwoFactorInfo
-import com.sanardev.instagrammqtt.utils.Resource
+import com.sanardev.instagrammqtt.datasource.model.response.*
 import com.sanardev.instagrammqtt.repository.InstagramRepository
 import com.sanardev.instagrammqtt.utils.CookieUtils
 import com.sanardev.instagrammqtt.utils.InstagramHashUtils
+import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.StorageUtils
 import okhttp3.Headers
 import okhttp3.RequestBody
-import okhttp3.ResponseBody
+import java.io.*
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.HashMap
+
 
 class UseCase(
     var application: Application,
@@ -32,6 +37,8 @@ class UseCase(
 ) {
     val XLATE = "0123456789abcdef"
 
+
+    private val audioList = HashMap<String,InputStream>()
 
     protected fun digest(codec: String, source: String): String {
         try {
@@ -102,24 +109,26 @@ class UseCase(
 
         getInstagramToken(result).observeForever {
 
-            val cookie = cookieUtils.getLocalCookie()
+            val cookie = getCookie()
+            cookie.csrftoken = it!!
             val deviceId = generateDeviceId(username, password)
 
             val instagramLoginPayload =
                 InstagramLoginPayload(
                     username,
                     cookie.phoneID,
-                    it!!,
+                    cookie.csrftoken!!,
                     cookie.guid,
                     cookie.adid,
                     deviceId,
                     password
                 )
-            StorageUtils.saveLastLoginData(application,instagramLoginPayload)
+            StorageUtils.saveLastLoginData(application, instagramLoginPayload)
+            StorageUtils.saveLoginCookie(application, cookie)
             mInstagramRepository.login(
                 result,
                 instagramLoginPayload,
-                { cookieUtils.getHeaders() },
+                { getHeaders() },
                 { t -> getPayload(t) }
             )
         }
@@ -137,7 +146,7 @@ class UseCase(
         code: String
     ) {
         val instagramLoginTwoFactorPayload =
-            InstagramLoginTwoFactorPayload.fromCookie(cookieUtils.getLocalCookie()).apply {
+            InstagramLoginTwoFactorPayload.fromCookie(getCookie()).apply {
                 username = instagramTwoFactorInfo.username
                 verification_code = code
                 two_factor_identifier = instagramTwoFactorInfo.twoFactorIdentifier
@@ -146,7 +155,7 @@ class UseCase(
         mInstagramRepository.verifyTwoFactor(
             responseLiveData,
             instagramLoginTwoFactorPayload,
-            { cookieUtils.getHeaders() },
+            { getHeaders() },
             { t -> getPayload(t) }
         )
     }
@@ -160,37 +169,153 @@ class UseCase(
         )
     }
 
-    fun saveCookie(headers: Headers?) {
-        if(headers == null)
-            return
-        cookieUtils.saveCookie(headers)
-    }
 
     fun saveUserData(
         loggedInUser: InstagramLoggedUser?,
         headers: Headers?
     ) {
-        if(loggedInUser == null)
+        if (loggedInUser == null)
             return
         val instagramLoginPayload = StorageUtils.getLastLoginData(application)
-        loggedInUser.cookie = cookieUtils.getCookieFromHeadersAndLocalData(headers!!)
+        loggedInUser.cookie = cookieUtils.getCookieFromHeadersAndLocalData(
+            headers!!,
+            StorageUtils.getCookie(application)!!
+        )
         loggedInUser.password = instagramLoginPayload!!.password
-        StorageUtils.saveLoggedInUserData(application,loggedInUser)
+        StorageUtils.saveLoggedInUserData(application, loggedInUser)
     }
 
-    fun getUserData():InstagramLoggedUser?{
+    fun getUserData(): InstagramLoggedUser? {
         return StorageUtils.getUserData(application)
     }
 
-    fun getDirectInbox(responseLiveData: MediatorLiveData<Resource<InstagramInbox>>){
-        mInstagramRepository.getDirectInbox(responseLiveData) {cookieUtils.getHeaders()}
+    fun getDirectInbox(responseLiveData: MediatorLiveData<Resource<InstagramDirects>>) {
+        mInstagramRepository.getDirectInbox(responseLiveData) { getHeaders() }
     }
-    fun getLastLoginData():InstagramLoginPayload?{
+
+    fun getLastLoginData(): InstagramLoginPayload? {
         return StorageUtils.getLastLoginData(application)
+    }
+
+    fun getCookie(): Cookie {
+        val cookie = StorageUtils.getCookie(application)
+        if (cookie != null) {
+            return cookie
+        } else {
+            return CookieUtils.generateCookie()
+        }
+    }
+
+    fun getHeaders(): HashMap<String, String> {
+        val cookie = getCookie()
+        val user = StorageUtils.getUserData(application)
+        val map = HashMap<String, String>()
+        map[InstagramConstants.X_DEVICE_ID] = cookie.deviceID
+        map[InstagramConstants.X_DEVICE_ID] = "en_US"
+        map[InstagramConstants.X_IG_DEVICE_LOCALE] = "en_US"
+        map[InstagramConstants.X_IG_MAPPED_LOCALE] = "en_US"
+        map[InstagramConstants.X_PIGEON_SESSION_ID] = UUID.randomUUID().toString()
+        map[InstagramConstants.X_PIGEON_RAWCLIENT_TIEM] = System.currentTimeMillis().toString()
+        map[InstagramConstants.X_IG_CONNECTION_SPEED] = "-1kbps"
+        map[InstagramConstants.X_IG_BANDWIDTH_SPEED_KBPS] = "1665"
+        map[InstagramConstants.X_IG_BANDWIDTH_TOTALBYTES_B] = "465691"
+        map[InstagramConstants.X_IG_BAND_WIDTH_TOTALTIME_MS] = "3322"
+        map[InstagramConstants.X_IG_APP_STARTUP_COUNTRY] = "IR"
+        map[InstagramConstants.X_BLOKS_VERSION_ID] = InstagramConstants.BLOKS_VERSION_ID
+        map[InstagramConstants.X_IG_WWW_CLAIM] = 0.toString()
+        map[InstagramConstants.X_BLOKS_IS_LAYOUT_RTL] = false.toString()
+        map[InstagramConstants.X_BLOKS_ENABLE_RENDER_CORE] = false.toString()
+        map[InstagramConstants.X_IG_DEVICE_ID] = cookie.deviceID
+        map[InstagramConstants.X_IG_ANDROID_ID] = "android-2d397713fddd2a9d"
+        map[InstagramConstants.X_IG_CONNECTION_TYPE] = "WIFI"
+        map[InstagramConstants.X_IG_CAPABILITIES] = InstagramConstants.DEVICE_CAPABILITIES
+        map[InstagramConstants.X_IG_APP_ID] = InstagramConstants.APP_ID
+        map[InstagramConstants.X_USER_AGENT] =
+            "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; 1080x2038; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
+        map[InstagramConstants.ACCEPT_LANGUAGE] = "en-US"
+        map[InstagramConstants.COOKIE] =
+            "mid=${cookie.mid}; csrftoken=${cookie.csrftoken};sessionid=${cookie.sessionID};dc_user=${user?.username.toString()
+                .toLowerCase()};dc_user_id=${user?.pk.toString()}"
+        map[InstagramConstants.X_MID] = cookie.mid.toString()
+        map[InstagramConstants.ACCEPT] = "application/json"
+        map[InstagramConstants.CONTENT_TYPE] = "application/x-www-form-urlencoded; charset=UTF-8"
+        map[InstagramConstants.HOST] = "i.instagram.com"
+        map[InstagramConstants.X_FB_HTTP_ENGINE] = "Liger"
+        map[InstagramConstants.CONNECTION] = "keep-alive"
+        return map
     }
 
     fun resetUserData() {
         StorageUtils.removeLoggedData(application)
         cookieUtils.removeCookie()
+    }
+
+    fun getChats(result: MediatorLiveData<Resource<InstagramChats>>,limit:Int=10, threadId: String, seqID: Int) {
+        mInstagramRepository.getChats(result, threadId,limit, seqID, { getHeaders() })
+    }
+
+    fun getDifferentTimeString(time: Long, startFromDay: Boolean = true): String {
+        val nowTime = System.currentTimeMillis()
+        val differentTime = (nowTime - time) / 1000
+        val rightNow = (3 * 60)
+        val today = 24 * 60 * 60
+        val month = 30 * 24 * 60 * 60
+        val year = 12 * 30 * 24 * 60 * 60
+        if (differentTime < rightNow && !startFromDay) {
+            return application.getString(R.string.right_now)
+        }
+        if (differentTime < today) {
+            if (startFromDay) {
+                return application.getString(R.string.today)
+            }
+            val hour = differentTime / (60 * 60)
+            if (hour > 0) {
+                return String.format(application.getString(R.string.hours_ago), hour)
+            } else {
+                val min = differentTime / (60)
+                return String.format(application.getString(R.string.min_ago), min)
+            }
+        }
+        if (differentTime < month) {
+            val days = (differentTime / (24 * 60 * 60)).toInt()
+            if(days == 1){
+                return application.getString(R.string.yesterday)
+            }
+            return String.format(application.getString(R.string.days_ago),days)
+        }
+        if (differentTime < year) {
+            val month = differentTime / (30 * 24 * 60 * 60)
+            return String.format(application.getString(R.string.month_ago), month)
+        }
+        val sdf = SimpleDateFormat("yyyy-MM-dd")
+        val netDate = Date(time)
+        return sdf.format(netDate)
+    }
+
+    fun isFileExist(audioSrc: String): Boolean {
+        return StorageUtils.isFileExist(application,audioSrc)
+    }
+
+    fun playAudio(audioSrc: String) {
+        val inputStream = audioList[audioSrc]
+        if(inputStream == null){
+
+        }else{
+
+        }
+    }
+
+    fun getFile(fileLiveData: MutableLiveData<File>, url: String, id: String) {
+        val file = StorageUtils.getFile(application,"$id")
+        if(file != null){
+            fileLiveData.postValue(file)
+        }else{
+            val result = MediatorLiveData<InputStream>()
+            mInstagramRepository.downloadAudio(result,url)
+            result.observeForever {
+                StorageUtils.saveFile(application,"$id",it)
+                getFile(fileLiveData,url,id)
+            }
+        }
     }
 }

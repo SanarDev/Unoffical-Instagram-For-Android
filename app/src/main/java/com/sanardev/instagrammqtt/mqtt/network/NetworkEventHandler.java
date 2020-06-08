@@ -13,18 +13,9 @@ import android.util.Log;
 import com.sanardev.instagrammqtt.mqtt.service.NettyService;
 import com.sanardev.instagrammqtt.mqtt.util.WakeLockWrapper;
 
-/**
- * When a network event is occurred, these methods will be called.
- * <p>
- * - 새로운 채널이 연결될 때 {@link #channelConnected(ChannelHandlerContext, ChannelStateEvent)}
- * <br/> - 채널에서 새로운 메시지가 유입될 때 {@link #messageReceived(ChannelHandlerContext, MessageEvent)}
- * <br/> - Exception 이 발생 했을 때 {@link #exceptionCaught(ChannelHandlerContext, ExceptionEvent)}
- * <br/> - 채널이 닫힐 때 {@link #channelClosed(ChannelHandlerContext, ChannelStateEvent)}
- * <br/>
- * <p>
- * @author Hovan Yoo
- */
-public class NetworkEventHandler extends SimpleChannelHandler {
+import io.netty.channel.ChannelInboundHandlerAdapter;
+
+public class NetworkEventHandler extends ChannelInboundHandlerAdapter {
 
 	NettyService mService;
 
@@ -32,43 +23,13 @@ public class NetworkEventHandler extends SimpleChannelHandler {
 		mService = service;
 	}
 
-	/** Session is connected! */
 	@Override
-	public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-		Log.i("TEST_APPLICATION",String.format("%s.channelConnected()", NetworkEventHandler.class.getSimpleName()));
-		super.channelConnected(ctx, e);
+	public void channelActive(io.netty.channel.ChannelHandlerContext ctx) throws Exception {
+		super.channelActive(ctx);
 	}
 
-	/** Some message was delivered */
 	@Override
-	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-		PowerManager.WakeLock wakeLock = WakeLockWrapper.getWakeLockInstance(mService, NetworkEventHandler.class.getSimpleName());
-		wakeLock.acquire();
-		try {
-			super.messageReceived(ctx, e);
-			//You should do something with the received message.
-		} finally {
-			wakeLock.release();
-		}
-	}
-	
-	/** An exception is occurred! */
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-		super.exceptionCaught(ctx, e);
-		
-		if(ctx.getChannel() != null && ctx.getChannel().isOpen()) {
-			ctx.getChannel().close();
-		} else {
-			mService.scheduleToReconnect();
-		}
-	}
-
-	/** The channel is going to closed. */
-	@Override
-	public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-		Log.i("TEST_APPLICATION",String.format("%s.channelClosed()", NetworkEventHandler.class.getSimpleName()));
-		super.channelClosed(ctx, e);
-		mService.scheduleToReconnect();
+	public void channelRead(io.netty.channel.ChannelHandlerContext ctx, Object msg) throws Exception {
+		super.channelRead(ctx, msg);
 	}
 }

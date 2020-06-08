@@ -90,8 +90,8 @@ fun Dialog.openFromBottom(height:Int = ViewGroup.LayoutParams.MATCH_PARENT) {
     window!!.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, height)
 }
 
-fun dpToPx(dp: Float, context: Context): Int {
-    return dpToPx(dp, context.resources)
+fun Resources.dpToPx(dp: Float): Int {
+    return dpToPx(dp,this)
 }
 
 fun Activity.hideKeyboard(){

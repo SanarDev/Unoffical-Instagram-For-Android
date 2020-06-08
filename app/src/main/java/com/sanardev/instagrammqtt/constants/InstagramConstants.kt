@@ -37,6 +37,7 @@ class InstagramConstants {
         const val HOST = "Host"
         const val X_FB_HTTP_ENGINE = "X-FB-HTTP-Engine"
         const val CONNECTION = "Connection"
+        const val X_MID = "x-mid"
 
         const val BASE_API_URL = "https://i.instagram.com/"
         /**
@@ -144,5 +145,31 @@ class InstagramConstants {
         LOGIN_REQUIRED("login_required")
     }
 
+    enum class MessageType(var type:String){
+        LIKE("like"),
+        TEXT("text"),
+        MEDIA_SHARE("media_share"),
+        LINK("link"),
+        MEDIA("media"),
+        STORY_SHARE("story_share"),
+        RAVEN_MEDIA("raven_media"),
+        VOICE_MEDIA("voice_media"),
+        ACTION_LOG("action_log"),
+        PROFILE("profile"),
+        PLACE_HOLDER("place_holder"),
+        LOCATION("location"),
+        FELIX_SHARE("felix_share"),
+        REEL_SHARE("reel_share"),
+        ANIMATED_MEDIA("animated_media"),
+        HASH_TAG("hash_tag"),
+        LIVE_VIEWER_INVITE("live_viewer_invite"),
+        VIDEO_CALL_EVENT("video_call_event")
+    }
+
+    enum class ReelType(var type:String){
+        REPLY("reply"),
+        USER_REEL("user_reel"),
+        MENTION("mention")
+    }
 
 }

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_message"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:padding="10dp">
+
+                    <com.tylersuehr.chips.CircleImageView
+                        android:id="@+id/img_profile"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@mipmap/example" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/txt_username"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_weight="1"
+                        android:text="TheSanardev"
+                        android:textColor="@color/text_very_light"
+                        android:textStyle="bold" />
+
+
+                    <!--                <androidx.appcompat.widget.AppCompatImageButton-->
+                    <!--                    android:id="@+id/btn_volume"-->
+                    <!--                    android:layout_width="wrap_content"-->
+                    <!--                    android:layout_height="wrap_content"-->
+                    <!--                    android:src="@drawable/ic_volume_high"-->
+                    <!--                    android:background="@null"-->
+                    <!--                    android:tint="@color/white"-->
+                    <!--                    android:padding="10dp"/>-->
+
+                </LinearLayout>
+
+                <RelativeLayout
+                    android:id="@+id/layout_video_view"
+                    android:layout_width="240dp"
+                    android:layout_height="240dp">
+
+                    <com.google.android.exoplayer2.ui.PlayerView
+                        android:id="@+id/video_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="1dp"
+                        app:repeat_toggle_modes="all"
+                        app:show_timeout="0"
+                        app:hide_on_touch="false"
+                        app:controller_layout_id="@layout/media_share_exo_controller" />
+
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/btn_replay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_margin="10dp"
+                        android:background="@drawable/bg_circluar"
+                        android:padding="5dp"
+                        android:src="@drawable/ic_replay"
+                        android:tint="@color/white" />
+
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/img_volume"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:visibility="gone"
+                        android:layout_alignParentBottom="true"
+                        android:layout_margin="10dp"
+                        android:background="@drawable/bg_circluar"
+                        android:padding="5dp"
+                        android:src="@drawable/ic_volume_high"
+                        android:tint="@color/white" />
+
+
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/txt_caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:maxWidth="250dp"
+                        android:text="TheSanardev Salam inam az post Emreeooz"
+                        android:textColor="@color/text_very_light"
+                        android:textSize="16sp" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/txt_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="03:03"
+                        android:textColor="@color/hint_light" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="bottom"
+            android:visibility="gone"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="7dp"
+                android:layout_marginTop="5dp"
+                android:tint="@color/white"
+                android:background="@drawable/bg_circluar"
+                android:src="@drawable/ic_replay"/>
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="7dp"
+                android:layout_marginTop="5dp"
+                android:tint="@color/white"
+                android:background="@drawable/bg_circluar"
+                android:src="@drawable/ic_download"/>
+
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="7dp"
+                android:tint="@color/white"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_circluar"
+                android:src="@drawable/ic_share"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</layout>

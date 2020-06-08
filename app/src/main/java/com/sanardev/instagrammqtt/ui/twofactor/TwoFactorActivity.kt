@@ -31,7 +31,7 @@ class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding,TwoFactorViewMod
 
        viewModel.result.observe(this, Observer {
            if(it.status == Resource.Status.ERROR){
-               if(it.data?.error_type == InstagramConstants.Error.INVALID_TWO_FACTOR_CODE.msg){
+               if(it.data?.errorType == InstagramConstants.Error.INVALID_TWO_FACTOR_CODE.msg){
                    DialogHelper.createDialog(
                        this@TwoFactorActivity,
                        layoutInflater,

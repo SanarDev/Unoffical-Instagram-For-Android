@@ -6,13 +6,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import androidx.lifecycle.Observer
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.sanardev.instagrammqtt.base.BaseActivity
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.databinding.ActivityLoginBinding
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.ui.main.MainActivity
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
@@ -57,7 +54,7 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                     binding.btnLogin.visibility = View.VISIBLE
                     binding.layoutButton.isEnabled = true
 
-                    when(it.data?.error_type){
+                    when(it.data?.errorType){
                         InstagramConstants.Error.BAD_PASSWORD.msg ->{
                             DialogHelper.createDialog(
                                 this@LoginActivity,

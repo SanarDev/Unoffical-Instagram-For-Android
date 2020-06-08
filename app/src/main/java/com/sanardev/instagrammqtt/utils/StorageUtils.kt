@@ -3,6 +3,7 @@ package com.sanardev.instagrammqtt.utils
 import android.app.Application
 import android.content.Context
 import com.google.gson.Gson
+import com.sanardev.instagrammqtt.datasource.model.Cookie
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import java.io.*
@@ -12,8 +13,10 @@ class StorageUtils {
     companion object {
         private const val USER_DATA_FILE_NAME = "DrEEct1yHs"
         private const val LAST_LOGIN_DATA_FILE_NAME = "UyUiOOps"
+        private const val COOKIE_BEFORE_LOGIN = "IoPkjTyX"
 
         fun saveLoggedInUserData(context: Context, user: InstagramLoggedUser) {
+            removeFile(context, COOKIE_BEFORE_LOGIN)
             saveJsonFile(context, USER_DATA_FILE_NAME,user)
         }
 
@@ -73,9 +76,53 @@ class StorageUtils {
             file.delete()
         }
 
+        fun saveLoginCookie(application: Application,cookie: Cookie){
+            saveJsonFile(application, COOKIE_BEFORE_LOGIN,cookie)
+        }
+        private fun getLoginCookie(application: Application): Cookie? {
+            return readFile(application, COOKIE_BEFORE_LOGIN,Cookie::class.java)
+        }
         fun removeLoggedData(context: Context) {
             removeFile(context, USER_DATA_FILE_NAME)
             removeFile(context, LAST_LOGIN_DATA_FILE_NAME)
+        }
+
+        fun getCookie(application: Application): Cookie? {
+            val user = getUserData(application)
+            return if(user?.cookie != null){
+                user.cookie!!
+            }else{
+                getLoginCookie(application)
+            }
+        }
+
+        fun isFileExist(context: Context,audioSrc: String): Boolean {
+            val file = File("${context.filesDir.path}/$audioSrc")
+            return file.exists()
+        }
+
+        fun getFile(context: Context,name: String):File? {
+            val file = File("${context.filesDir.path}/$name")
+            return if(!file.exists()){
+                null
+            }else{
+                file
+            }
+        }
+
+        fun saveFile(application: Application, id: String, it: InputStream) {
+            val file = File("${application.filesDir.path}/$id")
+            if(file.exists())
+                file.delete()
+            file.createNewFile()
+            try {
+//            BufferedWriter for performance, true to set append to file flag
+                val buf = BufferedWriter(FileWriter(file, true))
+                buf.append(it.readBytes().toString())
+                buf.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
         }
     }
 }

@@ -4,10 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <variable
             name="viewModel"
             type="com.sanardev.instagrammqtt.ui.direct.DirectViewModel" />
     </data>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_parent"
         android:layout_width="match_parent"
@@ -20,7 +22,7 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/theme_edittext"
             android:gravity="center_vertical"
-            app:layout_constraintBottom_toTopOf="@id/recyclerview_chats"
+            app:layout_constraintBottom_toTopOf="@id/layout_recyclerview"
             app:layout_constraintTop_toTopOf="parent">
 
             <androidx.appcompat.widget.AppCompatImageButton
@@ -30,12 +32,12 @@
                 android:background="@null"
                 android:padding="5dp"
                 android:src="@drawable/ic_back"
-                android:tint="@color/text_light" />
+                android:tint="@color/light_button" />
 
             <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/profile_image"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:id="@+id/img_profile_image"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginStart="10dp"
                 android:src="@mipmap/example"
                 app:civ_border_color="@color/hint_light"
@@ -52,13 +54,15 @@
                 android:orientation="vertical">
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txt_profile_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-medium"
-                    android:textColor="@color/text_light"
+                    android:textColor="@color/text_very_light"
                     tools:text="Ramtin" />
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txt_profile_last_active"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-light"
@@ -70,15 +74,32 @@
 
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerview_chats"
+        <RelativeLayout
+            android:id="@+id/layout_recyclerview"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintTop_toBottomOf="@id/toolbar"
-            tools:listitem="@layout/layout_incoming_message" />
+            app:layout_constraintBottom_toTopOf="@id/layout_message_inbox"
+            app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerview_chats"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="20dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:reverseLayout="true"
+                tools:listitem="@layout/layout_incoming_message" />
+
+            <ProgressBar
+                android:id="@+id/progressbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"/>
+        </RelativeLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_message_inbox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/theme_edittext"
@@ -91,10 +112,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:background="@null"
-                android:padding="@dimen/small_padding"
                 android:onClick="onEmojiClick"
+                android:padding="@dimen/small_padding"
                 android:src="@drawable/ic_emoji"
-                android:tint="@color/text_light"
+                android:tint="@color/light_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
@@ -106,16 +127,16 @@
                 android:background="@null"
                 android:fontFamily="sans-serif"
                 android:hint="@string/message"
-                android:paddingStart="10dp"
                 android:onTextChanged="@{viewModel.edtMessageChange}"
+                android:paddingStart="10dp"
                 android:paddingTop="5dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="5dp"
                 android:textColor="@color/text_light"
                 android:textColorHint="@color/hint_light"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@id/btn_emoji"
                 app:layout_constraintEnd_toStartOf="@id/layout_chat_option"
+                app:layout_constraintStart_toEndOf="@id/btn_emoji"
                 app:layout_constraintTop_toTopOf="parent" />
 
 
@@ -123,29 +144,29 @@
                 android:id="@+id/layout_chat_option"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/edt_text_chat"
+                android:orientation="horizontal"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:orientation="horizontal">
-
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:padding="@dimen/small_padding"
-                    app:visible="@{viewModel.isEnableSendButton == true}"
-                    android:tint="@color/text_light"
-                    android:background="@null"
-                    android:src="@drawable/ic_send"/>
+                app:layout_constraintStart_toEndOf="@id/edt_text_chat">
 
                 <androidx.appcompat.widget.AppCompatImageButton
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:background="@null"
                     android:padding="@dimen/small_padding"
-                    tools:visibility="gone"
-                    app:visible="@{viewModel.isEnableSendButton == false}"
+                    android:src="@drawable/ic_send"
+                    android:tint="@color/light_button"
+                    app:visible="@{viewModel.isEnableSendButton == true}" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@null"
+                    android:padding="@dimen/small_padding"
                     android:src="@drawable/ic_add_photo"
-                    android:tint="@color/text_light" />
+                    android:tint="@color/text_light"
+                    app:visible="@{viewModel.isEnableSendButton == false}"
+                    tools:visibility="gone" />
 
                 <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/btn_voice"
@@ -153,10 +174,10 @@
                     android:layout_height="match_parent"
                     android:background="@null"
                     android:padding="@dimen/small_padding"
-                    tools:visibility="gone"
-                    app:visible="@{viewModel.isEnableSendButton == false}"
                     android:src="@drawable/ic_mic"
-                    android:tint="@color/text_light" />
+                    android:tint="@color/text_light"
+                    app:visible="@{viewModel.isEnableSendButton == false}"
+                    tools:visibility="gone" />
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

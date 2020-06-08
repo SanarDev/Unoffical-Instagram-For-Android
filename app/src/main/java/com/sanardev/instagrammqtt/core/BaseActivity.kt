@@ -37,4 +37,4 @@ import javax.inject.Inject
 
     abstract fun layoutRes(): Int
     abstract fun getViewModelClass(): Class<VM>
-}
+ }

@@ -83,9 +83,7 @@ class NettyService : WorkerService() {
 
                 // Set up the pipeline factory.
                 bootstrap.pipelineFactory = ChannelPipelineFactory {
-                    Channels.pipeline(
-                        NetworkEventHandler(this@NettyService)
-                    )
+                    Channels.pipeline()
                 }
 
                 // Bind and start to accept incoming connections.
