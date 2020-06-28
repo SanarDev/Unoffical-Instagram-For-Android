@@ -80,6 +80,15 @@ fun Context.vibration(duration: Long = 500) {
         v.vibrate(duration)
     }
 }
+@SuppressLint("MissingPermission")
+fun Context.vibration(vararg duration: Long) {
+    val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        v.vibrate(VibrationEffect.createWaveform(duration, -1))
+    } else {
+        v.vibrate(duration,-1)
+    }
+}
 
 fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }
 

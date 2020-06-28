@@ -36,4 +36,17 @@
     <string name="mentioned_you_in_their_story">Mentioned you in their story</string>
     <string name="send_story_from">Send %s\'s story</string>
     <string name="view_photo">View Photo</string>
+    <string name="data_not_available">No data available</string>
+    <string name="you_reacten_to_their_story">You reacted to their story</string>
+    <string name="error_internet_connection">Error in internet connection</string>
+    <string name="check_your_network">Please check your network connection</string>
+    <string name="mentioned_person_in_your_story">Mentioned %s in your story</string>
+    <string name="reply_to_your_story">Replied to your story</string>
+    <string name="send_a_sticker">Send a sticker</string>
+    <string name="share_a_media">Share a media</string>
+    <string name="send_a_like">Send a like</string>
+    <string name="send_a_voice">Send a voice</string>
+    <string name="you_send_a_voice_message">You send a voice message</string>
+    <string name="send_a_voice_message">Send a voice message</string>
+    <string name="you_viewed_their_story">You viewed their story</string>
 </resources>

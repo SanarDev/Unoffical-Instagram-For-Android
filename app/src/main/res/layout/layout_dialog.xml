@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layoutDirection="rtl"
-        android:background="@color/theme_background"
+        android:background="@color/theme_background_dialog"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView

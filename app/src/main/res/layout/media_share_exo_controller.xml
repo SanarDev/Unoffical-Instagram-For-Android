@@ -15,6 +15,7 @@
         android:layout_gravity="right"
         android:layout_margin="10dp"
         android:paddingLeft="4dp"
+        android:background="@drawable/bg_circluar"
         android:paddingRight="4dp"
         android:textColor="#FFBEBEBE"
         android:textSize="14sp"
@@ -76,9 +77,9 @@
                 app:bar_height="1dp"
                 app:unplayed_color="@android:color/transparent"
                 app:buffered_color="@android:color/transparent"
-                app:scrubber_disabled_size="0dp"
-                app:scrubber_enabled_size="0dp"
-                app:scrubber_dragged_size="0dp"
+                app:scrubber_disabled_size="1dp"
+                app:scrubber_enabled_size="1dp"
+                app:scrubber_dragged_size="1dp"
                 app:ad_marker_width="1dp" />
 
 

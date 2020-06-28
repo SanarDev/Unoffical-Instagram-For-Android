@@ -5,10 +5,12 @@ import com.sanardev.instagrammqtt.datasource.model.Device
 class InstagramConstants {
 
     companion object {
-
         /**
          * Base API URL
+         *
          */
+        const val DEBUG_TAG = "debug_application"
+
         const val X_DEVICE_ID = "X-DEVICE-ID"
         const val X_IG_APP_LOCALE = "X-IG-App-Locale"
         const val X_IG_DEVICE_LOCALE = "X-IG-Device-Locale"
@@ -39,6 +41,16 @@ class InstagramConstants {
         const val CONNECTION = "Connection"
         const val X_MID = "x-mid"
 
+        const val DEVICE_TYPE = "device_type"
+        const val IS_MAIN_PUSH_CHANNEL = "is_main_push_channel"
+        const val PHONE_ID = "phone_id"
+        const val DEVICE_SUB_TYPE = "device_sub_type"
+        const val DEVICE_TOKEN = "device_token"
+        const val CSRFTOKEN = "_csrftoken"
+        const val GUID = "guid"
+        const val UUID = "_uuid"
+        const val USERS = "users"
+
         const val BASE_API_URL = "https://i.instagram.com/"
         /**
          * API v1 URL
@@ -56,6 +68,9 @@ class InstagramConstants {
         /**
          * Device
          */
+
+        const val INSTAGRAM_PACKAGE_NAME = "com.instagram.android"
+
         var device = Device.GOOD_DEVICES[0]
             set(value) {
                 field = value
@@ -115,7 +130,7 @@ class InstagramConstants {
         /**
          * Instagram App Id
          */
-        const val APP_ID = "567067343352427"
+        const val APP_ID = "567310203415052"
         /**
          * User Locale
          */
@@ -145,6 +160,10 @@ class InstagramConstants {
         LOGIN_REQUIRED("login_required")
     }
 
+    enum class ErrorCode(var code:Int){
+        INTERNET_CONNECTION(301)
+    }
+
     enum class MessageType(var type:String){
         LIKE("like"),
         TEXT("text"),
@@ -166,10 +185,33 @@ class InstagramConstants {
         VIDEO_CALL_EVENT("video_call_event")
     }
 
+
     enum class ReelType(var type:String){
         REPLY("reply"),
         USER_REEL("user_reel"),
-        MENTION("mention")
+        MENTION("mention"),
+        REACTION("reaction")
     }
 
+
+    enum class TopicIds(var id:Int,var path:String)
+    {
+        Message(76,"/fbns_msg"),   // "/fbns_msg"
+        RegReq(79,"/fbns_reg_req"),    // "/fbns_reg_req"
+        RegResp(80,"/fbns_reg_resp")    // "/fbns_reg_resp"
+    }
+
+    enum class RealTimeTopics(var id:Int,var path:String)
+    {
+        GRAPHQL(9,"/graphql"),
+        PUBSUB(88,"/pubsub"),
+        SEND_MESSAGE_RESPONSE(133,"/ig_send_message_response"),
+        IRIS_SUB(134,"/ig_sub_iris"),
+        IRIS_SUB_RESPONSE(135,"/ig_sub_iris_response"),
+        MESSAGE_SYNC(146,"/ig_message_sync"),
+        REALTIME_SUB(149,"/ig_realtime_sub"),
+        REGION_HINT(150,"/t_region_hint"),
+        FOREGROUND_STATE(102,"/t_fs"),
+        SEND_MESSAGE(132,"/ig_send_message"),
+    }
 }

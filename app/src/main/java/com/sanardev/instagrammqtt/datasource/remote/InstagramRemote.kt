@@ -2,6 +2,7 @@ package com.sanardev.instagrammqtt.datasource.remote
 
 import com.google.gson.annotations.SerializedName
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
+import com.sanardev.instagrammqtt.datasource.model.payload.RegisterPush
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramInbox
@@ -65,5 +66,8 @@ interface InstagramRemote {
         @Query("limit") limit: Int = 10,
         @Query("seq_id") seqID: Int = 0
     ): Call<InstagramChats>
+
+    @POST("push/register/")
+    fun sendPushRegister(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
 
 }

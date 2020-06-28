@@ -12,7 +12,7 @@ public class In {
     private User user;
     @SerializedName("position")
     @Expose
-    private List<Long> position = null;
+    private List<Double> position = null;
     @SerializedName("start_time_in_video_in_sec")
     @Expose
     private Object startTimeInVideoInSec;
@@ -20,11 +20,11 @@ public class In {
     @Expose
     private Object durationInVideoInSec;
 
-    public List<Long> getPosition() {
+    public List<Double> getPosition() {
         return position;
     }
 
-    public void setPosition(List<Long> position) {
+    public void setPosition(List<Double> position) {
         this.position = position;
     }
 

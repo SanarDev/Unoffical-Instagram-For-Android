@@ -89,13 +89,13 @@
                 android:paddingBottom="20dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:reverseLayout="true"
-                tools:listitem="@layout/layout_incoming_message" />
+                tools:listitem="@layout/layout_message" />
 
             <ProgressBar
                 android:id="@+id/progressbar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"/>
+                android:layout_centerInParent="true" />
         </RelativeLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -130,56 +130,70 @@
                 android:onTextChanged="@{viewModel.edtMessageChange}"
                 android:paddingStart="10dp"
                 android:paddingTop="5dp"
-                android:paddingEnd="10dp"
+                android:paddingEnd="40dp"
                 android:paddingBottom="5dp"
                 android:textColor="@color/text_light"
                 android:textColorHint="@color/hint_light"
+                app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/layout_chat_option"
-                app:layout_constraintStart_toEndOf="@id/btn_emoji"
+                app:layout_constraintLeft_toRightOf="@id/btn_emoji"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btn_send"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@null"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                android:padding="@dimen/small_padding"
+                android:src="@drawable/ic_send"
+                android:tint="@color/light_button"
+                app:visible="@{viewModel.isEnableSendButton == true}" />
 
-            <LinearLayout
-                android:id="@+id/layout_chat_option"
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btn_addPhoto"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:padding="@dimen/small_padding"
+                android:src="@drawable/ic_add_photo"
+                android:tint="@color/text_light"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/btn_voice"
+                app:visible="@{viewModel.isEnableSendButton == false}"
+                tools:visibility="gone" />
+
+            <com.devlomi.record_view.RecordButton
+                android:id="@+id/btn_voice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginStart="5dp"
+                app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/edt_text_chat">
+                app:layout_constraintTop_toTopOf="parent"
+                android:background="@null"
+                android:scaleType="centerInside"
+                app:mic_icon="@drawable/recv_ic_mic_white" />
 
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:background="@null"
-                    android:padding="@dimen/small_padding"
-                    android:src="@drawable/ic_send"
-                    android:tint="@color/light_button"
-                    app:visible="@{viewModel.isEnableSendButton == true}" />
 
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:background="@null"
-                    android:padding="@dimen/small_padding"
-                    android:src="@drawable/ic_add_photo"
-                    android:tint="@color/text_light"
-                    app:visible="@{viewModel.isEnableSendButton == false}"
-                    tools:visibility="gone" />
 
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:id="@+id/btn_voice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:background="@null"
-                    android:padding="@dimen/small_padding"
-                    android:src="@drawable/ic_mic"
-                    android:tint="@color/text_light"
-                    app:visible="@{viewModel.isEnableSendButton == false}"
-                    tools:visibility="gone" />
-            </LinearLayout>
+
+            <com.devlomi.record_view.RecordView
+                android:id="@+id/record_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:slide_to_cancel_arrow="@drawable/recv_ic_arrow"
+                app:slide_to_cancel_arrow_color="#000000"
+                app:slide_to_cancel_bounds="4dp"
+                app:slide_to_cancel_margin_right="10dp"
+                app:slide_to_cancel_text="Slide To Cancel" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -2,8 +2,10 @@ package com.sanardev.instagrammqtt.utils
 
 import android.app.Application
 import android.content.Context
+import android.os.Environment
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.datasource.model.Cookie
+import com.sanardev.instagrammqtt.datasource.model.FbnsAuth
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import java.io.*
@@ -14,6 +16,7 @@ class StorageUtils {
         private const val USER_DATA_FILE_NAME = "DrEEct1yHs"
         private const val LAST_LOGIN_DATA_FILE_NAME = "UyUiOOps"
         private const val COOKIE_BEFORE_LOGIN = "IoPkjTyX"
+        private const val FBNS_AUTH = "YuiioQwe"
 
         fun saveLoggedInUserData(context: Context, user: InstagramLoggedUser) {
             removeFile(context, COOKIE_BEFORE_LOGIN)
@@ -79,6 +82,17 @@ class StorageUtils {
         fun saveLoginCookie(application: Application,cookie: Cookie){
             saveJsonFile(application, COOKIE_BEFORE_LOGIN,cookie)
         }
+
+
+        fun saveFbnsAuth(application: Application,fbnsAuth: FbnsAuth) {
+            saveJsonFile(application,FBNS_AUTH,fbnsAuth)
+        }
+
+        fun getFbnsAuth(application: Application):FbnsAuth{
+            val fbns = readFile(application, FBNS_AUTH,FbnsAuth::class.java)
+            return fbns ?: FbnsAuth()
+        }
+
         private fun getLoginCookie(application: Application): Cookie? {
             return readFile(application, COOKIE_BEFORE_LOGIN,Cookie::class.java)
         }
@@ -124,5 +138,27 @@ class StorageUtils {
                 e.printStackTrace()
             }
         }
+        fun createFileInExternalStorage(application: Application,folderName:String,fileName:String,text:String=""){
+            val filesDir: File = application.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)!!
+            if (!filesDir.exists()) {
+                if (filesDir.mkdirs()) {
+                }
+            }
+            val file = File(filesDir, fileName)
+            try {
+                if (!file.exists()) {
+                    if (!file.createNewFile()) {
+                        throw IOException("Cant able to create file")
+                    }
+                }
+                val os: OutputStream = FileOutputStream(file)
+                val data: ByteArray = text.toByteArray()
+                os.write(data)
+                os.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+
     }
 }

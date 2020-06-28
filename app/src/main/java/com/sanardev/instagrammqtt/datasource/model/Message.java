@@ -27,23 +27,6 @@ public class Message {
     @SerializedName("action_log")
     @Expose
     private ActionLog actionLog;
-
-    public Media getMedia() {
-        return media;
-    }
-
-    public void setMedia(Media media) {
-        this.media = media;
-    }
-
-    public RavenMedia getRavenMedia() {
-        return ravenMedia;
-    }
-
-    public void setRavenMedia(RavenMedia ravenMedia) {
-        this.ravenMedia = ravenMedia;
-    }
-
     @SerializedName("media")
     @Expose
     private Media media;
@@ -68,6 +51,45 @@ public class Message {
     @SerializedName("show_forward_attribution")
     @Expose
     private Boolean showForwardAttribution;
+    @SerializedName("animated_media")
+    @Expose
+    private AnimatedMedia animatedMedia;
+    @SerializedName("like")
+    @Expose
+    private String like;
+
+    public String getLike() {
+        return like;
+    }
+
+    public void setLike(String like) {
+        this.like = like;
+    }
+
+    public Media getMedia() {
+        return media;
+    }
+
+    public void setMedia(Media media) {
+        this.media = media;
+    }
+
+    public RavenMedia getRavenMedia() {
+        return ravenMedia;
+    }
+
+
+    public AnimatedMedia getAnimatedMedia() {
+        return animatedMedia;
+    }
+
+    public void setAnimatedMedia(AnimatedMedia animatedMedia) {
+        this.animatedMedia = animatedMedia;
+    }
+
+    public void setRavenMedia(RavenMedia ravenMedia) {
+        this.ravenMedia = ravenMedia;
+    }
 
     public String getItemId() {
         return itemId;

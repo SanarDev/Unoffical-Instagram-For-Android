@@ -2,6 +2,7 @@ package com.sanardev.instagrammqtt.ui.direct
 
 import android.app.Application
 import android.media.MediaPlayer
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -23,6 +24,7 @@ import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.Resource
 import okhttp3.ResponseBody
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -31,6 +33,8 @@ import kotlin.math.roundToInt
 class DirectViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
     BaseViewModel(application) {
 
+    private var mediaRecorder: MediaRecorder = MediaRecorder()
+    private var currentVoiceFileName: String? = null
     val isEnableSendButton = ObservableField<Boolean>(false)
 
     private val result = MediatorLiveData<Resource<InstagramChats>>()
@@ -40,6 +44,9 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
             releaseMessages(it.data!!)
         }
         return@map it
+    }
+    init {
+
     }
 
     private fun releaseMessages(it: InstagramChats) {
@@ -98,7 +105,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         return sdf.format(netDate)
     }
 
-    fun getTimeFromFloat(duration:Float): String {
+    fun getTimeFromFloat(duration: Float): String {
         val timeDuration = duration.roundToInt()
         val h: Int = timeDuration / 3600
         val min: Int = (timeDuration - h * 3600) / 60
@@ -118,11 +125,43 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         } else {
             s.toString()
         }
-        return String.format("%s:%s",strMin,strS)
+        return String.format("%s:%s", strMin, strS)
     }
 
     fun getFile(url: String, id: String) {
-        mUseCase.getFile(fileLiveData,url,id)
+        mUseCase.getFile(fileLiveData, url, id)
+    }
+
+    fun cancelAudioRecording(){
+        stopRecording()
+        File(currentVoiceFileName).delete()
+    }
+
+    fun startAudioRecording() {
+        currentVoiceFileName = mUseCase.generateFilePath(String.format("%d_voice.m4a", System.currentTimeMillis()))
+
+        mediaRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
+            setAudioEncodingBitRate(16*44100);
+            setAudioSamplingRate(44100);
+            setOutputFile(currentVoiceFileName)
+        }
+
+        try {
+            mediaRecorder.prepare()
+            mediaRecorder.start()
+        } catch (e: IllegalStateException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    fun stopRecording() {
+        mediaRecorder.stop()
+        mediaRecorder.release()
     }
 
 }

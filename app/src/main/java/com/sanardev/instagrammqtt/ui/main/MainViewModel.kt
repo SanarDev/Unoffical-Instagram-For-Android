@@ -7,8 +7,10 @@ import androidx.lifecycle.Transformations
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.base.BaseViewModel
+import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
+import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.Resource
 import java.security.Timestamp
@@ -53,6 +55,10 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
 
     fun convertTimeStampToData(lastActivityAt: Long): String {
        return mUseCase.getDifferentTimeString(lastActivityAt / 1000,false)
+    }
+
+    fun getUser(): InstagramLoggedUser {
+        return mUseCase.getUserData()!!
     }
 
     init {

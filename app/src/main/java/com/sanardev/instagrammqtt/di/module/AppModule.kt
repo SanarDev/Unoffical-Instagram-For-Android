@@ -53,6 +53,6 @@ class AppModule {
 
     @Provides
     fun provideUseCase(application: Application,mInstagramRepository: InstagramRepository,cookieUtils: CookieUtils,gson: Gson): UseCase {
-        return UseCase(application,mInstagramRepository,cookieUtils,gson)
+        return UseCase(application,mInstagramRepository,cookieUtils,Handler(),gson)
     }
 }

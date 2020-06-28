@@ -9,6 +9,7 @@ import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
 import dagger.android.HasServiceInjector
 import javax.inject.Inject
+import javax.net.ssl.SSLContext
 
 class BaseApplication : Application() , HasActivityInjector, HasServiceInjector {
 
@@ -32,7 +33,6 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector 
             .application(this)
             .build()
             .inject(this)
-
     }
 
 }

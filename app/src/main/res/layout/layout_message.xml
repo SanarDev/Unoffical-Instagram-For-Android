@@ -27,6 +27,7 @@
             android:orientation="horizontal">
 
             <LinearLayout
+                android:id="@+id/layout_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_message"
@@ -40,7 +41,7 @@
                     android:fontFamily="sans-serif"
                     android:maxWidth="200dp"
                     android:textSize="@dimen/chat_message_size"
-                    android:text="Ok No problem. just send me a message"
+                    tools:text="Ok No problem. just send me a message"
                     android:textColor="@color/text_very_light"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"

@@ -1,24 +1,24 @@
 package com.sanardev.instagrammqtt.repository
 
 import android.os.Handler
+import android.util.Log
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
+import com.sanardev.instagrammqtt.datasource.model.payload.RegisterPush
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
+import com.sanardev.instagrammqtt.datasource.remote.NetworkCall
 import com.sanardev.instagrammqtt.utils.Resource
 import okhttp3.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.adapter.rxjava2.Result.response
-import java.io.BufferedReader
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.util.*
 
 
@@ -33,7 +33,8 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         encrypter: (InstagramLoginPayload) -> RequestBody
     ) {
         liveData.addSource(
-            NetworkCall<InstagramLoginResult>().makeCall(
+            NetworkCall<InstagramLoginResult>()
+                .makeCall(
                 mInstagramRemote.login(
                     headersGenerater.invoke(),
                     encrypter.invoke(instagramLoginPayload)
@@ -62,7 +63,9 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         headersGenerater: () -> Map<String, String>,
         encrypter: (InstagramLoginTwoFactorPayload) -> RequestBody
     ) {
-        liveData.addSource(NetworkCall<InstagramLoginResult>().makeCall(
+        liveData.addSource(
+            NetworkCall<InstagramLoginResult>()
+                .makeCall(
             mInstagramRemote.twoFactorLogin(
                 headersGenerater(),
                 encrypter(instagramLoginTwoFactorPayload)
@@ -77,7 +80,8 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         headersGenerater: () -> Map<String, String>
     ) {
         responseLiveData.addSource(
-            NetworkCall<InstagramDirects>().makeCall(
+            NetworkCall<InstagramDirects>()
+                .makeCall(
                 mInstagramRemote.getDirectIndex(
                     headersGenerater.invoke()
                 )
@@ -96,7 +100,8 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
     ) {
         responseLiveData.value = Resource.loading(null)
         responseLiveData.addSource(
-            NetworkCall<InstagramChats>().makeCall(
+            NetworkCall<InstagramChats>()
+                .makeCall(
                 mInstagramRemote.getChats(
                     function.invoke(),
                     threadId = threadId,
@@ -108,6 +113,13 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
             })
     }
 
+
+    fun sendPushRegister(result: MediatorLiveData<Resource<ResponseBody>>,registerPush: Map<String,*>,encrypter: (Map<String,*>) -> okhttp3.RequestBody,function: () -> HashMap<String, String>) {
+        result.addSource(NetworkCall<ResponseBody>().makeCall(mInstagramRemote.sendPushRegister(function.invoke(),encrypter.invoke(registerPush))),
+            Observer {
+                result.postValue(it)
+            })
+    }
     fun downloadAudio(result: MutableLiveData<InputStream>, audioSrc: String) {
         Thread {
             val client = OkHttpClient()
@@ -124,6 +136,7 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
             response.body()!!.close()
         }.start()
     }
+
 
 
 }

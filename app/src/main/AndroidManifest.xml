@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.Manifest.permission.RECORD_AUDIO"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
         android:name=".core.BaseApplication"
@@ -20,7 +23,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:requestLegacyExternalStorage="true"
-        android:debuggable="true"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning,HardcodedDebugMode"
         tools:replace="android:label">
@@ -41,12 +43,21 @@
 
         </activity>
 
-        <service android:name=".mqtt.service.NettyService">
+        <service android:name="com.sanardev.instagrammqtt.service.fbns.FbnsService">
             <intent-filter>
-                <action android:name="com.sanardev.instagrammqtt.ACTION_CHECK_SESSION" />
-                <action android:name="com.sanardev.instagrammqtt.ACTION_HEARTBEAT" />
-                <action android:name="com.sanardev.instagrammqtt.ACTION_CONNECT_SESSION" />
-                <action android:name="com.sanardev.instagrammqtt.ACTION_DISCONNECT_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_CHECK_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_HEARTBEAT" />
+                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_CONNECT_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_DISCONNECT_SESSION" />
+            </intent-filter>
+        </service>
+
+        <service android:name="com.sanardev.instagrammqtt.service.realtime.RealTimeService">
+            <intent-filter>
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CHECK_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_HEARTBEAT" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CONNECT_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_DISCONNECT_SESSION" />
             </intent-filter>
         </service>
 

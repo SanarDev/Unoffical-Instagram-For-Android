@@ -1,27 +1,36 @@
 package com.sanardev.instagrammqtt.usecase
 
 import android.app.Application
-import android.media.MediaPlayer
-import android.net.Uri
+import android.os.Environment
+import android.os.Handler
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.Cookie
+import com.sanardev.instagrammqtt.datasource.model.FbnsAuth
+import com.sanardev.instagrammqtt.datasource.model.NotificationContentJson
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
+import com.sanardev.instagrammqtt.datasource.model.payload.RegisterPush
 import com.sanardev.instagrammqtt.datasource.model.response.*
 import com.sanardev.instagrammqtt.repository.InstagramRepository
-import com.sanardev.instagrammqtt.utils.CookieUtils
-import com.sanardev.instagrammqtt.utils.InstagramHashUtils
-import com.sanardev.instagrammqtt.utils.Resource
-import com.sanardev.instagrammqtt.utils.StorageUtils
+import com.sanardev.instagrammqtt.utils.*
 import okhttp3.Headers
 import okhttp3.RequestBody
-import java.io.*
+import okhttp3.ResponseBody
+import org.apache.http.client.utils.URLEncodedUtils
+import run.tripa.android.extensions.openSharedPref
+import java.io.File
+import java.io.InputStream
+import java.io.UnsupportedEncodingException
+import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.text.SimpleDateFormat
@@ -33,12 +42,13 @@ class UseCase(
     var application: Application,
     var mInstagramRepository: InstagramRepository,
     var cookieUtils: CookieUtils,
+    var mHandler: Handler,
     var gson: Gson
 ) {
     val XLATE = "0123456789abcdef"
 
 
-    private val audioList = HashMap<String,InputStream>()
+    private val audioList = HashMap<String, InputStream>()
 
     protected fun digest(codec: String, source: String): String {
         try {
@@ -169,6 +179,39 @@ class UseCase(
         )
     }
 
+    private fun formUrlEncode(obj: Map<*,*>): RequestBody{
+        val parsedData = urlEncodeUTF8(obj)
+        Log.i(InstagramConstants.DEBUG_TAG,"FormUrlEncode $parsedData ");
+        return RequestBody.create(
+            okhttp3.MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8"),
+            parsedData
+        )
+    }
+
+    fun urlEncodeUTF8(map: Map<*, *>): String? {
+        val sb = StringBuilder()
+        for (entry in map.entries) {
+            if (sb.length > 0) {
+                sb.append("&")
+            }
+            sb.append(
+                String.format(
+                    "%s=%s",
+                    urlEncodeUTF8(entry.key.toString()),
+                    urlEncodeUTF8(entry.value.toString())
+                )
+            )
+        }
+        return sb.toString()
+    }
+
+    fun urlEncodeUTF8(s: String?): String? {
+        return try {
+            URLEncoder.encode(s, "UTF-8")
+        } catch (e: UnsupportedEncodingException) {
+            throw UnsupportedOperationException(e)
+        }
+    }
 
     fun saveUserData(
         loggedInUser: InstagramLoggedUser?,
@@ -204,6 +247,15 @@ class UseCase(
         } else {
             return CookieUtils.generateCookie()
         }
+//        return Cookie(
+//            csrftoken = "wqKWi6ifSTi0qLfYetUyqNaKbAOIz8BV",
+//            rur = "PRN",
+//            mid = "XvMPKgABAAHDyYM-2UzWLZ4maha_",
+//            sessionID = "11292195227%3A9ZtQHcjsfe5HUO%3A10",
+//        phoneID = "2c03e37d-85cb-4e1e-b313-ecf5f33e98b0",
+//        adid = "6ea72bf1-7e36-4321-9dc3-f5cf567ee98e",
+//        guid = "2c03e37d-85cb-4e1e-b313-ecf5f33e98b0",
+//        deviceID = "")
     }
 
     fun getHeaders(): HashMap<String, String> {
@@ -231,7 +283,7 @@ class UseCase(
         map[InstagramConstants.X_IG_CAPABILITIES] = InstagramConstants.DEVICE_CAPABILITIES
         map[InstagramConstants.X_IG_APP_ID] = InstagramConstants.APP_ID
         map[InstagramConstants.X_USER_AGENT] =
-            "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; 1080x2038; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
+            "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
         map[InstagramConstants.ACCEPT_LANGUAGE] = "en-US"
         map[InstagramConstants.COOKIE] =
             "mid=${cookie.mid}; csrftoken=${cookie.csrftoken};sessionid=${cookie.sessionID};dc_user=${user?.username.toString()
@@ -250,8 +302,50 @@ class UseCase(
         cookieUtils.removeCookie()
     }
 
-    fun getChats(result: MediatorLiveData<Resource<InstagramChats>>,limit:Int=10, threadId: String, seqID: Int) {
-        mInstagramRepository.getChats(result, threadId,limit, seqID, { getHeaders() })
+    fun getChats(
+        result: MediatorLiveData<Resource<InstagramChats>>,
+        limit: Int = 10,
+        threadId: String,
+        seqID: Int
+    ) {
+        mInstagramRepository.getChats(result, threadId, limit, seqID, { getHeaders() })
+    }
+
+
+    fun pushRegister(token: String) {
+        val res = MediatorLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()
+
+        val map = HashMap<String,String>().apply {
+            put("device_type","android_mqtt")
+            put("is_main_push_channel","true")
+            put("phone_id",cookie.phoneID)
+            put("device_sub_type",2.toString())
+            put("device_token",token)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("guid",cookie.guid)
+            put("_uuid",cookie.guid)
+            put("users",user!!.pk!!.toString())
+        }
+
+        /*
+       put(InstagramConstants.DEVICE_TYPE,"android_mqtt")
+         put(InstagramConstants.IS_MAIN_PUSH_CHANNEL,true.toString())
+         put(InstagramConstants.PHONE_ID,cookie.phoneID)
+         put(InstagramConstants.DEVICE_SUB_TYPE,2.toString())
+         put(InstagramConstants.DEVICE_TOKEN,token)
+         put(InstagramConstants.CSRFTOKEN,cookie.csrftoken!!)
+         put(InstagramConstants.GUID,cookie.phoneID)
+         put(InstagramConstants.UUID,cookie.guid)
+         put(InstagramConstants.USERS,user!!.pk!!.toString())
+      */
+        mHandler.post {
+            mInstagramRepository.sendPushRegister(res,map,{t -> formUrlEncode(t)},{getHeaders()})
+            res.observeForever {
+                Log.i(InstagramConstants.DEBUG_TAG,"PushRegister State ${it.status.name} with data ${it.data}");
+            }
+        }
     }
 
     fun getDifferentTimeString(time: Long, startFromDay: Boolean = true): String {
@@ -278,10 +372,10 @@ class UseCase(
         }
         if (differentTime < month) {
             val days = (differentTime / (24 * 60 * 60)).toInt()
-            if(days == 1){
+            if (days == 1) {
                 return application.getString(R.string.yesterday)
             }
-            return String.format(application.getString(R.string.days_ago),days)
+            return String.format(application.getString(R.string.days_ago), days)
         }
         if (differentTime < year) {
             val month = differentTime / (30 * 24 * 60 * 60)
@@ -293,29 +387,58 @@ class UseCase(
     }
 
     fun isFileExist(audioSrc: String): Boolean {
-        return StorageUtils.isFileExist(application,audioSrc)
+        return StorageUtils.isFileExist(application, audioSrc)
     }
 
     fun playAudio(audioSrc: String) {
         val inputStream = audioList[audioSrc]
-        if(inputStream == null){
+        if (inputStream == null) {
 
-        }else{
+        } else {
 
         }
     }
 
     fun getFile(fileLiveData: MutableLiveData<File>, url: String, id: String) {
-        val file = StorageUtils.getFile(application,"$id")
-        if(file != null){
+        val file = StorageUtils.getFile(application, "$id")
+        if (file != null) {
             fileLiveData.postValue(file)
-        }else{
+        } else {
             val result = MediatorLiveData<InputStream>()
-            mInstagramRepository.downloadAudio(result,url)
+            mInstagramRepository.downloadAudio(result, url)
             result.observeForever {
-                StorageUtils.saveFile(application,"$id",it)
-                getFile(fileLiveData,url,id)
+                StorageUtils.saveFile(application, "$id", it)
+                getFile(fileLiveData, url, id)
             }
         }
     }
+
+    fun createFileInExternalStorage(currentVoiceFileName: String) {
+        StorageUtils.createFileInExternalStorage(
+            application,
+            application.getString(R.string.app_name),
+            currentVoiceFileName
+        )
+    }
+
+    fun generateFilePath(format: String): String {
+        return Environment.getExternalStorageDirectory()!!.absolutePath + File.separator + format
+    }
+
+    fun saveFbnsAuthData(fbnsAuth: FbnsAuth) {
+        StorageUtils.saveFbnsAuth(application,fbnsAuth)
+    }
+
+    fun getFbnsAuthData(): FbnsAuth {
+        return StorageUtils.getFbnsAuth(application)
+    }
+
+    fun notify(notification: NotificationContentJson?) {
+        if(notification == null){
+            return
+        }
+        val nc = notification.notificationContent
+        NotificationUtils.notify(application,notification.connectionKey,"test","Minista",nc.message)
+    }
+
 }
