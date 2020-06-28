@@ -3,6 +3,7 @@ package com.sanardev.instagrammqtt.realtime.network
 import android.util.Log
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.realtime.PayloadProcessor
+import com.sanardev.instagrammqtt.realtime.commands.Commands
 import com.sanardev.instagrammqtt.realtime.packethelper.ForegroundStateConfig
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.utils.ZlibUtis
@@ -59,7 +60,7 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                 Log.i(InstagramConstants.DEBUG_TAG, "RealTime ConnAck");
                 ctx!!.pipeline().remove("encoder")
                 realTimeService.onConnAck()
-                sendForegroundState(ctx!!,true,true,90)
+//                sendForegroundState(ctx!!,true,true,90)
             }
             MqttMessageType.PUBACK -> {
                 Log.i(
@@ -94,44 +95,15 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
 //                            keepAliveTimeout = 900
 //                        )
                     }
+                    InstagramConstants.RealTimeTopics.PUBSUB.id ->{
+                        Commands.parseData(json)
+                    }
                     InstagramConstants.RealTimeTopics.REALTIME_SUB.id ->{
-                        val a = TMemoryBuffer(json.size)
-                        a.write(json)
-                        val iprot = TCompactProtocol(a)
-                        var topic:String
-                        var payload:String
-                        try{
-                            var field :TField
-                            while (true){
-                                field = iprot.readFieldBegin()
-                                if(field.type == TType.STOP){
-                                    break
-                                }
-                                when(field.id.toInt()){
-                                    1 ->{
-                                        if(field.type == TType.STRING){
-                                            topic = iprot.readString()
-                                        }else{
-                                            TProtocolUtil.skip(iprot,field.type)
-                                        }
-                                    }
-                                    2 ->{
-                                        if(field.type == TType.STRING){
-                                            payload = iprot.readString()
-                                        }else{
-                                            TProtocolUtil.skip(iprot,field.type)
-                                        }
-                                    }
-                                    else ->{
-                                        TProtocolUtil.skip(iprot,field.type)
-                                    }
-                                }
-                                iprot.readFieldEnd()
-                            }
-                        }finally {
-                            Log.i("TEST","TEST")
-                        }
+                        Commands.parseData(json)
+                    }
 
+                    InstagramConstants.RealTimeTopics.MESSAGE_SYNC.id ->{
+                        Commands.parseData(json)
                     }
                 }
 

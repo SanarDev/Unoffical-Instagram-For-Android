@@ -8,8 +8,10 @@ import com.google.gson.Gson
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.fbns.network.PayloadProcessor
 import com.sanardev.instagrammqtt.fbns.packethelper.*
+import com.sanardev.instagrammqtt.realtime.commands.DirectCommands
 import com.sanardev.instagrammqtt.realtime.network.NetworkHandler
 import com.sanardev.instagrammqtt.realtime.subcribers.GraphQLSubscriptions
+import com.sanardev.instagrammqtt.realtime.subcribers.SkywalkerSubscriptions
 import com.sanardev.instagrammqtt.service.fbns.FbnsService
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.DisplayUtils
@@ -46,6 +48,7 @@ class RealTimeService : Service() {
 
     private var seqID: Long = 0
     private var snapShotAt: Long = 0
+    private var directCommands : DirectCommands?=null
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -155,7 +158,7 @@ class RealTimeService : Service() {
                 RealTimeService.SERVER_PORT
             ).sync()
             mChannel = future.channel()
-
+            directCommands = DirectCommands(mChannel!!,Gson())
             mChannel!!.writeAndFlush(fbnsConnectPacket)
         } finally {
         }
@@ -198,6 +201,18 @@ class RealTimeService : Service() {
         )
 
         updateSubscriptions(
+            InstagramConstants.RealTimeTopics.PUBSUB.id.toString(),
+            HashMap<String,Any>().apply {
+                put(
+                    "sub",
+                    arrayOf(
+                        SkywalkerSubscriptions.directSub(user!!.pk.toString()),
+                        SkywalkerSubscriptions.liveSub(user!!.pk.toString())
+                    )
+                )
+            }
+        )
+        updateSubscriptions(
             InstagramConstants.RealTimeTopics.IRIS_SUB.id.toString(),
             HashMap<String,Any>().apply {
                 put("seq_id",seqID.toString())
@@ -205,6 +220,9 @@ class RealTimeService : Service() {
                 put("snapshot_at_ms",snapShotAt.toString())
             }
         )
+
+        directCommands!!.sendText(text = "Salam",threadId = "340282366841710300949128267726276550694")
+        directCommands!!.sendLike(threadId = "340282366841710300949128267726276550694")
     }
 
     fun updateSubscriptions(topicId: String, data: HashMap<String, Any>) {

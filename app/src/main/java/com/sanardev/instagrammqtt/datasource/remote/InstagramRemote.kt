@@ -70,4 +70,5 @@ interface InstagramRemote {
     @POST("push/register/")
     fun sendPushRegister(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
 
+    var item:Thread
 }
