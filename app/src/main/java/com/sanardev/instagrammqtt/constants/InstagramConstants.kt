@@ -207,11 +207,16 @@ class InstagramConstants {
         PUBSUB(88,"/pubsub"),
         SEND_MESSAGE_RESPONSE(133,"/ig_send_message_response"),
         IRIS_SUB(134,"/ig_sub_iris"),
-        IRIS_SUB_RESPONSE(135,"/ig_sub_iris_response"),
         MESSAGE_SYNC(146,"/ig_message_sync"),
         REALTIME_SUB(149,"/ig_realtime_sub"),
+        IRIS_SUB_RESPONSE(135,"/ig_sub_iris_response"),
         REGION_HINT(150,"/t_region_hint"),
         FOREGROUND_STATE(102,"/t_fs"),
         SEND_MESSAGE(132,"/ig_send_message"),
+    }
+
+    enum class RealTimeEvent(var id:String) {
+        NEW_MESSAGE("items"),
+        ACTIVITY_INDICATOR_ID("activity_indicator_id")
     }
 }

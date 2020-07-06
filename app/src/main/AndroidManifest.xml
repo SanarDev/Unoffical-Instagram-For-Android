@@ -23,7 +23,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:requestLegacyExternalStorage="true"
-        android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning,HardcodedDebugMode"
         tools:replace="android:label">
         <activity android:name=".ui.main.MainActivity">
@@ -58,6 +57,7 @@
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_HEARTBEAT" />
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CONNECT_SESSION" />
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_DISCONNECT_SESSION" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_TEXT_MESSAGE" />
             </intent-filter>
         </service>
 

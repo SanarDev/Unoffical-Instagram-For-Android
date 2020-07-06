@@ -5,29 +5,29 @@ import com.sanardev.instagrammqtt.datasource.model.subscribers.GraphQLSubBaseOpt
 
 class GraphQLSubscriptions {
 
-    companion object {
-        class QueryIDs {
-            companion object {
-                const val appPresence = "17846944882223835"
-                const val asyncAdSub = "17911191835112000"
-                const val clientConfigUpdate = "17849856529644700"
-                const val directStatus = "17854499065530643"
-                const val directTyping = "17867973967082385"
-                const val liveWave = "17882305414154951"
-                const val interactivityActivateQuestion = "18005526940184517"
-                const val interactivityRealtimeQuestionSubmissionsStatus = "18027779584026952"
-                const val interactivitySub = "17907616480241689"
-                const val liveRealtimeComments = "17855344750227125"
-                const val liveTypingIndicator = "17926314067024917"
-                const val mediaFeedback = "17877917527113814"
-                const val reactNativeOTA = "17861494672288167"
-                const val videoCallCoWatchControl = "17878679623388956"
-                const val videoCallInAlert = "17878679623388956"
-                const val videoCallPrototypePublish = "18031704190010162"
-                const val zeroProvision = "17913953740109069"
-            }
+    class QueryIDs {
+        companion object {
+            const val appPresence = "17846944882223835"
+            const val asyncAdSub = "17911191835112000"
+            const val clientConfigUpdate = "17849856529644700"
+            const val directStatus = "17854499065530643"
+            const val directTyping = "17867973967082385"
+            const val liveWave = "17882305414154951"
+            const val interactivityActivateQuestion = "18005526940184517"
+            const val interactivityRealtimeQuestionSubmissionsStatus = "18027779584026952"
+            const val interactivitySub = "17907616480241689"
+            const val liveRealtimeComments = "17855344750227125"
+            const val liveTypingIndicator = "17926314067024917"
+            const val mediaFeedback = "17877917527113814"
+            const val reactNativeOTA = "17861494672288167"
+            const val videoCallCoWatchControl = "17878679623388956"
+            const val videoCallInAlert = "17878679623388956"
+            const val videoCallPrototypePublish = "18031704190010162"
+            const val zeroProvision = "17913953740109069"
         }
+    }
 
+    companion object {
         private fun formatSubscriptionString(
             queryId: String,
             inputParam: Map<String, Any>,

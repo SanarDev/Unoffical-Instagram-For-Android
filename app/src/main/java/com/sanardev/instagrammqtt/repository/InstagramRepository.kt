@@ -1,13 +1,13 @@
 package com.sanardev.instagrammqtt.repository
 
 import android.os.Handler
-import android.util.Log
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.sanardev.instagrammqtt.datasource.local.MessageDataSource
+import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
-import com.sanardev.instagrammqtt.datasource.model.payload.RegisterPush
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
@@ -19,13 +19,14 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.InputStream
-import java.util.*
+import kotlin.collections.HashMap
 
 
-class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
+class InstagramRepository(private var mInstagramRemote: InstagramRemote, private var mMessageDataSource: MessageDataSource) {
 
 
     private val mHandler = Handler()
+
     fun login(
         liveData: MediatorLiveData<Resource<InstagramLoginResult>>,
         instagramLoginPayload: InstagramLoginPayload,
@@ -35,11 +36,11 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         liveData.addSource(
             NetworkCall<InstagramLoginResult>()
                 .makeCall(
-                mInstagramRemote.login(
-                    headersGenerater.invoke(),
-                    encrypter.invoke(instagramLoginPayload)
+                    mInstagramRemote.login(
+                        headersGenerater.invoke(),
+                        encrypter.invoke(instagramLoginPayload)
+                    )
                 )
-            )
         ) {
             liveData.postValue(it)
         }
@@ -66,13 +67,13 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         liveData.addSource(
             NetworkCall<InstagramLoginResult>()
                 .makeCall(
-            mInstagramRemote.twoFactorLogin(
-                headersGenerater(),
-                encrypter(instagramLoginTwoFactorPayload)
-            )
-        ), Observer {
-            liveData.postValue(it)
-        })
+                    mInstagramRemote.twoFactorLogin(
+                        headersGenerater(),
+                        encrypter(instagramLoginTwoFactorPayload)
+                    )
+                ), Observer {
+                liveData.postValue(it)
+            })
     }
 
     fun getDirectInbox(
@@ -82,13 +83,28 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         responseLiveData.addSource(
             NetworkCall<InstagramDirects>()
                 .makeCall(
-                mInstagramRemote.getDirectIndex(
-                    headersGenerater.invoke()
-                )
-            ), Observer {
+                    mInstagramRemote.getDirectIndex(
+                        headersGenerater.invoke()
+                    )
+                ), Observer {
                 responseLiveData.postValue(it)
             }
         )
+    }
+
+    fun getDirectPresence(
+        responseLiveData: MediatorLiveData<Resource<PresenceResponse>>,
+        headersGenerater: () -> Map<String, String>
+    ) {
+        responseLiveData.addSource(NetworkCall<PresenceResponse>().makeCall(
+            mInstagramRemote.getDirectPresence(
+                headersGenerater.invoke()
+            )
+        ),
+            Observer {
+                responseLiveData.postValue(it)
+            })
+
     }
 
     fun getChats(
@@ -102,24 +118,35 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         responseLiveData.addSource(
             NetworkCall<InstagramChats>()
                 .makeCall(
-                mInstagramRemote.getChats(
-                    function.invoke(),
-                    threadId = threadId,
-                    limit = limit,
-                    seqID = seqID
-                )
-            ), Observer {
+                    mInstagramRemote.getChats(
+                        function.invoke(),
+                        threadId = threadId,
+                        limit = limit,
+                        seqID = seqID
+                    )
+                ), Observer {
                 responseLiveData.postValue(it)
             })
     }
 
 
-    fun sendPushRegister(result: MediatorLiveData<Resource<ResponseBody>>,registerPush: Map<String,*>,encrypter: (Map<String,*>) -> okhttp3.RequestBody,function: () -> HashMap<String, String>) {
-        result.addSource(NetworkCall<ResponseBody>().makeCall(mInstagramRemote.sendPushRegister(function.invoke(),encrypter.invoke(registerPush))),
+    fun sendPushRegister(
+        result: MediatorLiveData<Resource<ResponseBody>>,
+        registerPush: Map<String, *>,
+        encrypter: (Map<String, *>) -> okhttp3.RequestBody,
+        function: () -> HashMap<String, String>
+    ) {
+        result.addSource(NetworkCall<ResponseBody>().makeCall(
+            mInstagramRemote.sendPushRegister(
+                function.invoke(),
+                encrypter.invoke(registerPush)
+            )
+        ),
             Observer {
                 result.postValue(it)
             })
     }
+
     fun downloadAudio(result: MutableLiveData<InputStream>, audioSrc: String) {
         Thread {
             val client = OkHttpClient()
@@ -137,6 +164,12 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote) {
         }.start()
     }
 
-
+    fun loadMoreChats(result: MediatorLiveData<Resource<InstagramChats>>, cursor: String,threadId:String,seqId:Int ,headersGenerater: () -> Map<String, String>) {
+        result.addSource(NetworkCall<InstagramChats>().makeCall(
+            mInstagramRemote.loadMoreChats(header = headersGenerater.invoke(),cursor = cursor,threadId = threadId,seqID = seqId)),
+            Observer {
+                result.postValue(it)
+            })
+    }
 
 }

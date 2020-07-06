@@ -4,15 +4,25 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
+import com.google.gson.internal.LinkedTreeMap
 import com.sanardev.instagrammqtt.constants.InstagramConstants
-import com.sanardev.instagrammqtt.fbns.network.PayloadProcessor
-import com.sanardev.instagrammqtt.fbns.packethelper.*
+import com.sanardev.instagrammqtt.datasource.model.Message
+import com.sanardev.instagrammqtt.datasource.model.ParsedMessage
+import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
+import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
+import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
+import com.sanardev.instagrammqtt.datasource.model.realtime.RealtimeSubDirectDataWrapper
+import com.sanardev.instagrammqtt.fbns.packethelper.FbnsConnectPacket
+import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
+import com.sanardev.instagrammqtt.fbns.packethelper.MQTToTConnectionData
+import com.sanardev.instagrammqtt.fbns.packethelper.MQTTotConnectionClientInfo
+import com.sanardev.instagrammqtt.realtime.PayloadProcessor
 import com.sanardev.instagrammqtt.realtime.commands.DirectCommands
 import com.sanardev.instagrammqtt.realtime.network.NetworkHandler
 import com.sanardev.instagrammqtt.realtime.subcribers.GraphQLSubscriptions
 import com.sanardev.instagrammqtt.realtime.subcribers.SkywalkerSubscriptions
-import com.sanardev.instagrammqtt.service.fbns.FbnsService
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.DisplayUtils
 import com.sanardev.instagrammqtt.utils.ZlibUtis
@@ -33,6 +43,7 @@ import io.netty.handler.ssl.SslHandler
 import io.netty.handler.ssl.SslProvider
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import io.netty.util.CharsetUtil
+import org.greenrobot.eventbus.EventBus
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
@@ -45,6 +56,9 @@ class RealTimeService : Service() {
 
     @Inject
     lateinit var mUseCase: UseCase
+
+    @Inject
+    lateinit var mGson: Gson
 
     private var seqID: Long = 0
     private var snapShotAt: Long = 0
@@ -67,7 +81,12 @@ class RealTimeService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        connect(intent!!.extras!!.getLong("seq_id"), intent!!.extras!!.getLong("snap_shot_at"))
+        if(mChannel == null){
+            connect(intent!!.extras!!.getLong("seq_id"), intent!!.extras!!.getLong("snap_shot_at"))
+        }
+        if(intent!!.action == RealTimeIntent.ACTION_SEND_TEXT_MESSAGE){
+            directCommands!!.sendText(text = intent!!.extras!!.getString("text")!!,threadId = intent!!.extras!!.getString("thread_id")!!)
+        }
 
         return super.onStartCommand(intent, flags, startId)
     }
@@ -123,7 +142,7 @@ class RealTimeService : Service() {
                 put("Accept-Language", "en-US")
                 put("platform", "android")
                 put("ig_mqtt_route", "django")
-                put("pubsub_msg_type_blacklist", "direct, typing_type")
+//                put("pubsub_msg_type_blacklist", "direct, typing_type")
                 put("auth_cache_enabled", "0")
             }
             mqtToTConnectionData.appSpecificInfo = appSpecificInfo
@@ -221,8 +240,8 @@ class RealTimeService : Service() {
             }
         )
 
-        directCommands!!.sendText(text = "Salam",threadId = "340282366841710300949128267726276550694")
-        directCommands!!.sendLike(threadId = "340282366841710300949128267726276550694")
+//        directCommands!!.sendText(text = "Salam",threadId = "340282366841710300949128267726276550694")
+//        directCommands!!.sendLike(threadId = "340282366841710300949128267726276550694")
     }
 
     fun updateSubscriptions(topicId: String, data: HashMap<String, Any>) {
@@ -260,6 +279,42 @@ class RealTimeService : Service() {
         val packetID = Random().nextInt(65000)
         Log.i(InstagramConstants.DEBUG_TAG,"Generate Packet $packetID")
         return packetID
+    }
+
+    fun onMessageEvent(parseData: ParsedMessage) {
+        val map = mGson.fromJson(parseData.payload,HashMap::class.java)
+        val data = map["data"]
+        val realtimeSubDirectDataWrapper = jacksonObjectMapper().convertValue((data as ArrayList<LinkedTreeMap<String, String>>).get(0),RealtimeSubDirectDataWrapper::class.java)
+        if(realtimeSubDirectDataWrapper.path.startsWith("/direct_v2/threads/")){
+            val param = realtimeSubDirectDataWrapper.path.split("/")
+            val threadId = param[3]
+            val event = param[4]
+            when(event){
+                 InstagramConstants.RealTimeEvent.NEW_MESSAGE.id ->{
+                    EventBus.getDefault().postSticky(MessageEvent(threadId,mGson.fromJson(realtimeSubDirectDataWrapper.value,
+                        Message::class.java)))
+                }
+
+                InstagramConstants.RealTimeEvent.ACTIVITY_INDICATOR_ID.id ->{
+                    EventBus.getDefault().post(
+                        TypingEvent(
+                            threadId
+                        )
+                    )
+                }
+            }
+            Log.i("TEST","TEST")
+        }
+    }
+
+    fun onActivityEvent(parseData: ParsedMessage) {
+        when(parseData.topicName){
+            GraphQLSubscriptions.QueryIDs.appPresence ->{
+                val map = mGson.fromJson(parseData.payload,HashMap::class.java)
+                val event = jacksonObjectMapper().convertValue(map["presence_event"], PresenceEvent::class.java)
+                EventBus.getDefault().post(event)
+            }
+        }
     }
 
     companion object {

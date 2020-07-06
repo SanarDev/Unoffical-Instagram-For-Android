@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.os.Handler
 import com.google.gson.Gson
+import com.sanardev.instagrammqtt.datasource.local.MessageDataSource
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.repository.InstagramRepository
 import com.sanardev.instagrammqtt.usecase.UseCase
@@ -39,8 +40,14 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideInstagramRepository(mInstagramRemote: InstagramRemote):InstagramRepository{
-        return InstagramRepository(mInstagramRemote)
+    fun provideMessageDataSource(): MessageDataSource {
+        return MessageDataSource()
+    }
+
+    @Provides
+    @Singleton
+    fun provideInstagramRepository(mInstagramRemote: InstagramRemote,messageDataSource: MessageDataSource):InstagramRepository{
+        return InstagramRepository(mInstagramRemote,messageDataSource)
     }
 
 

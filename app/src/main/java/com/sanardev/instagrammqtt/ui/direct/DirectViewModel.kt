@@ -1,33 +1,25 @@
 package com.sanardev.instagrammqtt.ui.direct
 
 import android.app.Application
-import android.media.MediaPlayer
 import android.media.MediaRecorder
-import android.net.Uri
-import android.os.Bundle
-import android.util.Log
 import androidx.databinding.ObservableField
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
-import com.google.gson.Gson
 import com.sanardev.instagrammqtt.base.BaseViewModel
-import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
-import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramInbox
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.usecase.UseCase
+import com.sanardev.instagrammqtt.utils.DisplayUtils
 import com.sanardev.instagrammqtt.utils.Resource
-import okhttp3.ResponseBody
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 class DirectViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
@@ -37,22 +29,24 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     private var currentVoiceFileName: String? = null
     val isEnableSendButton = ObservableField<Boolean>(false)
 
+
+    private val messages = ArrayList<Message>().toMutableList()
+
     private val result = MediatorLiveData<Resource<InstagramChats>>()
     val fileLiveData = MutableLiveData<File>()
+    val mutableLiveData = MutableLiveData<Resource<InstagramChats>>()
     val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.SUCCESS) {
-            releaseMessages(it.data!!)
+            messages.addAll(it.data!!.thread!!.messages)
+            it!!.data!!.thread!!.releasesMessage = releaseMessages(messages)
         }
         return@map it
     }
-    init {
 
-    }
-
-    private fun releaseMessages(it: InstagramChats) {
+    private fun releaseMessages(it: List<Message>): List<Any> {
         val sdf = SimpleDateFormat("yyyy-MM-dd")
         var oldMessage: Message? = null
-        val messagesReverse = it.thread!!.messages.reversed()
+        val messagesReverse = it.reversed()
         val releasesMessage = ArrayList<Any>().toMutableList()
         for (message in messagesReverse) {
             if (oldMessage != null) {
@@ -80,7 +74,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
             }
             oldMessage = message
         }
-        it.thread!!.releasesMessage = releasesMessage.reversed()
+        return releasesMessage.reversed()
     }
 
     fun edtMessageChange(s: CharSequence, start: Int, before: Int, count: Int) {
@@ -89,6 +83,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         } else {
             isEnableSendButton.set(true)
         }
+
     }
 
     fun init(threadId: String, seqID: Int) {
@@ -162,6 +157,32 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     fun stopRecording() {
         mediaRecorder.stop()
         mediaRecorder.release()
+    }
+
+    fun getStandardHeight(height: Int): Int {
+        var standardHeight = 0
+        val screenHeight = DisplayUtils.getScreenHeight()/1.5
+        if((screenHeight * 0.7) < height){
+            standardHeight =  (height * ((screenHeight * 0.7) / height)).toInt()
+        }else{
+            standardHeight = height.toInt()
+        }
+        return standardHeight
+    }
+
+    fun getStandardWidth(width:Int):Int{
+        var standardWidth = 0
+        val screenWidth = DisplayUtils.getScreenWidth()
+        if((screenWidth * 0.7) < width){
+            standardWidth =  (width * ((screenWidth * 0.7) / width)).toInt()
+        }else{
+            standardWidth = width
+        }
+        return standardWidth
+    }
+
+    fun loadMoreItem(cursor: String,threadId: String,seqId:Int) {
+        mUseCase.loadMoreChats(result,cursor,threadId,seqId)
     }
 
 }

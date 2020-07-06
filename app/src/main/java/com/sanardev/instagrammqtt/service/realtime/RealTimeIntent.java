@@ -6,5 +6,6 @@ public class RealTimeIntent {
     public static final String ACTION_HEARTBEAT = 			"com.sanardev.instagrammqtt.REALTIME.ACTION_HEARTBEAT";
     public static final String ACTION_CONNECT_SESSION = 	"com.sanardev.instagrammqtt.REALTIME.ACTION_CONNECT_SESSION";
     public static final String ACTION_DISCONNECT_SESSION = 	"com.sanardev.instagrammqtt.REALTIME.ACTION_DISCONNECT_SESSION";
+    public static final String ACTION_SEND_TEXT_MESSAGE = 	"com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_TEXT_MESSAGE";
 
 }

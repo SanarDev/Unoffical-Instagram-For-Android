@@ -10,61 +10,134 @@
             type="com.sanardev.instagrammqtt.ui.main.MainViewModel" />
     </data>
 
-    <LinearLayout
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/theme_background"
-        android:orientation="vertical"
-        tools:context=".ui.main.MainActivity">
-
-
-        <androidx.appcompat.widget.Toolbar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/theme_edittext"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp">
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/txt_toolbarTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@color/text_very_light"
-                android:textSize="16sp"
-                tools:text="TheSanardev" />
-
-            <androidx.appcompat.widget.AppCompatImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:background="@null"
-                android:padding="10dp"
-                android:src="@drawable/ic_setting"
-                android:tint="@color/text_light" />
-
-        </androidx.appcompat.widget.Toolbar>
+        android:layout_height="match_parent">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerview_directs"
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/layout_direct" />
+                android:background="@color/theme_background"
+                android:orientation="vertical"
+                tools:context=".ui.main.MainActivity">
 
-            <ProgressBar
-                android:id="@+id/progressbar"
+
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/theme_item"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp">
+
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="left"
+                        android:background="@null"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_menu"
+                        android:tint="@color/text_light" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/txt_toolbarTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginEnd="20dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textColor="@color/text_very_light"
+                        android:textSize="16sp"
+                        tools:text="TheSanardev" />
+
+                </androidx.appcompat.widget.Toolbar>
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:background="@drawable/bg_message_2"
+                    android:hint="@string/search"
+                    android:paddingStart="15dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="15dp"
+                    android:paddingBottom="10dp"
+                    android:textColor="@color/text_very_light"
+                    android:textColorHint="@color/hint_light" />
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/collectionTabLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:tabIconTint="@color/text_very_light"
+                    app:tabInlineLabel="true"
+                    app:tabTextColor="@color/text_very_light">
+
+
+                </com.google.android.material.tabs.TabLayout>
+
+                <androidx.viewpager.widget.ViewPager
+                    android:id="@+id/directViewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone">
+
+                </androidx.viewpager.widget.ViewPager>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerview_directs"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        tools:listitem="@layout/layout_direct" />
+
+                    <ProgressBar
+                        android:id="@+id/progressbar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true" />
+
+                </RelativeLayout>
+
+
+            </LinearLayout>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"/>
-
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                app:backgroundTint="@color/theme_item"
+                android:src="@drawable/ic_pen"
+                app:useCompatPadding="true"
+                android:tint="@color/text_very_light"
+                app:rippleColor="@color/text_very_light"
+                app:fabSize="normal" />
         </RelativeLayout>
 
-    </LinearLayout>
+        <com.google.android.material.navigation.NavigationView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:background="@color/theme_background"
+            app:headerLayout="@layout/nav_header_main"
+            app:itemIconTint="@color/text_very_light"
+            app:itemShapeFillColor="@color/text_very_light"
+            app:itemTextColor="@color/text_very_light"
+            app:menu="@menu/activity_main_drawer" />
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
 </layout>

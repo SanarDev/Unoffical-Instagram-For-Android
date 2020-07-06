@@ -1,13 +1,9 @@
 package com.sanardev.instagrammqtt.datasource.remote
 
-import com.google.gson.annotations.SerializedName
-import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
-import com.sanardev.instagrammqtt.datasource.model.payload.RegisterPush
+import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramInbox
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
-import com.sanardev.instagrammqtt.utils.Resource
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -53,9 +49,9 @@ interface InstagramRemote {
     fun getDirectIndex(
         @HeaderMap header: Map<String, String>,
         @Query("visual_message_return_type") visualMessageReturnType: String = "unseen",
-        @Query("thread_message_limit") threadMessageLimit: Int = 10,
+        @Query("thread_message_limit") threadMessageLimit: Int = 1,
         @Query("persistentBadging") persistentBadging: Boolean = true,
-        @Query("limit") limit: Int = 10
+        @Query("limit") limit: Int = 50
     ): Call<InstagramDirects>
 
     @GET("direct_v2/threads/{threadId}/")
@@ -67,8 +63,22 @@ interface InstagramRemote {
         @Query("seq_id") seqID: Int = 0
     ): Call<InstagramChats>
 
+    @GET("direct_v2/threads/{threadId}/")
+    fun loadMoreChats(
+        @HeaderMap header: Map<String, String>,
+        @Path("threadId") threadId: String,
+        @Query("visual_message_return_type") visualMessageReturnType: String = "unseen",
+        @Query("direction") direction: String = "older",
+        @Query("cursor") cursor: String,
+        @Query("limit") limit: Int = 10,
+        @Query("seq_id") seqID: Int = 0
+    ): Call<InstagramChats>
+
     @POST("push/register/")
     fun sendPushRegister(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
+
+    @GET("direct_v2/get_presence/")
+    fun getDirectPresence(@HeaderMap header: Map<String, String>):Call<PresenceResponse>
 
     var item:Thread
 }

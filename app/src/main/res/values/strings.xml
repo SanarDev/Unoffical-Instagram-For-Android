@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Instagram For Business</string>
+    <string name="app_name">Minista</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="login">Login</string>
@@ -20,24 +20,24 @@
     <string name="youre_been_logged_out">You\'re been logged out. please loggin again.</string>
     <string name="unknownError">Unknown error. please try again</string>
     <string name="five_min_ago">5m ago</string>
-    <string name="right_now">right now</string>
-    <string name="hours_ago">%d hours ago</string>
-    <string name="min_ago">%d min ago</string>
+    <string name="right_now">now</string>
+    <string name="hours_ago">%dh ago</string>
+    <string name="min_ago">%dm ago</string>
     <string name="month_ago">%d month ago</string>
     <string name="category">Category</string>
     <string name="export_chat">Export chat</string>
     <string name="note">Note</string>
-    <string name="notes">Notes</string>
+    <string name="SavedMessage">Saved message</string>
     <string name="remove">Remove</string>
     <string name="today">Today</string>
-    <string name="days_ago">%d days ago</string>
+    <string name="days_ago">%dd ago</string>
     <string name="yesterday">Yesterday</string>
     <string name="reply_to_their_story">Replied to their story</string>
     <string name="mentioned_you_in_their_story">Mentioned you in their story</string>
     <string name="send_story_from">Send %s\'s story</string>
     <string name="view_photo">View Photo</string>
     <string name="data_not_available">No data available</string>
-    <string name="you_reacten_to_their_story">You reacted to their story</string>
+    <string name="you_reacted_to_their_story">You reacted to their story</string>
     <string name="error_internet_connection">Error in internet connection</string>
     <string name="check_your_network">Please check your network connection</string>
     <string name="mentioned_person_in_your_story">Mentioned %s in your story</string>
@@ -49,4 +49,14 @@
     <string name="you_send_a_voice_message">You send a voice message</string>
     <string name="send_a_voice_message">Send a voice message</string>
     <string name="you_viewed_their_story">You viewed their story</string>
+    <string name="new_message">%d new messages</string>
+    <string name="more_than_nine_new_message">9+ new messages</string>
+    <string name="typing">typing ...</string>
+    <string name="reacted_to_your_story">Reacted to your story</string>
+    <string name="new_message_with_time">%s %s</string>
+    <string name="online">Online</string>
+    <string name="active_at">Active %s</string>
+    <string name="navigation_drawer_open">Navigartion drawer open</string>
+    <string name="navigation_drawer_close">Navigation drawer close</string>
+    <string name="search">Search</string>
 </resources>

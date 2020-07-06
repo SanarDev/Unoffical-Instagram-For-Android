@@ -1,6 +1,7 @@
 package com.sanardev.instagrammqtt.datasource.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.LinkedTreeMap;
@@ -124,6 +125,60 @@ public class Thread {
     @SerializedName("last_permanent_item")
     @Expose
     private LastPermanentItem lastPermanentItem;
+    @JsonIgnore
+    private Boolean isActive = false;
+    @JsonIgnore
+    private Boolean isTyping = false;
+    @JsonIgnore
+    private Long typingAtMs;
+
+    public Long getTypingAtMs() {
+        return typingAtMs;
+    }
+
+    public void setTypingAtMs(Long typingAtMs) {
+        this.typingAtMs = typingAtMs;
+    }
+
+    public Boolean getTyping() {
+        return isTyping;
+    }
+
+    public void setTyping(Boolean typing) {
+        isTyping = typing;
+    }
+
+    public Boolean getPin() {
+        return isPin;
+    }
+
+    public void setPin(Boolean pin) {
+        isPin = pin;
+    }
+
+    public Boolean getGroup() {
+        return isGroup;
+    }
+
+    public void setGroup(Boolean group) {
+        isGroup = group;
+    }
+
+    public Boolean getSpam() {
+        return isSpam;
+    }
+
+    public void setSpam(Boolean spam) {
+        isSpam = spam;
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
 
     public String getThreadId() {
         return threadId;

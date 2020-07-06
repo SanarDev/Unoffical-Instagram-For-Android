@@ -27,6 +27,9 @@ public class Message {
     @SerializedName("action_log")
     @Expose
     private ActionLog actionLog;
+    @SerializedName("path")
+    @Expose
+    private String path;
     @SerializedName("media")
     @Expose
     private Media media;
@@ -51,12 +54,31 @@ public class Message {
     @SerializedName("show_forward_attribution")
     @Expose
     private Boolean showForwardAttribution;
+    @SerializedName("felix_share")
+    @Expose
+    private Object felixShare;
     @SerializedName("animated_media")
     @Expose
     private AnimatedMedia animatedMedia;
     @SerializedName("like")
     @Expose
     private String like;
+
+    public Object getFelixShare() {
+        return felixShare;
+    }
+
+    public void setFelixShare(Object felixShare) {
+        this.felixShare = felixShare;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
 
     public String getLike() {
         return like;

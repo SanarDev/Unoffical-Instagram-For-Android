@@ -20,7 +20,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/theme_edittext"
+            android:background="@color/theme_item"
             android:gravity="center_vertical"
             app:layout_constraintBottom_toTopOf="@id/layout_recyclerview"
             app:layout_constraintTop_toTopOf="parent">
@@ -36,8 +36,8 @@
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/img_profile_image"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:layout_marginStart="10dp"
                 android:src="@mipmap/example"
                 app:civ_border_color="@color/hint_light"
@@ -58,11 +58,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-medium"
+                    android:textSize="16sp"
                     android:textColor="@color/text_very_light"
                     tools:text="Ramtin" />
 
                 <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/txt_profile_last_active"
+                    android:id="@+id/txt_profile_dec"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-light"
@@ -102,7 +103,7 @@
             android:id="@+id/layout_message_inbox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/theme_edittext"
+            android:background="@color/theme_item"
             android:padding="10dp"
             app:layout_constraintBottom_toBottomOf="parent">
 
@@ -132,7 +133,7 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="40dp"
                 android:paddingBottom="5dp"
-                android:textColor="@color/text_light"
+                android:textColor="@color/white"
                 android:textColorHint="@color/hint_light"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -147,6 +148,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
+                android:onClick="onSendMessageClick"
                 android:padding="@dimen/small_padding"
                 android:src="@drawable/ic_send"
                 android:tint="@color/light_button"
@@ -174,6 +176,7 @@
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                app:visible="@{viewModel.isEnableSendButton == false}"
                 android:background="@null"
                 android:scaleType="centerInside"
                 app:mic_icon="@drawable/recv_ic_mic_white" />

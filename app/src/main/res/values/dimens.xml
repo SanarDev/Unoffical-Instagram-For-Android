@@ -2,4 +2,6 @@
 <resources>
     <dimen name="small_padding">7dp</dimen>
     <dimen name="chat_message_size">16sp</dimen>
+    <dimen name="emoji_size_big">35sp</dimen>
+    <dimen name="emoji_size_normal">20dp</dimen>
 </resources>

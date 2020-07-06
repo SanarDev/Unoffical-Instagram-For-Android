@@ -57,9 +57,22 @@
                 </LinearLayout>
 
                 <RelativeLayout
+                    android:id="@+id/layout_image_view"
+                    android:layout_width="240dp"
+                    android:layout_height="240dp"
+                    android:visibility="gone">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/image_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                </RelativeLayout>
+                <RelativeLayout
                     android:id="@+id/layout_video_view"
                     android:layout_width="240dp"
-                    android:layout_height="240dp">
+                    android:layout_height="240dp"
+                    android:visibility="gone">
 
                     <com.google.android.exoplayer2.ui.PlayerView
                         android:id="@+id/video_view"

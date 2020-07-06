@@ -8,25 +8,22 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.Cookie
 import com.sanardev.instagrammqtt.datasource.model.FbnsAuth
 import com.sanardev.instagrammqtt.datasource.model.NotificationContentJson
+import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
+import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
-import com.sanardev.instagrammqtt.datasource.model.payload.RegisterPush
 import com.sanardev.instagrammqtt.datasource.model.response.*
 import com.sanardev.instagrammqtt.repository.InstagramRepository
 import com.sanardev.instagrammqtt.utils.*
 import okhttp3.Headers
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import org.apache.http.client.utils.URLEncodedUtils
-import run.tripa.android.extensions.openSharedPref
 import java.io.File
 import java.io.InputStream
 import java.io.UnsupportedEncodingException
@@ -149,6 +146,10 @@ class UseCase(
         return user != null
     }
 
+    fun getDirectPresence(responseLiveData: MediatorLiveData<Resource<PresenceResponse>>) {
+        mInstagramRepository.getDirectPresence(responseLiveData,headersGenerater = {getHeaders()})
+    }
+
 
     fun checkTwoFactorCode(
         responseLiveData: MediatorLiveData<Resource<InstagramLoginResult>>,
@@ -179,9 +180,9 @@ class UseCase(
         )
     }
 
-    private fun formUrlEncode(obj: Map<*,*>): RequestBody{
+    private fun formUrlEncode(obj: Map<*, *>): RequestBody {
         val parsedData = urlEncodeUTF8(obj)
-        Log.i(InstagramConstants.DEBUG_TAG,"FormUrlEncode $parsedData ");
+        Log.i(InstagramConstants.DEBUG_TAG, "FormUrlEncode $parsedData ");
         return RequestBody.create(
             okhttp3.MediaType.parse("application/x-www-form-urlencoded; charset=UTF-8"),
             parsedData
@@ -304,7 +305,7 @@ class UseCase(
 
     fun getChats(
         result: MediatorLiveData<Resource<InstagramChats>>,
-        limit: Int = 10,
+        limit: Int = 20,
         threadId: String,
         seqID: Int
     ) {
@@ -317,16 +318,16 @@ class UseCase(
         val cookie = getCookie()
         val user = getUserData()
 
-        val map = HashMap<String,String>().apply {
-            put("device_type","android_mqtt")
-            put("is_main_push_channel","true")
-            put("phone_id",cookie.phoneID)
-            put("device_sub_type",2.toString())
-            put("device_token",token)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("guid",cookie.guid)
-            put("_uuid",cookie.guid)
-            put("users",user!!.pk!!.toString())
+        val map = HashMap<String, String>().apply {
+            put("device_type", "android_mqtt")
+            put("is_main_push_channel", "true")
+            put("phone_id", cookie.phoneID)
+            put("device_sub_type", 2.toString())
+            put("device_token", token)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("guid", cookie.guid)
+            put("_uuid", cookie.guid)
+            put("users", user!!.pk!!.toString())
         }
 
         /*
@@ -341,9 +342,16 @@ class UseCase(
          put(InstagramConstants.USERS,user!!.pk!!.toString())
       */
         mHandler.post {
-            mInstagramRepository.sendPushRegister(res,map,{t -> formUrlEncode(t)},{getHeaders()})
+            mInstagramRepository.sendPushRegister(
+                res,
+                map,
+                { t -> formUrlEncode(t) },
+                { getHeaders() })
             res.observeForever {
-                Log.i(InstagramConstants.DEBUG_TAG,"PushRegister State ${it.status.name} with data ${it.data}");
+                Log.i(
+                    InstagramConstants.DEBUG_TAG,
+                    "PushRegister State ${it.status.name} with data ${it.data}"
+                );
             }
         }
     }
@@ -426,7 +434,7 @@ class UseCase(
     }
 
     fun saveFbnsAuthData(fbnsAuth: FbnsAuth) {
-        StorageUtils.saveFbnsAuth(application,fbnsAuth)
+        StorageUtils.saveFbnsAuth(application, fbnsAuth)
     }
 
     fun getFbnsAuthData(): FbnsAuth {
@@ -434,11 +442,24 @@ class UseCase(
     }
 
     fun notify(notification: NotificationContentJson?) {
-        if(notification == null){
+        if (notification == null) {
             return
         }
         val nc = notification.notificationContent
-        NotificationUtils.notify(application,notification.connectionKey,"test","Minista",nc.message)
+        NotificationUtils.notify(
+            application,
+            notification.connectionKey,
+            "test",
+            "Minista",
+            nc.message
+        )
+    }
+
+    fun addMessage(event: MessageEvent) {
+    }
+
+    fun loadMoreChats(result: MediatorLiveData<Resource<InstagramChats>>, cursor: String,threadId:String,seqId:Int) {
+        mInstagramRepository.loadMoreChats(result,cursor,threadId,seqId,{getHeaders()})
     }
 
 }
