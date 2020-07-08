@@ -24,6 +24,7 @@ import com.sanardev.instagrammqtt.utils.*
 import okhttp3.Headers
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import retrofit2.http.Query
 import java.io.File
 import java.io.InputStream
 import java.io.UnsupportedEncodingException
@@ -147,7 +148,7 @@ class UseCase(
     }
 
     fun getDirectPresence(responseLiveData: MediatorLiveData<Resource<PresenceResponse>>) {
-        mInstagramRepository.getDirectPresence(responseLiveData,headersGenerater = {getHeaders()})
+        mInstagramRepository.getDirectPresence(responseLiveData,headersGenerator = {getHeaders()})
     }
 
 
@@ -460,6 +461,14 @@ class UseCase(
 
     fun loadMoreChats(result: MediatorLiveData<Resource<InstagramChats>>, cursor: String,threadId:String,seqId:Int) {
         mInstagramRepository.loadMoreChats(result,cursor,threadId,seqId,{getHeaders()})
+    }
+
+    fun searchUser(result: MediatorLiveData<Resource<ResponseBody>>, query: String){
+        mInstagramRepository.searchUser(result,query) {getHeaders()}
+    }
+
+    fun getRecipients(result: MediatorLiveData<Resource<InstagramRecipients>>, query: String?=null){
+        mInstagramRepository.getRecipients(result,query,{getHeaders()})
     }
 
 }

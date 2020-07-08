@@ -33,6 +33,7 @@ import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
+import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.color
@@ -41,6 +42,7 @@ import com.sanardev.instagrammqtt.service.fbns.FbnsIntent
 import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
 import com.sanardev.instagrammqtt.ui.direct.DirectActivity
 import com.sanardev.instagrammqtt.ui.login.LoginActivity
+import com.sanardev.instagrammqtt.ui.startmessage.StartMessageActivity
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
 import com.squareup.picasso.Picasso
@@ -75,7 +77,6 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         binding.recyclerviewDirects.adapter = adapter
 
         val instagramDirectObserver = InstagramDirectObserver()
-        viewModel.liveData.observe(this, instagramDirectObserver)
         viewModel.mutableLiveData.observe(this, instagramDirectObserver)
         user = viewModel.getUser()
         binding.txtToolbarTitle.text = getString(R.string.app_name)
@@ -105,6 +106,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         }
         binding.collectionTabLayout.getTabAt(1)!!.apply {
             setIcon(R.drawable.ic_online)
+        }
+        binding.fabStartMessage.setOnClickListener {
+            StartMessageActivity.open(this@MainActivity)
         }
     }
 
@@ -199,6 +203,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         Log.i(InstagramConstants.DEBUG_TAG, "message event ${event.message.text}")
     }
 
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onUpdateSeenEvent(event: UpdateSeenEvent) {
+        viewModel.onUpdateSeenEvent(event)
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onTypingEvent(event: TypingEvent) { /* Do something */
         viewModel.onTyping(event)
@@ -214,6 +223,10 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         EventBus.getDefault().register(this);
     }
 
+    override fun onResume() {
+        super.onResume()
+    }
+
     override fun onStop() {
         super.onStop()
         EventBus.getDefault().unregister(this);
@@ -225,8 +238,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             val dataBinding = holder.binding as LayoutDirectBinding
             if (item.messages != null) {
                 val lastSeen =
-                    (((item.lastSeenAt as LinkedTreeMap<*, *>)[user.pk.toString()] as LinkedTreeMap<String, *>)["timestamp"]).toString()
-                        .toLong()
+                    item.lastSeenAt[user.pk.toString()]!!.timeStamp
                 var unreadMessage = 0
                 for (message in item.messages) {
                     if (message.timestamp > lastSeen) {
@@ -361,6 +373,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     putString("username", item.users[0].username)
                     putLong("last_activity_at", item.lastActivityAt)
                     putInt("seq_id", seqID)
+                    if(!item.isGroup){
+                        putLong("last_seen_at",item.lastSeenAt[item.users[0].pk.toString()]!!.timeStamp)
+                    }
                 })
             }
             return item

@@ -10,9 +10,11 @@ import com.google.gson.internal.LinkedTreeMap
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.ParsedMessage
+import com.sanardev.instagrammqtt.datasource.model.Seen
 import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
+import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
 import com.sanardev.instagrammqtt.datasource.model.realtime.RealtimeSubDirectDataWrapper
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsConnectPacket
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
@@ -62,7 +64,7 @@ class RealTimeService : Service() {
 
     private var seqID: Long = 0
     private var snapShotAt: Long = 0
-    private var directCommands : DirectCommands?=null
+    private var directCommands: DirectCommands? = null
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -81,11 +83,21 @@ class RealTimeService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if(mChannel == null){
-            connect(intent!!.extras!!.getLong("seq_id"), intent!!.extras!!.getLong("snap_shot_at"))
-        }
-        if(intent!!.action == RealTimeIntent.ACTION_SEND_TEXT_MESSAGE){
-            directCommands!!.sendText(text = intent!!.extras!!.getString("text")!!,threadId = intent!!.extras!!.getString("thread_id")!!)
+        if(intent != null) {
+            if (mChannel == null) {
+                if (intent?.extras != null) {
+                    connect(
+                        intent!!.extras!!.getLong("seq_id"),
+                        intent!!.extras!!.getLong("snap_shot_at")
+                    )
+                }
+            }
+            if (intent!!.action == RealTimeIntent.ACTION_SEND_TEXT_MESSAGE) {
+                directCommands!!.sendText(
+                    text = intent!!.extras!!.getString("text")!!,
+                    threadId = intent!!.extras!!.getString("thread_id")!!
+                )
+            }
         }
 
         return super.onStartCommand(intent, flags, startId)
@@ -138,7 +150,10 @@ class RealTimeService : Service() {
                             "\"presence_subscribe\":\"17846944882223835\"" +
                             '}'
                 )
-                put("User-Agent", "[FBAN/MQTT;FBAV/${InstagramConstants.APP_VERSION};FBBV/${InstagramConstants.APP_ID};FBDM/{density=4.0,width=${DisplayUtils.getScreenWidth()},height=${DisplayUtils.getScreenHeight()}};FBLC/en_US;FBCR/${""};FBMF/LGE;FBBD/lge;FBPN/com.instagram.android;FBDV/RS988;FBSV/6.0.1;FBLR/0;FBBK/1;FBCA/armeabi-v7a:armeabi;]")
+                put(
+                    "User-Agent",
+                    "[FBAN/MQTT;FBAV/${InstagramConstants.APP_VERSION};FBBV/${InstagramConstants.APP_ID};FBDM/{density=4.0,width=${DisplayUtils.getScreenWidth()},height=${DisplayUtils.getScreenHeight()}};FBLC/en_US;FBCR/${""};FBMF/LGE;FBBD/lge;FBPN/com.instagram.android;FBDV/RS988;FBSV/6.0.1;FBLR/0;FBBK/1;FBCA/armeabi-v7a:armeabi;]"
+                )
                 put("Accept-Language", "en-US")
                 put("platform", "android")
                 put("ig_mqtt_route", "django")
@@ -177,7 +192,7 @@ class RealTimeService : Service() {
                 RealTimeService.SERVER_PORT
             ).sync()
             mChannel = future.channel()
-            directCommands = DirectCommands(mChannel!!,Gson())
+            directCommands = DirectCommands(mChannel!!, Gson())
             mChannel!!.writeAndFlush(fbnsConnectPacket)
         } finally {
         }
@@ -221,7 +236,7 @@ class RealTimeService : Service() {
 
         updateSubscriptions(
             InstagramConstants.RealTimeTopics.PUBSUB.id.toString(),
-            HashMap<String,Any>().apply {
+            HashMap<String, Any>().apply {
                 put(
                     "sub",
                     arrayOf(
@@ -233,10 +248,10 @@ class RealTimeService : Service() {
         )
         updateSubscriptions(
             InstagramConstants.RealTimeTopics.IRIS_SUB.id.toString(),
-            HashMap<String,Any>().apply {
-                put("seq_id",seqID.toString())
+            HashMap<String, Any>().apply {
+                put("seq_id", seqID.toString())
                 put("sub", emptyArray<String>())
-                put("snapshot_at_ms",snapShotAt.toString())
+                put("snapshot_at_ms", snapShotAt.toString())
             }
         )
 
@@ -246,17 +261,19 @@ class RealTimeService : Service() {
 
     fun updateSubscriptions(topicId: String, data: HashMap<String, Any>) {
         val payload = ZlibUtis.compress(Gson().toJson(data).toByteArray(CharsetUtil.UTF_8))
-        mChannel!!.writeAndFlush(MqttPublishMessage(
-            MqttFixedHeader(
-                MqttMessageType.PUBLISH,
-                false,
-                MqttQoS.AT_LEAST_ONCE,
-                false,
-                payload.size
-            ),
-            MqttPublishVariableHeader(topicId, generatePacketID()),
-            Unpooled.copiedBuffer(payload)
-        ))
+        mChannel!!.writeAndFlush(
+            MqttPublishMessage(
+                MqttFixedHeader(
+                    MqttMessageType.PUBLISH,
+                    false,
+                    MqttQoS.AT_LEAST_ONCE,
+                    false,
+                    payload.size
+                ),
+                MqttPublishVariableHeader(topicId, generatePacketID()),
+                Unpooled.copiedBuffer(payload)
+            )
+        )
     }
 
     public fun sendSubscribe(list: List<Pair<MqttQoS, String>>): Int {
@@ -277,41 +294,62 @@ class RealTimeService : Service() {
 
     private fun generatePacketID(): Int {
         val packetID = Random().nextInt(65000)
-        Log.i(InstagramConstants.DEBUG_TAG,"Generate Packet $packetID")
+        Log.i(InstagramConstants.DEBUG_TAG, "Generate Packet $packetID")
         return packetID
     }
 
     fun onMessageEvent(parseData: ParsedMessage) {
-        val map = mGson.fromJson(parseData.payload,HashMap::class.java)
+        val map = mGson.fromJson(parseData.payload, HashMap::class.java)
         val data = map["data"]
-        val realtimeSubDirectDataWrapper = jacksonObjectMapper().convertValue((data as ArrayList<LinkedTreeMap<String, String>>).get(0),RealtimeSubDirectDataWrapper::class.java)
-        if(realtimeSubDirectDataWrapper.path.startsWith("/direct_v2/threads/")){
+        val realtimeSubDirectDataWrapper = jacksonObjectMapper().convertValue(
+            (data as ArrayList<LinkedTreeMap<String, String>>).get(0),
+            RealtimeSubDirectDataWrapper::class.java
+        )
+        if (realtimeSubDirectDataWrapper.path.startsWith("/direct_v2/threads/")) {
             val param = realtimeSubDirectDataWrapper.path.split("/")
             val threadId = param[3]
             val event = param[4]
-            when(event){
-                 InstagramConstants.RealTimeEvent.NEW_MESSAGE.id ->{
-                    EventBus.getDefault().postSticky(MessageEvent(threadId,mGson.fromJson(realtimeSubDirectDataWrapper.value,
-                        Message::class.java)))
+            when (event) {
+                InstagramConstants.RealTimeEvent.NEW_MESSAGE.id -> {
+                    EventBus.getDefault().postSticky(
+                        MessageEvent(
+                            threadId, mGson.fromJson(
+                                realtimeSubDirectDataWrapper.value,
+                                Message::class.java
+                            )
+                        )
+                    )
                 }
 
-                InstagramConstants.RealTimeEvent.ACTIVITY_INDICATOR_ID.id ->{
+                InstagramConstants.RealTimeEvent.ACTIVITY_INDICATOR_ID.id -> {
                     EventBus.getDefault().post(
                         TypingEvent(
                             threadId
                         )
                     )
                 }
+
+                InstagramConstants.RealTimeEvent.PARTICIPANTS.id ->{
+                    EventBus.getDefault().postSticky(
+                        UpdateSeenEvent(
+                            threadId,mGson.fromJson(realtimeSubDirectDataWrapper.value,
+                            Seen::class.java)
+                        )
+                    )
+                }
             }
-            Log.i("TEST","TEST")
+            Log.i("TEST", "TEST")
         }
     }
 
     fun onActivityEvent(parseData: ParsedMessage) {
-        when(parseData.topicName){
-            GraphQLSubscriptions.QueryIDs.appPresence ->{
-                val map = mGson.fromJson(parseData.payload,HashMap::class.java)
-                val event = jacksonObjectMapper().convertValue(map["presence_event"], PresenceEvent::class.java)
+        when (parseData.topicName) {
+            GraphQLSubscriptions.QueryIDs.appPresence -> {
+                val map = mGson.fromJson(parseData.payload, HashMap::class.java)
+                val event = jacksonObjectMapper().convertValue(
+                    map["presence_event"],
+                    PresenceEvent::class.java
+                )
                 EventBus.getDefault().post(event)
             }
         }

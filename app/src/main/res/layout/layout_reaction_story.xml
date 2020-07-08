@@ -1,55 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <LinearLayout
         android:id="@+id/layout_parent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
             android:orientation="vertical">
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/txt_reacted_status"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/you_reacted_to_their_story"
-                android:textColor="@color/hint_light"
-                android:textSize="12sp" />
+                android:gravity="bottom"
+                android:orientation="horizontal">
 
-            <RelativeLayout
-                android:id="@+id/layout_img_story"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp">
+                <com.tylersuehr.chips.CircleImageView
+                    android:id="@+id/img_thread_profile_image"
+                    style="@style/ProfileImage"
+                    android:src="@mipmap/example" />
 
-                <com.makeramen.roundedimageview.RoundedImageView
-                    android:id="@+id/img_story"
-                    android:layout_width="180dp"
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:adjustViewBounds="true"
-                    tools:src="@mipmap/img_story_text"
-                    android:scaleType="fitCenter"
-                    app:riv_corner_radius="20dip"
-                    app:riv_border_width="2dip"
-                    app:riv_mutate_background="true" />
+                    android:layout_margin="10dp"
+                    android:orientation="vertical">
 
-                <com.vanniktech.emoji.EmojiTextView
-                    android:id="@+id/txt_message"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:layout_alignParentBottom="true"
-                    android:fontFamily="sans-serif"
-                    android:textSize="@dimen/chat_message_size"
-                    tools:text="" />
-            </RelativeLayout>
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/txt_reacted_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/you_reacted_to_their_story"
+                        android:textColor="@color/hint_light"
+                        android:textSize="12sp" />
 
+                    <RelativeLayout
+                        android:id="@+id/layout_img_story"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp">
+
+                        <com.makeramen.roundedimageview.RoundedImageView
+                            android:id="@+id/img_story"
+                            android:layout_width="180dp"
+                            android:layout_height="wrap_content"
+                            android:adjustViewBounds="true"
+                            android:scaleType="fitCenter"
+                            app:riv_border_width="2dip"
+                            app:riv_corner_radius="20dip"
+                            app:riv_mutate_background="true"
+                            tools:src="@mipmap/img_story_text" />
+
+                        <com.vanniktech.emoji.EmojiTextView
+                            android:id="@+id/txt_message"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentBottom="true"
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="sans-serif"
+                            android:textSize="@dimen/chat_message_size"
+                            tools:text="" />
+                    </RelativeLayout>
+
+
+                    <include android:id="@+id/include_time"
+                        layout="@layout/layout_time"/>
+
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <include
+                android:id="@+id/include_reaction"
+                layout="@layout/layout_reactions_like"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
         </LinearLayout>
+
     </LinearLayout>
 </layout>

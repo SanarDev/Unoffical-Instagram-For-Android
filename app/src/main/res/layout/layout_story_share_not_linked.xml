@@ -6,50 +6,77 @@
         android:id="@+id/layout_parent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical">
+
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:orientation="horizontal"
-            tools:background="@color/theme_background">
-
-            <View
-                android:layout_width="4dp"
-                android:layout_height="match_parent"
-                android:background="@color/theme_light" />
+            android:layout_margin="10dp"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:orientation="vertical">
+                android:gravity="bottom"
+                android:orientation="horizontal">
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/txtTitle"
+                <com.tylersuehr.chips.CircleImageView
+                    android:id="@+id/img_thread_profile_image"
+                    style="@style/ProfileImage"
+                    android:src="@mipmap/example" />
+
+                <LinearLayout
+                    android:id="@+id/layout_message"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    tools:text="Send @milad_nouri's story"
-                    android:textColor="@color/text_very_light" />
+                    android:orientation="horizontal"
+                    android:padding="10dp"
+                    tools:background="@drawable/bg_message">
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/txtMessage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:text="no longer available"
-                    android:textColor="@color/text_light" />
+                    <View
+                        android:layout_width="4dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/theme_light" />
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/txtTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:text="03:03"
-                    android:textColor="@color/hint_light"
-                    android:layout_gravity="end"/>
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:orientation="vertical">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/txtTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_very_light"
+                            tools:text="Send @milad_nouri's story" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/txtMessage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_light"
+                            tools:text="no longer available" />
+
+
+                        <include android:id="@+id/include_time"
+                            layout="@layout/layout_time"/>
+
+
+                    </LinearLayout>
+                </LinearLayout>
+
 
             </LinearLayout>
+
+            <include
+                android:id="@+id/include_reaction"
+                layout="@layout/layout_reactions_like"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
         </LinearLayout>
+
     </LinearLayout>
 </layout>

@@ -8,25 +8,31 @@ public class FriendshipStatus {
 
     @SerializedName("following")
     @Expose
-    private Boolean following;
+    private boolean following;
+    @SerializedName("followed_by")
+    @Expose
+    private boolean followedBt;
     @SerializedName("blocking")
     @Expose
-    private Boolean blocking;
+    private boolean blocking;
     @SerializedName("is_private")
     @Expose
-    private Boolean isPrivate;
+    private boolean isPrivate;
+    @SerializedName("muting")
+    @Expose
+    private boolean muting;
     @SerializedName("incoming_request")
     @Expose
-    private Boolean incomingRequest;
+    private boolean incomingRequest;
     @SerializedName("outgoing_request")
     @Expose
-    private Boolean outgoingRequest;
+    private boolean outgoingRequest;
     @SerializedName("is_bestie")
     @Expose
-    private Boolean isBestie;
+    private boolean isBestie;
     @SerializedName("is_restricted")
     @Expose
-    private Boolean isRestricted;
+    private boolean isRestricted;
 
     public Boolean getFollowing() {
         return following;

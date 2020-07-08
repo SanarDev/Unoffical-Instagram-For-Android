@@ -9,6 +9,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Thread {
@@ -106,7 +107,7 @@ public class Thread {
     private Boolean hasNewer;
     @SerializedName("last_seen_at")
     @Expose
-    private Object lastSeenAt;
+    private HashMap<String,Seen> lastSeenAt;
     @SerializedName("newest_cursor")
     @Expose
     private String newestCursor;
@@ -468,11 +469,11 @@ public class Thread {
         this.lastPermanentItem = lastPermanentItem;
     }
 
-    public Object getLastSeenAt() {
+    public HashMap<String,Seen> getLastSeenAt() {
         return lastSeenAt;
     }
 
-    public void setLastSeenAt(Object lastSeenAt) {
+    public void setLastSeenAt(HashMap<String,Seen> lastSeenAt) {
         this.lastSeenAt = lastSeenAt;
     }
 

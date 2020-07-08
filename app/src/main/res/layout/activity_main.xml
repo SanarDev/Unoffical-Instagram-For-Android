@@ -67,10 +67,13 @@
                     android:layout_margin="10dp"
                     android:background="@drawable/bg_message_2"
                     android:hint="@string/search"
+                    android:textSize="14sp"
                     android:paddingStart="15dp"
+                    android:fontFamily="sans-serif-light"
                     android:paddingTop="10dp"
                     android:paddingEnd="15dp"
                     android:paddingBottom="10dp"
+                    android:onTextChanged="@{viewModel::onSearch}"
                     android:textColor="@color/text_very_light"
                     android:textColorHint="@color/hint_light" />
 
@@ -80,7 +83,8 @@
                     android:layout_height="wrap_content"
                     app:tabIconTint="@color/text_very_light"
                     app:tabInlineLabel="true"
-                    app:tabTextColor="@color/text_very_light">
+                    app:tabTextColor="@color/text_very_light"
+                    android:visibility="gone">
 
 
                 </com.google.android.material.tabs.TabLayout>
@@ -115,6 +119,7 @@
 
             </LinearLayout>
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab_start_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
@@ -122,6 +127,9 @@
                 app:backgroundTint="@color/theme_item"
                 android:src="@drawable/ic_pen"
                 app:useCompatPadding="true"
+                android:clickable="true"
+                android:focusable="true"
+                android:elevation="10dp"
                 android:tint="@color/text_very_light"
                 app:rippleColor="@color/text_very_light"
                 app:fabSize="normal" />
@@ -131,7 +139,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:background="@color/theme_background"
+            android:background="@color/navigation_background"
             app:headerLayout="@layout/nav_header_main"
             app:itemIconTint="@color/text_very_light"
             app:itemShapeFillColor="@color/text_very_light"

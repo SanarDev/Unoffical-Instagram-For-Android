@@ -11,6 +11,7 @@ import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFact
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
+import com.sanardev.instagrammqtt.datasource.model.response.InstagramRecipients
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.datasource.remote.NetworkCall
 import com.sanardev.instagrammqtt.utils.Resource
@@ -22,7 +23,10 @@ import java.io.InputStream
 import kotlin.collections.HashMap
 
 
-class InstagramRepository(private var mInstagramRemote: InstagramRemote, private var mMessageDataSource: MessageDataSource) {
+class InstagramRepository(
+    private var mInstagramRemote: InstagramRemote,
+    private var mMessageDataSource: MessageDataSource
+) {
 
 
     private val mHandler = Handler()
@@ -30,14 +34,14 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote, private
     fun login(
         liveData: MediatorLiveData<Resource<InstagramLoginResult>>,
         instagramLoginPayload: InstagramLoginPayload,
-        headersGenerater: () -> Map<String, String>,
+        headersGenerator: () -> Map<String, String>,
         encrypter: (InstagramLoginPayload) -> RequestBody
     ) {
         liveData.addSource(
             NetworkCall<InstagramLoginResult>()
                 .makeCall(
                     mInstagramRemote.login(
-                        headersGenerater.invoke(),
+                        headersGenerator.invoke(),
                         encrypter.invoke(instagramLoginPayload)
                     )
                 )
@@ -61,14 +65,14 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote, private
     fun verifyTwoFactor(
         liveData: MediatorLiveData<Resource<InstagramLoginResult>>,
         instagramLoginTwoFactorPayload: InstagramLoginTwoFactorPayload,
-        headersGenerater: () -> Map<String, String>,
+        headersGenerator: () -> Map<String, String>,
         encrypter: (InstagramLoginTwoFactorPayload) -> RequestBody
     ) {
         liveData.addSource(
             NetworkCall<InstagramLoginResult>()
                 .makeCall(
                     mInstagramRemote.twoFactorLogin(
-                        headersGenerater(),
+                        headersGenerator(),
                         encrypter(instagramLoginTwoFactorPayload)
                     )
                 ), Observer {
@@ -78,13 +82,13 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote, private
 
     fun getDirectInbox(
         responseLiveData: MediatorLiveData<Resource<InstagramDirects>>,
-        headersGenerater: () -> Map<String, String>
+        headersGenerator: () -> Map<String, String>
     ) {
         responseLiveData.addSource(
             NetworkCall<InstagramDirects>()
                 .makeCall(
                     mInstagramRemote.getDirectIndex(
-                        headersGenerater.invoke()
+                        headersGenerator.invoke()
                     )
                 ), Observer {
                 responseLiveData.postValue(it)
@@ -94,11 +98,11 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote, private
 
     fun getDirectPresence(
         responseLiveData: MediatorLiveData<Resource<PresenceResponse>>,
-        headersGenerater: () -> Map<String, String>
+        headersGenerator: () -> Map<String, String>
     ) {
         responseLiveData.addSource(NetworkCall<PresenceResponse>().makeCall(
             mInstagramRemote.getDirectPresence(
-                headersGenerater.invoke()
+                headersGenerator.invoke()
             )
         ),
             Observer {
@@ -164,12 +168,54 @@ class InstagramRepository(private var mInstagramRemote: InstagramRemote, private
         }.start()
     }
 
-    fun loadMoreChats(result: MediatorLiveData<Resource<InstagramChats>>, cursor: String,threadId:String,seqId:Int ,headersGenerater: () -> Map<String, String>) {
+    fun loadMoreChats(
+        result: MediatorLiveData<Resource<InstagramChats>>,
+        cursor: String,
+        threadId: String,
+        seqId: Int,
+        headersGenerator: () -> Map<String, String>
+    ) {
         result.addSource(NetworkCall<InstagramChats>().makeCall(
-            mInstagramRemote.loadMoreChats(header = headersGenerater.invoke(),cursor = cursor,threadId = threadId,seqID = seqId)),
+            mInstagramRemote.loadMoreChats(
+                header = headersGenerator.invoke(),
+                cursor = cursor,
+                threadId = threadId,
+                seqID = seqId
+            )
+        ),
             Observer {
                 result.postValue(it)
             })
+    }
+
+    fun searchUser(
+        responseLiveData: MediatorLiveData<Resource<ResponseBody>>,
+        query: String,
+        headersGenerator: () -> Map<String, String>
+    ) {
+        responseLiveData.addSource(NetworkCall<ResponseBody>().makeCall(
+            mInstagramRemote.searchUser(headersGenerator.invoke(), query = query)
+        ),
+            Observer {
+                responseLiveData.postValue(it)
+            })
+    }
+
+    fun getRecipients(
+        result: MediatorLiveData<Resource<InstagramRecipients>>,
+        query: String? = null,
+        headersGenerator: () -> Map<String, String>
+    ) {
+        result.addSource(NetworkCall<InstagramRecipients>().makeCall(
+            if (query == null) mInstagramRemote.getRecipients(headersGenerator.invoke()) else mInstagramRemote.searchRecipients(
+                headersGenerator.invoke(),
+                query = query
+            )
+        )
+            , Observer {
+                result.postValue(it)
+            })
+
     }
 
 }

@@ -7,9 +7,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,11 +31,12 @@ import com.sanardev.instagrammqtt.core.BaseAdapter
 import com.sanardev.instagrammqtt.databinding.*
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
+import com.sanardev.instagrammqtt.datasource.model.event.LoadingEvent
+import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
+import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
-import com.sanardev.instagrammqtt.extensions.color
-import com.sanardev.instagrammqtt.extensions.gone
-import com.sanardev.instagrammqtt.extensions.visible
+import com.sanardev.instagrammqtt.extensions.*
 import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
 import com.sanardev.instagrammqtt.utils.DisplayUtils
 import com.sanardev.instagrammqtt.utils.PlayerManager
@@ -47,11 +50,15 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import run.tripa.android.extensions.dpToPx
 import run.tripa.android.extensions.vibration
+import java.util.*
 import java.util.regex.Pattern
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 
 class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
+    private var lastSeenTimeStamp: Long = 0
     private lateinit var threadId: String
     private var username: String? = null
     private var profileImage: String? = null
@@ -64,6 +71,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     private val players = HashMap<String, SimpleExoPlayer>()
     private var currentPlayerId: String? = null
     private var isLoading = false
+    private var olderMessageExist = true
 
     companion object {
         fun open(context: Context, bundle: Bundle) {
@@ -94,9 +102,13 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         threadId = intent.extras!!.getString("thread_id")!!
         profileImage = intent.extras!!.getString("profile_image")
         username = intent.extras!!.getString("username")
+        lastSeenTimeStamp = intent.extras!!.getLong("last_seen_at")
         val seqID = intent.extras!!.getInt("seq_id")
         val lastActivityAt = intent.extras!!.getLong("last_activity_at")
 
+        if(lastSeenTimeStamp.toString().length == 16){
+            lastSeenTimeStamp = lastSeenTimeStamp / 1000
+        }
         binding.txtProfileName.text = username
         Picasso.get().load(profileImage).into(binding.imgProfileImage)
         viewModel.init(threadId, seqID)
@@ -148,16 +160,30 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         binding.edtTextChat.setOnClickListener {
             emojiPopup.dismiss()
         }
-        viewModel.liveData.observe(this, Observer {
+        binding.btnBack.setOnClickListener {
+            onBackPressed()
+        }
+
+        viewModel.mutableLiveData.observe(this, Observer {
             if (it.status == Resource.Status.LOADING) {
                 binding.progressbar.visibility = View.VISIBLE
             }
             binding.progressbar.visibility = View.GONE
             if (it.status == Resource.Status.SUCCESS) {
+                olderMessageExist = it.data!!.thread!!.oldestCursor != null
+                if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
+                    adapter.items = it.data!!.thread!!.releasesMessage
+                    adapter.notifyDataSetChanged()
+                }
                 isLoading = false
-                adapter.items = it.data!!.thread!!.releasesMessage
-                adapter.notifyDataSetChanged()
+                adapter.setLoading(isLoading)
             }
+        })
+
+        viewModel.mutableLiveDataAddMessage.observe(this, Observer {
+            adapter.items.add(0,it)
+            adapter.notifyItemInserted(0)
+            binding.recyclerviewChats.scrollToPosition(0)
         })
         viewModel.fileLiveData.observe(this, Observer {
 
@@ -173,11 +199,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 val totalItemCount = layoutManager.itemCount
                 val firstVisibleItemIndex = layoutManager.findFirstVisibleItemPosition()
 
-                if (!isLoading) {
+                if (!isLoading && olderMessageExist) {
                     if (layoutManager != null && layoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
+                        if(totalItemCount - 2 < 0){
+                            return
+                        }
                         if (adapter.items[totalItemCount - 2] is Message) {
-                            viewModel.loadMoreItem((adapter.items[totalItemCount - 2] as Message).itemId,threadId,seqID)
+                            viewModel.loadMoreItem(
+                                (adapter.items[totalItemCount - 2] as Message).itemId,
+                                threadId,
+                                seqID
+                            )
                             isLoading = true
+                            adapter.setLoading(isLoading)
                         }
                     }
                 }
@@ -214,6 +248,18 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         }
     }
 
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: MessageEvent) {
+        viewModel.onMessageReceive(event)
+    }
+
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onUpdateSeenEvent(event: UpdateSeenEvent) {
+        if(event.threadId == threadId){
+            lastSeenTimeStamp = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
+            adapter.notifyDataSetChanged()
+        }
+    }
 
     override fun onStart() {
         super.onStart()
@@ -242,6 +288,12 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 val dataBinding = holder.binding as LayoutMediaShareBinding
                 if (dataBinding.videoView.player != null) {
                     (dataBinding.videoView.player as SimpleExoPlayer).volume = 0f
+                    for (item in players.entries) {
+                        if (item.value == dataBinding.videoView.player) {
+                            players.remove(item.key)
+                            return
+                        }
+                    }
                 }
             }
         }
@@ -256,16 +308,92 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 dataBinding.txtDate.text = item.timeString
                 return item
             }
+            if (item is LoadingEvent) {
+                return item
+            }
             item as Message
+            if(item.timestamp.toString().length == 16){
+                item.timestamp = item.timestamp / 1000
+            }
             when (item.itemType) {
                 InstagramConstants.MessageType.TEXT.type -> {
                     val dataBinding = holder.binding as LayoutMessageBinding
+                    initReactions(dataBinding.includeReaction, item)
                     val textWithoghtEmoji = item.text.replace(
                         Pattern.compile("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+").toRegex(), ""
                     )
                     dataBinding.txtMessage.maxWidth = (DisplayUtils.getScreenWidth() * 0.7).toInt()
-                    dataBinding.txtTime.text =
-                        viewModel.getTimeFromTimeStamps(item.timestamp / 1000)
+                    dataBinding.includeTime.txtTime.text =
+                        viewModel.getTimeFromTimeStamps(item.timestamp)
+//
+//                    if(item.text.length > 20){
+//                        dataBinding.layoutMessage.orientation = android.widget.LinearLayout.VERTICAL
+//                        dataBinding.includeTime.layoutTime.layoutParams.apply {
+//                            this as LinearLayout.LayoutParams
+//                            marginStart = resources.dpToPx(0f)
+//                            marginEnd = resources.dpToPx(0f)
+//                        }
+//                    }else{
+//                        dataBinding.txtMessage.setPadding(
+//                            dataBinding.txtMessage.paddingLeft,
+//                            dataBinding.txtMessage.paddingTop,
+//                            dataBinding.txtMessage.paddingRight,
+//                            resources.dpToPx(5f))
+//                        dataBinding.layoutMessage.orientation = android.widget.LinearLayout.HORIZONTAL
+//                        dataBinding.includeTime.layoutTime.layoutParams.apply {
+//                            this as LinearLayout.LayoutParams
+//                            rightMargin = resources.dpToPx(5f)
+//                            leftMargin= resources.dpToPx(10f)
+//                            bottomMargin = 0
+//                            topMargin = 0
+//                            height = LinearLayout.LayoutParams.MATCH_PARENT
+//                        }
+//                        dataBinding.includeTime.layoutTime.gravity = Gravity.BOTTOM
+//                    }
+
+                    if (item.timestamp <= lastSeenTimeStamp) {
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                    } else {
+                        
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                    }
+                    if (item.userId == user.pk) {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                        dataBinding.layoutParent.gravity = Gravity.RIGHT
+                        dataBinding.layoutMessage.background =
+                            this@DirectActivity.getDrawable(R.drawable.bg_message)
+                    } else {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
+                        dataBinding.layoutMessage.background =
+                            this@DirectActivity.getDrawable(R.drawable.bg_message_2)
+                        dataBinding.layoutParent.gravity = Gravity.LEFT
+                    }
+
+                    // check text is only emoji
+                    if (textWithoghtEmoji.isBlank()) {
+                        dataBinding.layoutMessage.background = null
+                        dataBinding.txtMessage.setEmojiSizeRes(R.dimen.emoji_size_big)
+                        dataBinding.txtMessage.text = item.text
+                    } else {
+                        dataBinding.txtMessage.setEmojiSizeRes(R.dimen.emoji_size_normal)
+                        dataBinding.txtMessage.text = item.text
+                    }
+
+                    if (item.userId == user.pk) {
+                        dataBinding.imgThreadProfileImage.visibility = View.GONE
+                    } else {
+                        dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                        Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                    }
+                }
+                InstagramConstants.MessageType.LINK.type -> {
+                    val dataBinding = holder.binding as LayoutLinkBinding
+                    initReactions(dataBinding.includeReaction, item)
+                    dataBinding.txtMessage.width = (DisplayUtils.getScreenWidth() * 0.6).toInt()
+                    dataBinding.includeTime.txtTime.text =
+                        viewModel.getTimeFromTimeStamps(item.timestamp)
                     if (item.userId == user.pk) {
                         dataBinding.layoutParent.gravity = Gravity.RIGHT
                         dataBinding.layoutMessage.background =
@@ -275,19 +403,47 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             this@DirectActivity.getDrawable(R.drawable.bg_message_2)
                         dataBinding.layoutParent.gravity = Gravity.LEFT
                     }
-                    if (textWithoghtEmoji.isBlank()) {
-                        dataBinding.layoutMessage.background = null
-                        dataBinding.txtMessage.setEmojiSizeRes(R.dimen.emoji_size_big)
-                        dataBinding.txtMessage.text = item.text
-                    } else {
-                        dataBinding.txtMessage.setEmojiSizeRes(R.dimen.emoji_size_normal)
-                        dataBinding.txtMessage.text = item.text
-                    }
-                }
 
+                    val link = item.link
+                    dataBinding.txtMessage.setTextHTML(this@DirectActivity, link.text)
+                    if (link.linkContext.linkTitle.isNullOrBlank()) {
+                        gone(dataBinding.layoutLinkDes)
+                    } else {
+                        visible(dataBinding.layoutLinkDes)
+                        dataBinding.txtLinkSummary.text = link.linkContext.linkSummary
+                        dataBinding.txtLinkTitle.text = link.linkContext.linkTitle
+                    }
+                    if (link.linkContext.linkImageUrl.isNullOrBlank()) {
+                        dataBinding.imgLinkImage.visibility = View.GONE
+                    } else {
+                        Picasso.get().load(link.linkContext.linkImageUrl)
+                            .placeholder(R.drawable.placeholder_loading)
+                            .into(dataBinding.imgLinkImage)
+                    }
+
+
+                    if (item.timestamp <= lastSeenTimeStamp) {
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                    } else {
+                        
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                    }
+                    if (item.userId == user.pk) {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                        dataBinding.imgThreadProfileImage.visibility = View.GONE
+                    } else {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
+                        dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                        Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                    }
+
+                }
                 InstagramConstants.MessageType.REEL_SHARE.type -> {
                     if (item.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
                         val dataBinding = holder.binding as LayoutReelShareReplyBinding
+                        initReactions(dataBinding.includeReaction, item)
                         if (item.reelShare.media?.imageVersions2 != null) {
                             dataBinding.imgStory.layoutParams.apply {
                                 width = 300
@@ -295,6 +451,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             }
                             Picasso.get()
                                 .load(item.reelShare.media.imageVersions2.candidates[0].url)
+                                .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgStory)
                         } else {
                             gone(dataBinding.layoutImgStory)
@@ -302,8 +459,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         val textWithoghtEmoji = item.reelShare.text.replace(
                             Pattern.compile("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+").toRegex(), ""
                         )
-                        dataBinding.txtTime.text =
-                            viewModel.getTimeFromTimeStamps(item.timestamp / 1000)
+                        dataBinding.includeTime.txtTime.text =
+                            viewModel.getTimeFromTimeStamps(item.timestamp)
                         if (item.userId == user.pk) {
                             dataBinding.layoutMessage.background =
                                 this@DirectActivity.getDrawable(R.drawable.bg_message)
@@ -339,9 +496,34 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             dataBinding.txtMessage.setEmojiSizeRes(R.dimen.emoji_size_normal)
                             dataBinding.txtMessage.text = item.reelShare.text
                         }
+
+
+                        if (item.timestamp <= lastSeenTimeStamp) {
+                            dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                            dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                        } else {
+                            
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                        }
+
+                        if (item.userId == user.pk) {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                            dataBinding.layoutParent.gravity = Gravity.RIGHT
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                            dataBinding.imgThreadProfileImage.visibility = View.GONE
+                        } else {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
+                            dataBinding.layoutParent.gravity = Gravity.LEFT
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
+                            dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                        }
                     }
                     if (item.reelShare.type == InstagramConstants.ReelType.MENTION.type) {
                         val dataBinding = holder.binding as LayoutReelShareBinding
+                        initReactions(dataBinding.includeReaction, item)
                         if (item.userId == user.pk) {
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
                             dataBinding.txtReelStatus.text = String.format(
@@ -352,12 +534,15 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                                 getString(R.string.mentioned_you_in_their_story)
                             dataBinding.layoutParent.gravity = Gravity.LEFT
                         }
-                        dataBinding.txtTime.text =
-                            viewModel.getTimeFromTimeStamps(item.timestamp / 1000)
+                        dataBinding.includeTime.txtTime.text =
+                            viewModel.getTimeFromTimeStamps(item.timestamp
+                            )
                         if (item.reelShare.media.imageVersions2 != null) {
                             val images = item.reelShare.media.imageVersions2.candidates
                             val user = item.reelShare.media.user
-                            Picasso.get().load(images[1].url).into(dataBinding.imgStory)
+                            Picasso.get().load(images[1].url)
+                                .placeholder(R.drawable.placeholder_loading)
+                                .into(dataBinding.imgStory)
                             Picasso.get().load(user.profilePicUrl).into(dataBinding.imgProfile)
                             dataBinding.txtUsername.text = user.username
                         } else {
@@ -365,9 +550,33 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             gone(dataBinding.imgStory, dataBinding.imgProfile)
                         }
 
+                        if (item.timestamp <= lastSeenTimeStamp) {
+                            dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                            dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                        } else {
+
+                            dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                            dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                        }
+
+                        if (item.userId == user.pk) {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                            dataBinding.layoutParent.gravity = Gravity.RIGHT
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                            dataBinding.imgThreadProfileImage.visibility = View.GONE
+                        } else {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
+                            dataBinding.layoutParent.gravity = Gravity.LEFT
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
+
+                            dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                        }
+
                     }
                     if (item.reelShare.type == InstagramConstants.ReelType.REACTION.type) {
                         val dataBinding = holder.binding as LayoutReactionStoryBinding
+                        initReactions(dataBinding.includeReaction, item)
                         if (item.reelShare.media?.imageVersions2 != null) {
                             dataBinding.imgStory.layoutParams.apply {
                                 width = 300
@@ -375,6 +584,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             }
                             Picasso.get()
                                 .load(item.reelShare.media.imageVersions2.candidates[0].url)
+                                .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgStory)
                         } else {
 
@@ -390,44 +600,113 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             dataBinding.txtMessage.setEmojiSizeRes(R.dimen.emoji_size_normal)
                             dataBinding.txtMessage.text = item.reelShare.text
                         }
+
+
+                        if (item.timestamp <= lastSeenTimeStamp) {
+                            dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                            dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                        } else {
+
+                            dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                            dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                        }
+
                         if (item.userId == user.pk) {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
                             dataBinding.txtReactedStatus.text =
                                 getString(R.string.you_reacted_to_their_story)
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                            dataBinding.imgThreadProfileImage.visibility = View.GONE
                         } else {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
                             dataBinding.txtReactedStatus.text =
                                 getString(R.string.reacted_to_your_story)
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
+
+                            dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
                             dataBinding.layoutParent.gravity = Gravity.LEFT
                         }
+
                     }
 
                 }
                 InstagramConstants.MessageType.STORY_SHARE.type -> {
                     if (item.storyShare.media != null) {
                         val dataBinding = holder.binding as LayoutReelShareBinding
+                        initReactions(dataBinding.includeReaction, item)
                         val images = item.storyShare.media.imageVersions2.candidates
                         val user = item.storyShare.media.user
-                        Picasso.get().load(images[1].url).into(dataBinding.imgStory)
+                        Picasso.get().load(images[1].url)
+                            .placeholder(R.drawable.placeholder_loading).into(dataBinding.imgStory)
                         Picasso.get().load(user.profilePicUrl).into(dataBinding.imgProfile)
                         dataBinding.txtUsername.text = user.username
                         dataBinding.txtReelStatus.text = String.format(
                             getString(R.string.send_story_from), user.username
                         )
-                    } else {
-                        val dataBinding = holder.binding as LayoutStoryShareNotLinkedBinding
-                        dataBinding.txtTitle.text = item.storyShare.title
-                        dataBinding.txtMessage.text = item.storyShare.message
-                        dataBinding.txtTime.text =
-                            viewModel.getTimeFromTimeStamps(item.timestamp / 1000)
+
+
+                        if (item.timestamp <= lastSeenTimeStamp) {
+                            dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                            dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                        } else {
+                            
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                        }
+
                         if (item.userId == user.pk) {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                            dataBinding.imgThreadProfileImage.visibility = View.GONE
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
                         } else {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
                             dataBinding.layoutParent.gravity = Gravity.LEFT
+                            dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                        }
+                    } else {
+                        val dataBinding = holder.binding as LayoutStoryShareNotLinkedBinding
+                        initReactions(dataBinding.includeReaction, item)
+                        dataBinding.txtTitle.text = item.storyShare.title
+                        dataBinding.txtMessage.text = item.storyShare.message
+                        dataBinding.includeTime.txtTime.text =
+                            viewModel.getTimeFromTimeStamps(item.timestamp)
+
+
+                        if (item.timestamp <= lastSeenTimeStamp) {
+                            dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                            dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                        } else {
+                            
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                        }
+
+                        if (item.userId == user.pk) {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                            dataBinding.imgThreadProfileImage.visibility = View.GONE
+                            dataBinding.layoutParent.gravity = Gravity.RIGHT
+                            dataBinding.layoutMessage.background =
+                                getDrawable(R.drawable.bg_message)
+                        } else {
+                            dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
+                            dataBinding.layoutMessage.background =
+                                getDrawable(R.drawable.bg_message_2)
+                            dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
+                            dataBinding.layoutParent.gravity = Gravity.LEFT
+                            dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
                         }
                     }
                 }
                 InstagramConstants.MessageType.VOICE_MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutVoiceMediaBinding
+                    initReactions(dataBinding.includeReaction, item)
                     val audioSrc = item.voiceMediaData.voiceMedia.audio.audioSrc
                     val id = item.voiceMediaData.voiceMedia.id
                     if (players[id] == null) {
@@ -447,28 +726,64 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     })
                     dataBinding.layoutVoice.minimumWidth =
                         (DisplayUtils.getScreenWidth() * 0.6).toInt()
-                    dataBinding.txtTime.text =
-                        viewModel.getTimeFromTimeStamps(item.timestamp / 1000)
-                    if (item.userId == user.pk) {
-                        dataBinding.layoutParent.gravity = Gravity.RIGHT
+                    dataBinding.includeTime.txtTime.text =
+                        viewModel.getTimeFromTimeStamps(item.timestamp)
+
+
+                    if (item.timestamp <= lastSeenTimeStamp) {
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
                     } else {
+                        
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                    }
+
+                    if (item.userId == user.pk) {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                        dataBinding.layoutParent.gravity = Gravity.RIGHT
+                        dataBinding.imgThreadProfileImage.visibility = View.GONE
+                    } else {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
                         dataBinding.layoutParent.gravity = Gravity.LEFT
+                        dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                        Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
                     }
                 }
                 InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
                     val dataBinding = holder.binding as LayoutEventBinding
                     dataBinding.txtEventDes.text = item.videoCallEvent.description
                 }
-
                 InstagramConstants.MessageType.MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutMediaBinding
+                    initReactions(dataBinding.includeReaction, item)
                     val images = item.media.imageVersions2.candidates
-                    Picasso.get().load(images[0].url).into(dataBinding.imgMedia)
+                    Picasso.get().load(images[0].url).placeholder(R.drawable.placeholder_loading)
+                        .into(dataBinding.imgMedia)
+
+
+                    if (item.timestamp <= lastSeenTimeStamp) {
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                    } else {
+                        
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                    }
+
+
+                    dataBinding.includeTime.txtTime.text =
+                        viewModel.getTimeFromTimeStamps(item.timestamp)
 
                     if (item.userId == user.pk) {
-                        dataBinding.layoutParent.gravity = Gravity.RIGHT
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
+                        dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                        dataBinding.imgThreadProfileImage.visibility = View.GONE
                     } else {
-                        dataBinding.layoutParent.gravity = Gravity.LEFT
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
+                        dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
+                        dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                        Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
                     }
 
                 }
@@ -477,12 +792,21 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
                 InstagramConstants.MessageType.LIKE.type -> {
                     val dataBinding = holder.binding as LayoutLikeBinding
+                    initReactions(dataBinding.includeReaction, item)
                     dataBinding.txtMessage.text = item.like
-                }
 
+                    if (item.userId == user.pk) {
+                        dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                        dataBinding.imgThreadProfileImage.visibility = View.GONE
+                    } else {
+                        dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
+                        dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                        Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                    }
+                }
                 InstagramConstants.MessageType.MEDIA_SHARE.type -> {
                     val dataBinding = holder.binding as LayoutMediaShareBinding
-
+                    initReactions(dataBinding.includeReaction, item)
                     val media = item.mediaShare
                     val user = media.user
                     val id = item.mediaShare.id
@@ -518,43 +842,67 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             players[id]!!.playWhenReady = true
                         }
                         dataBinding.layoutVideoView.layoutParams.apply {
-                            width =
-                                viewModel.getStandardWidth(resources.dpToPx(media.videoVersions[1].width.toFloat()))
-                            height =
-                                viewModel.getStandardHeight(resources.dpToPx(media.videoVersions[1].height.toFloat()))
+                            val sizeArray = viewModel.getStandardWidthAndHeight(
+                                resources.dpToPx(media.videoVersions[1].width.toFloat()),
+                                resources.dpToPx(media.videoVersions[1].height.toFloat())
+                            )
+                            width = sizeArray[0]
+                            height = sizeArray[1]
                         }
                         dataBinding.videoView.player = players[id]!!
                     } else if (media.imageVersions2 != null) {
                         val image = media.imageVersions2
                         dataBinding.layoutImageView.visibility = View.VISIBLE
-                        Picasso.get().load(image.candidates[0].url).into(dataBinding.imageView)
+                        Picasso.get().load(image.candidates[0].url)
+                            .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
                         dataBinding.layoutImageView.layoutParams.apply {
-                            width =
-                                viewModel.getStandardWidth(resources.dpToPx(media.imageVersions2.candidates[1].width.toFloat()))
-                            height =
-                                viewModel.getStandardHeight(resources.dpToPx(media.imageVersions2.candidates[1].height.toFloat()))
+                            val sizeArray = viewModel.getStandardWidthAndHeight(
+                                resources.dpToPx(media.imageVersions2.candidates[1].width.toFloat()),
+                                resources.dpToPx(media.imageVersions2.candidates[1].height.toFloat())
+                            )
+                            width = sizeArray[0]
+                            height = sizeArray[1]
                         }
                     }
 
                     Picasso.get().load(user.profilePicUrl).into(dataBinding.imgProfile)
                     dataBinding.txtUsername.text = user.username
                     dataBinding.txtCaption.text = media.caption.text
-                    dataBinding.txtTime.text =
-                        viewModel.getTimeFromTimeStamps(item.timestamp / 1000)
+                    dataBinding.includeTime.txtTime.text =
+                        viewModel.getTimeFromTimeStamps(item.timestamp)
+
+
+                    if (item.timestamp <= lastSeenTimeStamp) {
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check_multiple)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.checked_message_color))
+                    } else {
+                        
+                        dataBinding.includeTime.imgSeenStatus.setImageResource(R.drawable.ic_check)
+                        dataBinding.includeTime.imgSeenStatus.setColorFilter(color(R.color.text_light))
+                    }
+
                     if (item.userId == user.pk) {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
                         dataBinding.layoutParent.gravity = Gravity.RIGHT
                         dataBinding.layoutMessage.background =
                             this@DirectActivity.getDrawable(R.drawable.bg_message)
+                        dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
+                        dataBinding.imgThreadProfileImage.visibility = View.GONE
                     } else {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
                         dataBinding.layoutMessage.background =
                             this@DirectActivity.getDrawable(R.drawable.bg_message_2)
                         dataBinding.layoutParent.gravity = Gravity.LEFT
+
+                        dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
+                        Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                        dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
                     }
 
                 }
-
                 InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutAnimatedMediaBinding
+                    initReactions(dataBinding.includeReaction, item)
                     val url = item.animatedMedia.images.fixedHeight.url
                     val width = item.animatedMedia.images.fixedHeight.width.toInt()
                     val height = item.animatedMedia.images.fixedHeight.height.toInt()
@@ -567,16 +915,21 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
                     Log.i("TEST", "TEST")
                 }
+                InstagramConstants.MessageType.ACTION_LOG.type -> {
+
+                }
                 else -> {
                     val dataBinding = holder.binding as LayoutMessageBinding
                     dataBinding.txtMessage.text = "Sorry ${item.itemType} not support"
-                    dataBinding.txtTime.text =
-                        viewModel.getTimeFromTimeStamps(item.timestamp / 1000)
+                    dataBinding.includeTime.txtTime.text =
+                        viewModel.getTimeFromTimeStamps(item.timestamp)
                     if (item.userId == user.pk) {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.VISIBLE
                         dataBinding.layoutParent.gravity = Gravity.RIGHT
                         dataBinding.layoutMessage.background =
                             this@DirectActivity.getDrawable(R.drawable.bg_message)
                     } else {
+                        dataBinding.includeTime.imgSeenStatus.visibility = View.GONE
                         dataBinding.layoutMessage.background =
                             this@DirectActivity.getDrawable(R.drawable.bg_message_2)
                         dataBinding.layoutParent.gravity = Gravity.LEFT
@@ -584,6 +937,34 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
             }
             return item
+        }
+
+
+        private fun initReactions(includeReaction: LayoutReactionsLikeBinding, item: Message) {
+            if (item.reactions == null) {
+                includeReaction.layoutReactionsParent.visibility = View.GONE
+            } else {
+                if (item.userId == user.pk) {
+                    includeReaction.layoutReactionsParent.gravity = Gravity.RIGHT
+                } else {
+                    includeReaction.layoutReactionsParent.gravity = Gravity.RIGHT
+                }
+                includeReaction.layoutReactionsParent.visibility = View.VISIBLE
+            }
+        }
+
+        fun setLoading(isLoading: Boolean) {
+            if (isLoading) {
+                items.add(LoadingEvent())
+                notifyItemInserted(items.size - 1)
+            } else {
+                for (i in items.indices) {
+                    if (items[i] is LoadingEvent) {
+                        items.removeAt(i)
+                        notifyItemRemoved(i)
+                    }
+                }
+            }
         }
 
         private fun fullRotation(v: View) {
@@ -606,10 +987,17 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             valueAnimator.start()
         }
 
+        private fun configLayoutParent(layoutParent: ViewGroup, item: Message) {
+
+        }
+
         override fun getLayoutIdForPosition(position: Int): Int {
             val item = items[position]
             if (item is DirectDate) {
                 return R.layout.layout_direct_date
+            }
+            if (item is LoadingEvent) {
+                return R.layout.layout_loading
             }
             item as Message
             when (item.itemType) {
@@ -630,6 +1018,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
                     return R.layout.layout_felix_share
+                }
+                InstagramConstants.MessageType.LINK.type -> {
+                    return R.layout.layout_link
                 }
                 InstagramConstants.MessageType.REEL_SHARE.type -> {
                     return when (item.reelShare.type) {
@@ -667,6 +1058,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
                     return R.layout.layout_animated_media
                 }
+                InstagramConstants.MessageType.ACTION_LOG.type -> {
+                    return R.layout.layout_nothing
+                }
                 else -> {
                     return R.layout.layout_message
                 }
@@ -699,14 +1093,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 .putExtra("thread_id", threadId)
                 .putExtra("text", binding.edtTextChat.text.toString())
         );
-        adapter.items.add(0, Message().apply {
+        val message = Message().apply {
             this.text = binding.edtTextChat.text.toString()
             this.timestamp = System.currentTimeMillis()
             this.itemType = InstagramConstants.MessageType.TEXT.type
             this.userId = adapter.user.pk!!
-        })
-        adapter.notifyItemInserted(0)
-        binding.recyclerviewChats.scrollToPosition(0)
+            this.itemId = UUID.randomUUID().toString()
+        }
+        EventBus.getDefault().postSticky(MessageEvent(threadId,message))
         binding.edtTextChat.setText("")
     }
 

@@ -1,15 +1,18 @@
 package com.sanardev.instagrammqtt.ui.main
 
 import android.app.Application
+import android.view.View
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.base.BaseViewModel
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
+import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
 import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
+import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.usecase.UseCase
@@ -29,6 +32,8 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
         return user!!.password!!
     }
 
+    private val directs = ArrayList<Thread>().toMutableList()
+    private val searchedValue = ArrayList<Thread>().toMutableList()
     private val result = MediatorLiveData<Resource<InstagramDirects>>()
     private val resultPresence = MediatorLiveData<Resource<PresenceResponse>>()
     val mutableLiveData = MutableLiveData<Resource<InstagramDirects>>()
@@ -41,10 +46,15 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                 it.data = instagramInboxResult
             }
         } else if (it.status == Resource.Status.SUCCESS) {
-            mUseCase.getDirectPresence(resultPresence)
+            if(directs.isEmpty()){
+                mUseCase.getDirectPresence(resultPresence)
+            }
+            directs.addAll(it.data!!.inbox.threads)
+            it.data!!.inbox.threads = directs
         }
-        mutableLiveData.value = it
         return@map it
+    }.observeForever {
+        mutableLiveData.value = it
     }
 
     val liveDataPresence = Transformations.map(resultPresence) {
@@ -78,7 +88,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
             if (thread.threadId == event.threadId) {
                 var isMessageExist = false
                 for (message in thread.messages) {
-                    if (message.clientContext == event.message.clientContext) {
+                    if (message.itemId == event.message.itemId) {
                         isMessageExist = true
                     }
                 }
@@ -137,6 +147,39 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                     }
                 }
                 mutableLiveData.value = Resource.success(direct)
+            }
+        }
+    }
+
+    fun onSearch(s: CharSequence, start: Int, before: Int, count: Int){
+        if(directs.isEmpty()){
+            return
+        }
+        if(s.isBlank()){
+            searchedValue.clear()
+            val instagramDirect = mutableLiveData.value!!.data!!
+            instagramDirect.inbox.threads = directs
+            mutableLiveData.value = Resource.success(instagramDirect)
+        }else{
+            searchedValue.clear()
+            for (thread in directs){
+                if(!thread.isGroup && (thread.users[0].fullName.contains(s) || thread.users[0].username.contains(s))){
+                    searchedValue.add(thread)
+                }
+            }
+            val instagramDirect = mutableLiveData.value!!.data!!
+            instagramDirect.inbox.threads = searchedValue
+            mutableLiveData.value = Resource.success(instagramDirect)
+        }
+    }
+
+    fun onUpdateSeenEvent(event: UpdateSeenEvent) {
+        val instagramDirect = mutableLiveData.value!!.data!!
+        val threads = instagramDirect.inbox.threads
+        for(thread in threads){
+            if(thread.threadId == event.threadId){
+                thread.lastSeenAt[thread.users[0].pk.toString()]!!.timeStamp = event.seen.timeStamp
+                thread.lastSeenAt[thread.users[0].pk.toString()]!!.itemId = event.seen.itemId
             }
         }
     }

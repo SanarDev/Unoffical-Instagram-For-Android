@@ -41,6 +41,9 @@
         <activity android:name=".ui.direct.DirectActivity">
 
         </activity>
+        <activity android:name=".ui.startmessage.StartMessageActivity">
+
+        </activity>
 
         <service android:name="com.sanardev.instagrammqtt.service.fbns.FbnsService">
             <intent-filter>

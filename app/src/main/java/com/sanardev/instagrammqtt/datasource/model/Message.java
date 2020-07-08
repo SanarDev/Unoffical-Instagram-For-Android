@@ -21,6 +21,9 @@ public class Message {
     @SerializedName("text")
     @Expose
     private String text;
+    @SerializedName("link")
+    @Expose
+    private Link link;
     @SerializedName("reel_share")
     @Expose
     private ReelShare reelShare;
@@ -63,6 +66,25 @@ public class Message {
     @SerializedName("like")
     @Expose
     private String like;
+    @SerializedName("reactions")
+    @Expose
+    private DirectReactions reactions;
+
+    public DirectReactions getReactions() {
+        return reactions;
+    }
+
+    public Link getLink() {
+        return link;
+    }
+
+    public void setLink(Link link) {
+        this.link = link;
+    }
+
+    public void setReactions(DirectReactions reactions) {
+        this.reactions = reactions;
+    }
 
     public Object getFelixShare() {
         return felixShare;

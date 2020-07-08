@@ -33,4 +33,9 @@
     <style name="TextDrawerStyle" parent="Widget.AppCompat.TextView">
         <item name="android:textColor">@color/text_very_light</item>
     </style>
+    <style name="ProfileImage">
+        <item name="android:layout_width">38dp</item>
+        <item name="android:layout_height">38dp</item>
+        <item name="android:layout_marginEnd">10dp</item>
+    </style>
 </resources>

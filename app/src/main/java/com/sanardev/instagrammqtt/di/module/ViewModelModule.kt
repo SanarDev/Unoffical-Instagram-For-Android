@@ -7,6 +7,7 @@ import com.sanardev.instagrammqtt.di.ViewModelKey
 import com.sanardev.instagrammqtt.ui.direct.DirectViewModel
 import com.sanardev.instagrammqtt.ui.login.LoginViewModel
 import com.sanardev.instagrammqtt.ui.main.MainViewModel
+import com.sanardev.instagrammqtt.ui.startmessage.StartMessageViewModel
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorActivity
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorViewModel
 import dagger.Binds
@@ -37,5 +38,10 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(DirectViewModel::class)
     abstract fun directViewModel(directViewModel: DirectViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(StartMessageViewModel::class)
+    abstract fun startMessageViewModel(startMessageViewModel: StartMessageViewModel):ViewModel
 
 }

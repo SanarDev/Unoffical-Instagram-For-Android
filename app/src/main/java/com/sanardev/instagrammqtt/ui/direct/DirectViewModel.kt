@@ -9,6 +9,7 @@ import androidx.lifecycle.Transformations
 import com.sanardev.instagrammqtt.base.BaseViewModel
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
+import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.usecase.UseCase
@@ -35,12 +36,15 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     private val result = MediatorLiveData<Resource<InstagramChats>>()
     val fileLiveData = MutableLiveData<File>()
     val mutableLiveData = MutableLiveData<Resource<InstagramChats>>()
-    val liveData = Transformations.map(result) {
+    val mutableLiveDataAddMessage = MutableLiveData<Message>()
+    private val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.SUCCESS) {
             messages.addAll(it.data!!.thread!!.messages)
             it!!.data!!.thread!!.releasesMessage = releaseMessages(messages)
         }
         return@map it
+    }.observeForever {
+        mutableLiveData.postValue(it)
     }
 
     private fun releaseMessages(it: List<Message>): List<Any> {
@@ -50,15 +54,15 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         val releasesMessage = ArrayList<Any>().toMutableList()
         for (message in messagesReverse) {
             if (oldMessage != null) {
-                val oldMessageDate = Date(oldMessage.timestamp / 1000)
-                val messageDate = Date(message.timestamp / 1000)
+                val oldMessageDate = Date(convertToStandardTimeStamp(oldMessage.timestamp))
+                val messageDate = Date(convertToStandardTimeStamp(message.timestamp))
                 val oldMessageTime = sdf.format(oldMessageDate)
                 val messageTime = sdf.format(messageDate)
                 if (oldMessageTime != messageTime) {
                     releasesMessage.add(
                         DirectDate(
-                            message.timestamp / 1000,
-                            mUseCase.getDifferentTimeString(message.timestamp / 1000)
+                            convertToStandardTimeStamp(message.timestamp),
+                            mUseCase.getDifferentTimeString(convertToStandardTimeStamp(message.timestamp))
                         )
                     )
                 }
@@ -66,8 +70,8 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
             } else {
                 releasesMessage.add(
                     DirectDate(
-                        message.timestamp / 1000,
-                        mUseCase.getDifferentTimeString(message.timestamp / 1000)
+                        convertToStandardTimeStamp(message.timestamp),
+                        mUseCase.getDifferentTimeString(convertToStandardTimeStamp(message.timestamp))
                     )
                 )
                 releasesMessage.add(message)
@@ -77,6 +81,12 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         return releasesMessage.reversed()
     }
 
+    fun convertToStandardTimeStamp(timeStamp:Long): Long {
+        return if (timeStamp.toString().length == 16)
+            timeStamp / 1000
+        else
+            timeStamp
+    }
     fun edtMessageChange(s: CharSequence, start: Int, before: Int, count: Int) {
         if (s.isBlank()) {
             isEnableSendButton.set(false)
@@ -158,20 +168,41 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         mediaRecorder.stop()
         mediaRecorder.release()
     }
-
-    fun getStandardHeight(height: Int): Int {
-        var standardHeight = 0
-        val screenHeight = DisplayUtils.getScreenHeight()/1.5
-        if((screenHeight * 0.7) < height){
-            standardHeight =  (height * ((screenHeight * 0.7) / height)).toInt()
-        }else{
-            standardHeight = height.toInt()
+    /*
+     var standardHeight = 0
+        val screenHeight = DisplayUtils.getScreenHeight()/1.8
+        if((height.toFloat() / width.toFloat()) > 1.5){
+            if ((screenHeight) < height) {
+                standardHeight = (height * ((screenHeight) / height)).toInt()
+            } else {
+                standardHeight = height.toInt()
+            }
+        }else {
+            if ((screenHeight * 0.7) < height) {
+                standardHeight = (height * ((screenHeight * 0.7) / height)).toInt()
+            } else {
+                standardHeight = height.toInt()
+            }
         }
         return standardHeight
-    }
+     */
 
-    fun getStandardWidth(width:Int):Int{
+    fun getStandardWidthAndHeight(width:Int,height: Int):Array<Int>{
         var standardWidth = 0
+        var standardHeight = 0
+        val screenWidth = DisplayUtils.getScreenWidth()
+        if((screenWidth * 0.7) < width){
+            val a = width - (screenWidth * 0.7)
+            standardWidth = (width.toDouble() - a).toInt()
+            standardHeight = (height - ((height.toFloat() / width.toFloat()) * a).toInt())
+        }else{
+            standardWidth = width
+            standardHeight = height
+        }
+        return arrayOf(standardWidth,standardHeight)
+    }
+    /*
+    var standardWidth = 0
         val screenWidth = DisplayUtils.getScreenWidth()
         if((screenWidth * 0.7) < width){
             standardWidth =  (width * ((screenWidth * 0.7) / width)).toInt()
@@ -179,10 +210,32 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
             standardWidth = width
         }
         return standardWidth
-    }
+     */
 
     fun loadMoreItem(cursor: String,threadId: String,seqId:Int) {
         mUseCase.loadMoreChats(result,cursor,threadId,seqId)
     }
+
+    fun onMessageReceive(event: MessageEvent) {
+        addMessage(event.message)
+    }
+
+    fun addMessage(msg: Message) {
+        if(messages.size == 0){
+            return
+        }
+        var isMessageExist = false
+        for(message in messages){
+            if(message.itemId == msg.itemId){
+                isMessageExist = true
+            }
+        }
+        if(isMessageExist){
+            return
+        }
+        messages.add(0,msg)
+        mutableLiveDataAddMessage.postValue(msg)
+    }
+
 
 }

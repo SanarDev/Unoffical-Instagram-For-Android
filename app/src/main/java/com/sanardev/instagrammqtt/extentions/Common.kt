@@ -1,30 +1,27 @@
 package run.tripa.android.extensions
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Application
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Resources
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
-import android.widget.EditText
-import android.widget.TextView
+import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import android.os.VibrationEffect
-import android.os.Build
-import android.os.Vibrator
-import android.util.TypedValue
-import android.view.Gravity
-import android.view.ViewGroup
-import android.app.Activity
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
-import android.view.inputmethod.InputMethodManager
 
 
 fun Context.toast(message: CharSequence) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -101,6 +98,23 @@ fun Dialog.openFromBottom(height:Int = ViewGroup.LayoutParams.MATCH_PARENT) {
 
 fun Resources.dpToPx(dp: Float): Int {
     return dpToPx(dp,this)
+}
+
+private const val HTTPS = "https://"
+private const val HTTP = "http://"
+
+fun openUrl(context: Context, url: String) {
+    var url = url
+    if (!url.startsWith(HTTP) && !url.startsWith(HTTPS)) {
+        url = HTTP + url
+    }
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    context.startActivity(
+        Intent.createChooser(
+            intent,
+            "Choose browser"
+        )
+    ) // Choose browser is arbitrary :)
 }
 
 fun Activity.hideKeyboard(){

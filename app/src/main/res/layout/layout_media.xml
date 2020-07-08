@@ -5,18 +5,63 @@
     <LinearLayout
         android:id="@+id/layout_parent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <com.makeramen.roundedimageview.RoundedImageView
-            android:id="@+id/img_media"
-            android:layout_width="180dp"
+
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:adjustViewBounds="true"
-            android:src="@mipmap/img_story_text"
-            android:scaleType="fitCenter"
-            app:riv_corner_radius="20dip"
-            app:riv_border_width="2dip"
-            app:riv_mutate_background="true" />
+            android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="bottom"
+            android:orientation="horizontal">
+
+            <com.tylersuehr.chips.CircleImageView
+                android:id="@+id/img_thread_profile_image"
+                style="@style/ProfileImage"
+                android:src="@mipmap/example" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_message"
+                android:orientation="vertical">
+
+
+            <com.makeramen.roundedimageview.RoundedImageView
+                android:id="@+id/img_media"
+                android:layout_width="180dp"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@mipmap/img_story_text"
+                app:riv_corner_radius="15dip"
+                app:riv_mutate_background="true" />
+
+                <include
+                    android:id="@+id/include_time"
+                    layout="@layout/layout_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right"
+                    android:layout_margin="10dp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+            <include
+                android:id="@+id/include_reaction"
+                layout="@layout/layout_reactions_like"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
     </LinearLayout>
 </layout>
