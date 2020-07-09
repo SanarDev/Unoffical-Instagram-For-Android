@@ -11,8 +11,6 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.mqtt.*
-import org.apache.thrift.protocol.*
-import org.apache.thrift.transport.TMemoryBuffer
 import java.util.*
 
 
@@ -104,6 +102,9 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
 
                     InstagramConstants.RealTimeTopics.MESSAGE_SYNC.id ->{
                         Commands.parseData(json)
+                    }
+                    InstagramConstants.RealTimeTopics.SEND_MESSAGE_RESPONSE.id -> {
+                        realTimeService.onSendMessageResponse(String(json))
                     }
                 }
 

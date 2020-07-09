@@ -16,6 +16,7 @@ import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
 import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
 import com.sanardev.instagrammqtt.datasource.model.realtime.RealtimeSubDirectDataWrapper
+import com.sanardev.instagrammqtt.datasource.model.event.MessageResponseEvent
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsConnectPacket
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
 import com.sanardev.instagrammqtt.fbns.packethelper.MQTToTConnectionData
@@ -83,7 +84,7 @@ class RealTimeService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if(intent != null) {
+        if (intent != null) {
             if (mChannel == null) {
                 if (intent?.extras != null) {
                     connect(
@@ -95,7 +96,8 @@ class RealTimeService : Service() {
             if (intent!!.action == RealTimeIntent.ACTION_SEND_TEXT_MESSAGE) {
                 directCommands!!.sendText(
                     text = intent!!.extras!!.getString("text")!!,
-                    threadId = intent!!.extras!!.getString("thread_id")!!
+                    threadId = intent!!.extras!!.getString("thread_id")!!,
+                    clientContext = intent!!.extras!!.getString("client_context")!!
                 )
             }
         }
@@ -329,11 +331,13 @@ class RealTimeService : Service() {
                     )
                 }
 
-                InstagramConstants.RealTimeEvent.PARTICIPANTS.id ->{
+                InstagramConstants.RealTimeEvent.PARTICIPANTS.id -> {
                     EventBus.getDefault().postSticky(
                         UpdateSeenEvent(
-                            threadId,mGson.fromJson(realtimeSubDirectDataWrapper.value,
-                            Seen::class.java)
+                            threadId, mGson.fromJson(
+                                realtimeSubDirectDataWrapper.value,
+                                Seen::class.java
+                            )
                         )
                     )
                 }
@@ -353,6 +357,11 @@ class RealTimeService : Service() {
                 EventBus.getDefault().post(event)
             }
         }
+    }
+
+    fun onSendMessageResponse(json: String) {
+        val messageResponseEvent = mGson.fromJson(json, MessageResponseEvent::class.java)
+        EventBus.getDefault().post(messageResponseEvent)
     }
 
     companion object {

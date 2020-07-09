@@ -3,6 +3,7 @@ package com.sanardev.instagrammqtt.realtime.commands
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
+import com.sanardev.instagrammqtt.utils.InstagramHashUtils
 import com.sanardev.instagrammqtt.utils.ZlibUtis
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
@@ -11,21 +12,6 @@ import java.util.*
 import kotlin.collections.HashMap
 
 class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
-
-    fun getClientContext(): String {
-        var rnd = Random();
-        var str = "";
-        // 6600286272511816379
-        str += rnd.nextInt(9);
-        str += rnd.nextInt(9);
-        str += rnd.nextInt(9);
-        //str += Rnd.Next(11, 99);
-        str += (Math.random() * (9999 - 1000 + 1) + 1000).toInt()
-        str += (Math.random() * (99999 - 11111 + 1) + 11111).toInt()
-
-        str += (Math.random() * (6789 - 2222 + 1) + 2222).toInt()
-        return "668${str}";
-    }
 
     private fun sendCommand(
         action: String,
@@ -65,7 +51,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         threadId: String,
         itemType: String,
         data: HashMap<String, String>,
-        clientContext: String = getClientContext()
+        clientContext: String = InstagramHashUtils.getClientContext()
     ): String {
         return this.sendCommand("send_item", data.apply {
             put("item_type", itemType)
@@ -77,7 +63,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         text: String,
         threadId: String,
         hashtag: String,
-        clientContext: String = getClientContext()
+        clientContext: String = InstagramHashUtils.getClientContext()
     ): String {
         return sendItem(threadId, "hashtag", HashMap<String, String>().apply {
             put("text", text)
@@ -86,7 +72,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         }, clientContext)
     }
 
-    fun sendLike(threadId: String, clientContext: String = getClientContext()): String {
+    fun sendLike(threadId: String, clientContext: String = InstagramHashUtils.getClientContext()): String {
         return sendItem(threadId, "like", HashMap<String, String>(), clientContext)
     }
 
@@ -94,7 +80,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         text: String,
         locationId: String,
         threadId: String,
-        clientContext: String = getClientContext()
+        clientContext: String = InstagramHashUtils.getClientContext()
     ): String {
         return sendItem(
             threadId = threadId,
@@ -111,7 +97,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         text: String,
         mediaId: String,
         threadId: String,
-        clientContext: String = getClientContext()
+        clientContext: String = InstagramHashUtils.getClientContext()
     ): String {
         return sendItem(threadId, "media_share", HashMap<String, String>().apply {
             put("text", text)
@@ -123,7 +109,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         text: String,
         userId: String,
         threadId: String,
-        clientContext: String = getClientContext()
+        clientContext: String = InstagramHashUtils.getClientContext()
     ): String {
         return sendItem(threadId, "profile", HashMap<String, String>().apply {
             put("text", text)
@@ -135,7 +121,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
     fun sendReaction(
         itemId: String,
         reactionType: String,
-        clientContext: String = getClientContext(),
+        clientContext: String = InstagramHashUtils.getClientContext(),
         threadId: String,
         reactionStatus: String
     ): String {
@@ -151,7 +137,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         text: String,
         storyId: String,
         threadId: String,
-        clientContext: String = getClientContext()
+        clientContext: String = InstagramHashUtils.getClientContext()
     ): String {
         return sendItem(threadId, "reel_share", HashMap<String, String>().apply {
             put("text", text)
@@ -162,7 +148,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
 
     fun sendText(
         text: String,
-        clientContext: String = getClientContext(),
+        clientContext: String,
         threadId: String
     ): String {
         return sendItem(threadId, "text", HashMap<String, String>().apply {
@@ -173,13 +159,13 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
     fun markAsSeen(threadId: String, itemId: String): String {
         return sendCommand("mark_seen", HashMap<String, String>().apply {
             put("item_id", itemId)
-        }, threadId, getClientContext())
+        }, threadId, InstagramHashUtils.getClientContext())
     }
 
     fun indicateActivity(
         threadId: String,
         isActive: Boolean,
-        clientContext: String = getClientContext()
+        clientContext: String = InstagramHashUtils.getClientContext()
     ): String {
         return sendCommand("indicate_activity", HashMap<String, String>().apply {
             put("activity_status", if (isActive) "1" else "0")

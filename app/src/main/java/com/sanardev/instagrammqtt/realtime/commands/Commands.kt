@@ -11,6 +11,7 @@ import org.apache.thrift.transport.TMemoryBuffer
 
 class Commands {
     companion object {
+
         fun parseData(json: ByteArray): ParsedMessage {
             val a = TMemoryBuffer(json.size)
             a.write(json)

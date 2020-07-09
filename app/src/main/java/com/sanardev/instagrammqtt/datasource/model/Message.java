@@ -69,6 +69,17 @@ public class Message {
     @SerializedName("reactions")
     @Expose
     private DirectReactions reactions;
+    @SerializedName("is_delivered")
+    @Expose
+    private boolean isDelivered = true;
+
+    public boolean isDelivered() {
+        return isDelivered;
+    }
+
+    public void setDelivered(boolean delivered) {
+        isDelivered = delivered;
+    }
 
     public DirectReactions getReactions() {
         return reactions;
