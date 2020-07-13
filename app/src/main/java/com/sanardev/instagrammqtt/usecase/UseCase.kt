@@ -148,7 +148,9 @@ class UseCase(
     }
 
     fun getDirectPresence(responseLiveData: MediatorLiveData<Resource<PresenceResponse>>) {
-        mInstagramRepository.getDirectPresence(responseLiveData,headersGenerator = {getHeaders()})
+        mInstagramRepository.getDirectPresence(
+            responseLiveData,
+            headersGenerator = { getHeaders() })
     }
 
 
@@ -459,16 +461,24 @@ class UseCase(
     fun addMessage(event: MessageEvent) {
     }
 
-    fun loadMoreChats(result: MediatorLiveData<Resource<InstagramChats>>, cursor: String,threadId:String,seqId:Int) {
-        mInstagramRepository.loadMoreChats(result,cursor,threadId,seqId,{getHeaders()})
+    fun loadMoreChats(
+        result: MediatorLiveData<Resource<InstagramChats>>,
+        cursor: String,
+        threadId: String,
+        seqId: Int
+    ) {
+        mInstagramRepository.loadMoreChats(result, cursor, threadId, seqId, { getHeaders() })
     }
 
-    fun searchUser(result: MediatorLiveData<Resource<ResponseBody>>, query: String){
-        mInstagramRepository.searchUser(result,query) {getHeaders()}
+    fun searchUser(result: MediatorLiveData<Resource<ResponseBody>>, query: String) {
+        mInstagramRepository.searchUser(result, query) { getHeaders() }
     }
 
-    fun getRecipients(result: MediatorLiveData<Resource<InstagramRecipients>>, query: String?=null){
-        mInstagramRepository.getRecipients(result,query,{getHeaders()})
+    fun getRecipients(
+        result: MediatorLiveData<Resource<InstagramRecipients>>,
+        query: String? = null
+    ) {
+        mInstagramRepository.getRecipients(result, query, { getHeaders() })
     }
 
 }

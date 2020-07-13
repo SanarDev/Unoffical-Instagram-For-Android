@@ -6,6 +6,7 @@ import com.sanardev.instagrammqtt.realtime.PayloadProcessor
 import com.sanardev.instagrammqtt.realtime.commands.Commands
 import com.sanardev.instagrammqtt.realtime.packethelper.ForegroundStateConfig
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
+import com.sanardev.instagrammqtt.utils.InstagramHashUtils
 import com.sanardev.instagrammqtt.utils.ZlibUtis
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
@@ -127,7 +128,7 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
         keepAliveTimeout: Int
     ) {
         val topicName = InstagramConstants.RealTimeTopics.FOREGROUND_STATE.id.toString()
-        val packetID = generatePacketID()
+        val packetID = Random().nextInt(65535)
         val payload = PayloadProcessor.buildForegroundStateThrift(ForegroundStateConfig().apply {
             this.inForegroundApp = inForegroundApp
             this.inForegroundDevice = inForegroundDevice
@@ -164,9 +165,6 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
     override fun handlerRemoved(ctx: ChannelHandlerContext) {
     }
 
-    private fun generatePacketID():Int{
-        return Random().nextInt(65535)
-    }
     @Throws(Exception::class)
     override fun exceptionCaught(
         ctx: ChannelHandlerContext,

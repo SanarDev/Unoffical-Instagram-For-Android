@@ -61,6 +61,15 @@
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CONNECT_SESSION" />
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_DISCONNECT_SESSION" />
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_TEXT_MESSAGE" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_MARK_AS_SEEN" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_MEDIA" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_LOCATION" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_REACTION" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_TYPING_STATE" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_USER_STORY" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_LIKE" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_PROFILE" />
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_HASHTAG" />
             </intent-filter>
         </service>
 

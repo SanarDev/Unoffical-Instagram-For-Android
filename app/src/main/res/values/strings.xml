@@ -61,4 +61,5 @@
     <string name="search">Search</string>
     <string name="start_new_message">Start New Message</string>
     <string name="select_for_start_messaging">Select for start messaging</string>
+    <string name="group_name">%s and %d more</string>
 </resources>

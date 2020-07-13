@@ -31,14 +31,16 @@ import com.sanardev.instagrammqtt.core.BaseAdapter
 import com.sanardev.instagrammqtt.databinding.*
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
+import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.*
+import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_MarkAsSeen
+import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_SendLike
+import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_SendMessage
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.*
 import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
-import com.sanardev.instagrammqtt.utils.DisplayUtils
-import com.sanardev.instagrammqtt.utils.InstagramHashUtils
-import com.sanardev.instagrammqtt.utils.PlayerManager
-import com.sanardev.instagrammqtt.utils.Resource
+import com.sanardev.instagrammqtt.service.realtime.RealTimeService
+import com.sanardev.instagrammqtt.utils.*
 import com.squareup.picasso.Picasso
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.EmojiPopup
@@ -56,7 +58,7 @@ import kotlin.collections.HashMap
 
 class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
-    private var lastSeenTimeStamp: Long = 0
+    private var thread: Thread? = null
     private lateinit var threadId: String
     private var username: String? = null
     private var profileImage: String? = null
@@ -70,6 +72,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     private var currentPlayerId: String? = null
     private var isLoading = false
     private var olderMessageExist = true
+    private var lastSeenAt: Long = 0
 
     companion object {
         fun open(context: Context, bundle: Bundle) {
@@ -100,13 +103,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         threadId = intent.extras!!.getString("thread_id")!!
         profileImage = intent.extras!!.getString("profile_image")
         username = intent.extras!!.getString("username")
-        lastSeenTimeStamp = intent.extras!!.getLong("last_seen_at")
         val seqID = intent.extras!!.getInt("seq_id")
-        val lastActivityAt = intent.extras!!.getLong("last_activity_at")
 
-        if (lastSeenTimeStamp.toString().length == 16) {
-            lastSeenTimeStamp = lastSeenTimeStamp / 1000
-        }
         binding.txtProfileName.text = username
         Picasso.get().load(profileImage).into(binding.imgProfileImage)
         viewModel.init(threadId, seqID)
@@ -162,13 +160,25 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             onBackPressed()
         }
 
+        binding.btnLike.setOnClickListener {
+            val clientContext = InstagramHashUtils.getClientContext()
+            RealTimeService.run(this,RealTime_SendLike(threadId,clientContext))
+            val message = MessageGenerator.like(adapter.user.pk!!,clientContext)
+            EventBus.getDefault().postSticky(MessageEvent(threadId, message))
+        }
+
         viewModel.mutableLiveData.observe(this, Observer {
             if (it.status == Resource.Status.LOADING) {
                 binding.progressbar.visibility = View.VISIBLE
             }
             binding.progressbar.visibility = View.GONE
             if (it.status == Resource.Status.SUCCESS) {
-                olderMessageExist = it.data!!.thread!!.oldestCursor != null
+                thread = it.data!!.thread
+                if (thread!!.lastSeenAt[thread!!.users[0].pk.toString()] != null) {
+                    lastSeenAt =
+                        viewModel.convertToStandardTimeStamp(thread!!.lastSeenAt[thread!!.users[0].pk.toString()]!!.timeStamp)
+                }
+                olderMessageExist = it . data !!. thread !!. oldestCursor != null
                 if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
                     adapter.items = it.data!!.thread!!.releasesMessage
                     adapter.notifyDataSetChanged()
@@ -270,7 +280,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onUpdateSeenEvent(event: UpdateSeenEvent) {
         if (event.threadId == threadId) {
-            lastSeenTimeStamp = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
+            lastSeenAt = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
             adapter.notifyDataSetChanged()
         }
     }
@@ -368,7 +378,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     (holder.binding as LayoutRavenMediaBinding).includeTime
                 }
                 InstagramConstants.MessageType.LIKE.type -> {
-                    null
+                    (holder.binding as LayoutLikeBinding).includeTime
 //                            holder.binding as LayoutLikeBinding
                 }
                 InstagramConstants.MessageType.MEDIA_SHARE.type -> {
@@ -618,7 +628,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
             }
 
-            if(includeReaction != null){
+            if (includeReaction != null) {
                 if (item.reactions == null) {
                     includeReaction.layoutReactionsParent.visibility = View.GONE
                 } else {
@@ -639,10 +649,11 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     includeTime.imgMessageStatus.setImageResource(R.drawable.ic_time)
                     includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
                 } else {
-                    if (item.timestamp <= lastSeenTimeStamp) {
+                    if (item.timestamp <= lastSeenAt) {
                         includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
                         includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
                     } else {
+                        RealTimeService.run(this@DirectActivity,RealTime_MarkAsSeen(threadId,item.itemId))
                         includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check)
                         includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
                     }
@@ -683,6 +694,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         this@DirectActivity.getDrawable(R.drawable.bg_message_2)
                 }
             }
+
+
 
             when (item.itemType) {
                 InstagramConstants.MessageType.TEXT.type -> {
@@ -798,7 +811,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             gone(dataBinding.imgStory, dataBinding.imgProfile)
                         }
 
-                        if (item.timestamp <= lastSeenTimeStamp) {
+                        if (item.timestamp <= lastSeenAt) {
                             dataBinding.includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
                             dataBinding.includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
                         } else {
@@ -849,7 +862,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         }
 
 
-                        if (item.timestamp <= lastSeenTimeStamp) {
+                        if (item.timestamp <= lastSeenAt) {
                             dataBinding.includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
                             dataBinding.includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
                         } else {
@@ -893,7 +906,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         )
                     } else {
                         val dataBinding = holder.binding as LayoutStoryShareNotLinkedBinding
-                        dataBinding.txtMessage.maxWidth = (DisplayUtils.getScreenWidth() * 0.6).toInt()
+                        dataBinding.txtMessage.maxWidth =
+                            (DisplayUtils.getScreenWidth() * 0.6).toInt()
                         dataBinding.txtTitle.text = item.storyShare.title
                         dataBinding.txtMessage.text = item.storyShare.message
 
@@ -933,7 +947,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         .into(dataBinding.imgMedia)
                 }
                 InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                    Log.i("TEST","TEST")
+                    Log.i("TEST", "TEST")
                 }
                 InstagramConstants.MessageType.LIKE.type -> {
                     val dataBinding = holder.binding as LayoutLikeBinding
@@ -1064,9 +1078,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             valueAnimator.start()
         }
 
-        private fun configLayoutParent(layoutParent: ViewGroup, item: Message) {
-
-        }
 
         override fun getLayoutIdForPosition(position: Int): Int {
             val item = items[position]
@@ -1166,21 +1177,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
     fun onSendMessageClick(v: View) {
         val clientContext = InstagramHashUtils.getClientContext()
-        startService(
-            Intent(RealTimeIntent.ACTION_SEND_TEXT_MESSAGE).setPackage("com.sanardev.instagrammqtt")
-                .putExtra("thread_id", threadId)
-                .putExtra("text", binding.edtTextChat.text.toString())
-                .putExtra("client_context", clientContext)
-        );
-        val message = Message().apply {
-            this.text = binding.edtTextChat.text.toString()
-            this.timestamp = System.currentTimeMillis()
-            this.itemType = InstagramConstants.MessageType.TEXT.type
-            this.userId = adapter.user.pk!!
-            this.itemId = UUID.randomUUID().toString()
-            this.isDelivered = false
-            this.clientContext = clientContext
-        }
+        RealTimeService.run(this,RealTime_SendMessage(threadId,clientContext,binding.edtTextChat.text.toString()))
+        val message = MessageGenerator.text(binding.edtTextChat.text.toString(),adapter.user.pk!!,clientContext)
         EventBus.getDefault().postSticky(MessageEvent(threadId, message))
         binding.edtTextChat.setText("")
     }

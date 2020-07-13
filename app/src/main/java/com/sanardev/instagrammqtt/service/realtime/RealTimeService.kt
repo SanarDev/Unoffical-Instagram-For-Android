@@ -1,8 +1,10 @@
 package com.sanardev.instagrammqtt.service.realtime
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.os.Parcelable
 import android.util.Log
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
@@ -15,8 +17,8 @@ import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
 import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
-import com.sanardev.instagrammqtt.datasource.model.realtime.RealtimeSubDirectDataWrapper
 import com.sanardev.instagrammqtt.datasource.model.event.MessageResponseEvent
+import com.sanardev.instagrammqtt.datasource.model.realtime.*
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsConnectPacket
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
 import com.sanardev.instagrammqtt.fbns.packethelper.MQTToTConnectionData
@@ -47,6 +49,7 @@ import io.netty.handler.ssl.SslProvider
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import io.netty.util.CharsetUtil
 import org.greenrobot.eventbus.EventBus
+import java.lang.Exception
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
@@ -72,6 +75,35 @@ class RealTimeService : Service() {
         return null
     }
 
+    companion object {
+
+        var isConnectAlreadyScheduled = false
+        const val SERVER_URL = "edge-mqtt.facebook.com"
+        const val SERVER_PORT = 443
+
+        /** request후 response가 30초 이내에 응답이 와야 함  */
+        const val INTERVAL_WAIT_FOR_RESPONSE = 30 * 1000.toLong()
+        const val INTERVAL_RECONNECT_MINIMUM = 10 * 1000.toLong()
+        var INTERVAL_RECONNECT_EXPONENTIAL_BACKOFF =
+            INTERVAL_RECONNECT_MINIMUM
+
+        /** 이 값에 도달하면 서비스를 재시작 해본다. */
+        const val INTERVAL_RECONNECT_MAXIMUM = 30 * 60 * 1000.toLong()
+
+        fun run(context: Context, value: RealTimeCommand): Boolean {
+            try {
+                context.startService(
+                    Intent(value.action).setPackage("com.sanardev.instagrammqtt")
+                        .putExtra("data", value as Parcelable)
+                );
+            } catch (e: Exception) {
+                return false
+            } finally {
+                return true
+            }
+        }
+    }
+
     override fun onCreate() {
         AndroidInjection.inject(this)
         super.onCreate()
@@ -84,24 +116,73 @@ class RealTimeService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent != null) {
-            if (mChannel == null) {
-                if (intent?.extras != null) {
-                    connect(
-                        intent!!.extras!!.getLong("seq_id"),
-                        intent!!.extras!!.getLong("snap_shot_at")
-                    )
-                }
-            }
-            if (intent!!.action == RealTimeIntent.ACTION_SEND_TEXT_MESSAGE) {
-                directCommands!!.sendText(
-                    text = intent!!.extras!!.getString("text")!!,
-                    threadId = intent!!.extras!!.getString("thread_id")!!,
-                    clientContext = intent!!.extras!!.getString("client_context")!!
-                )
+        if (intent == null || intent.extras == null) {
+            return super.onStartCommand(intent, flags, startId)
+        }
+        if(intent.action != RealTimeIntent.ACTION_CONNECT_SESSION){
+            if(mChannel == null || directCommands == null){
+                return super.onStartCommand(intent, flags, startId)
             }
         }
 
+        when (intent.action) {
+            RealTimeIntent.ACTION_CONNECT_SESSION -> {
+                if (mChannel != null) {
+                    return super.onStartCommand(intent, flags, startId)
+                }
+                val data = intent.extras!!.getParcelable<RealTime_StartService>("data")!!
+                connect(data.seqId,data.snapShotAt)
+            }
+            RealTimeIntent.ACTION_SEND_TEXT_MESSAGE -> {
+                val data = intent.extras!!.getParcelable<RealTime_SendMessage>("data")!!
+                directCommands!!.sendText(data.text,data.clientContext!!,data.threadId)
+            }
+
+            RealTimeIntent.ACTION_MARK_AS_SEEN ->{
+                val data = intent.extras!!.getParcelable<RealTime_MarkAsSeen>("data")!!
+                directCommands!!.markAsSeen(data.threadId,data.itemId)
+            }
+
+            RealTimeIntent.ACTION_SEND_MEDIA -> {
+                val data = intent.extras!!.getParcelable<RealTime_SendMedia>("data")!!
+                directCommands!!.sendMedia(data.text,data.mediaId,data.threadId,data.clientContext)
+            }
+
+            RealTimeIntent.ACTION_SEND_LOCATION -> {
+                val data = intent.extras!!.getParcelable<RealTime_SendLocation>("data")!!
+                directCommands!!.sendLocation(data.text,data.locationId,data.threadId,data.clientContext)
+            }
+
+            RealTimeIntent.ACTION_SEND_REACTION -> {
+                val data = intent.extras!!.getParcelable<RealTime_SendReaction>("data")!!
+                directCommands!!.sendReaction(data.itemId,data.reactionType,data.clientContext,data.threadId,data.reactionStatus)
+            }
+
+            RealTimeIntent.ACTION_SEND_TYPING_STATE -> {
+                val data = intent.extras!!.getParcelable<RealTime_SendTypingState>("data")!!
+                directCommands!!.indicateActivity(data.threadId,data.isActive,data.clientContext)
+            }
+
+            RealTimeIntent.ACTION_SEND_USER_STORY ->{
+                val data = intent.extras!!.getParcelable<RealTime_SendUserStory>("data")!!
+                directCommands!!.sendUserStory(data.text,data.storyId,data.threadId,data.clientContext)
+            }
+
+            RealTimeIntent.ACTION_SEND_LIKE ->{
+                val data = intent.extras!!.getParcelable<RealTime_SendLike>("data")!!
+                directCommands!!.sendLike(data.threadId,data.clientContext)
+            }
+
+            RealTimeIntent.ACTION_SEND_PROFILE -> {
+                val data = intent.extras!!.getParcelable<RealTime_SendProfile>("data")!!
+                directCommands!!.sendProfile(data.text,data.userId,data.threadId,data.clientContext)
+            }
+
+            RealTimeIntent.ACTION_SEND_HASH_TAG -> {
+                val data =intent.extras!!.getParcelable<RealTime_SendHashTag>("data")!!
+                directCommands!!.sendHashtag(data.text,data.threadId,data.hashTag,data.clientContext)
+            }
+        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -364,18 +445,4 @@ class RealTimeService : Service() {
         EventBus.getDefault().post(messageResponseEvent)
     }
 
-    companion object {
-        var isConnectAlreadyScheduled = false
-        const val SERVER_URL = "edge-mqtt.facebook.com"
-        const val SERVER_PORT = 443
-
-        /** request후 response가 30초 이내에 응답이 와야 함  */
-        const val INTERVAL_WAIT_FOR_RESPONSE = 30 * 1000.toLong()
-        const val INTERVAL_RECONNECT_MINIMUM = 10 * 1000.toLong()
-        var INTERVAL_RECONNECT_EXPONENTIAL_BACKOFF =
-            INTERVAL_RECONNECT_MINIMUM
-
-        /** 이 값에 도달하면 서비스를 재시작 해본다. */
-        const val INTERVAL_RECONNECT_MAXIMUM = 30 * 60 * 1000.toLong()
-    }
 }

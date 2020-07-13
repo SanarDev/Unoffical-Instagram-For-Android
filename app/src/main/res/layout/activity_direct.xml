@@ -153,7 +153,22 @@
                 android:padding="@dimen/small_padding"
                 android:src="@drawable/ic_send"
                 android:tint="@color/light_button"
-                app:visible="@{viewModel.isEnableSendButton == true}" />
+                app:visible="@{viewModel.isEnableSendButton == true}"
+                tools:visibility="gone"/>
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btn_like"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:padding="@dimen/small_padding"
+                android:src="@drawable/ic_heart"
+                android:tint="@color/light_button"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/btn_addPhoto"
+                app:visible="@{viewModel.isEnableSendButton == false}"
+                tools:visibility="visible" />
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/btn_addPhoto"
@@ -162,12 +177,12 @@
                 android:background="@null"
                 android:padding="@dimen/small_padding"
                 android:src="@drawable/ic_add_photo"
-                android:tint="@color/text_light"
+                android:tint="@color/light_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintRight_toLeftOf="@id/btn_voice"
                 app:visible="@{viewModel.isEnableSendButton == false}"
-                tools:visibility="gone" />
+                tools:visibility="visible" />
 
             <com.devlomi.record_view.RecordButton
                 android:id="@+id/btn_voice"
@@ -177,6 +192,7 @@
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
+                android:tint="@color/light_button"
                 app:visible="@{viewModel.isEnableSendButton == false}"
                 android:background="@null"
                 android:scaleType="centerInside"

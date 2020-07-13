@@ -56,5 +56,10 @@ class InstagramHashUtils {
             str += (Math.random() * (6789 - 2222 + 1) + 2222).toInt()
             return "668${str}";
         }
+
+        @JvmStatic
+        fun generatePacketID(): Int {
+            return Random().nextInt(65535)
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.sanardev.instagrammqtt.realtime.commands
 
+import android.util.Log
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
@@ -26,6 +27,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
         map["client_context"] = clientContext
         map.putAll(data)
         val json = gson.toJson(map)
+        val packetID = Random().nextInt(65535)
 
         client.writeAndFlush(
             MqttPublishMessage(
@@ -38,11 +40,12 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
                 ),
                 MqttPublishVariableHeader(
                     InstagramConstants.RealTimeTopics.SEND_MESSAGE.id.toString(),
-                    1400
+                    packetID
                 ),
                 Unpooled.copiedBuffer(ZlibUtis.compress(json.toByteArray()))
             )
         )
+        Log.i(InstagramConstants.DEBUG_TAG,"Publish message with packet id $packetID in DirectCommands")
         return clientContext
     }
 

@@ -34,12 +34,16 @@ import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
 import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
+import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_StartService
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.color
+import com.sanardev.instagrammqtt.extensions.gone
 import com.sanardev.instagrammqtt.extensions.setTextViewDrawableColor
+import com.sanardev.instagrammqtt.extensions.visible
 import com.sanardev.instagrammqtt.service.fbns.FbnsIntent
 import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
+import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.ui.direct.DirectActivity
 import com.sanardev.instagrammqtt.ui.login.LoginActivity
 import com.sanardev.instagrammqtt.ui.startmessage.StartMessageActivity
@@ -182,20 +186,14 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             }
             seqID = it.data!!.seqId
             val threads = it.data!!.inbox.threads
-            connect(it.data!!.seqId.toLong(), it.data!!.snapshotAtMs)
+            RealTimeService.run(this@MainActivity,RealTime_StartService(it.data!!.seqId.toLong(),it.data!!.snapshotAtMs))
             adapter.items = threads
             adapter.notifyDataSetChanged()
         }
 
     }
 
-    fun connect(seqId: Long, snapshotAtMs: Long) {
-        startService(
-            Intent(RealTimeIntent.ACTION_CONNECT_SESSION).setPackage("com.sanardev.instagrammqtt")
-                .putExtra("seq_id",seqId)
-                .putExtra("snap_shot_at",snapshotAtMs)
-        )
-    }
+
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onMessageEvent(event: MessageEvent) { /* Do something */
@@ -343,8 +341,23 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                         viewModel.convertTimeStampToData(lastItem.timestamp)
                 }
             }
-            dataBinding.profileName.text = item.threadTitle
-            if (!item.isGroup) {
+            if (item.isGroup) {
+                dataBinding.profileName.text = String.format(
+                    getString(R.string.group_name),
+                    item.users[0].username,
+                    item.users.size - 1
+                )
+            } else {
+                dataBinding.profileName.text = item.threadTitle
+            }
+            if (item.isGroup) {
+                visible(dataBinding.layoutProfileImageGroup)
+                gone(dataBinding.layoutProfileImageUser)
+                Picasso.get().load(item.users[1].profilePicUrl).into(dataBinding.profileImageG1)
+                Picasso.get().load(item.users[0].profilePicUrl).into(dataBinding.profileImageG2)
+            }else{
+                gone(dataBinding.layoutProfileImageGroup)
+                visible(dataBinding.layoutProfileImageUser)
                 Picasso.get().load(item.users[0].profilePicUrl).into(dataBinding.profileImage)
             }
             dataBinding.profileMoreOption.setOnClickListener {
@@ -373,8 +386,15 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     putString("username", item.users[0].username)
                     putLong("last_activity_at", item.lastActivityAt)
                     putInt("seq_id", seqID)
-                    if(!item.isGroup){
-                        putLong("last_seen_at",item.lastSeenAt[item.users[0].pk.toString()]!!.timeStamp)
+                    if (!item.isGroup) {
+                        if(item.lastSeenAt[item.users[0].pk.toString()] != null){
+                            putLong(
+                                "last_seen_at",
+                                item.lastSeenAt[item.users[0].pk.toString()]!!.timeStamp
+                            )
+                        }else{
+                            putLong("last_seen_at",0)
+                        }
                     }
                 })
             }

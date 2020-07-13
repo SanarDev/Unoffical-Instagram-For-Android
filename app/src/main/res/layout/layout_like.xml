@@ -19,7 +19,6 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginEnd="10dp"
-                android:layout_marginBottom="5dp"
                 android:gravity="bottom"
                 android:orientation="horizontal">
 
@@ -37,10 +36,19 @@
             </LinearLayout>
 
             <include
+                android:id="@+id/include_time"
+                layout="@layout/layout_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_margin="10dp" />
+
+            <include
                 android:id="@+id/include_reaction"
                 layout="@layout/layout_reactions_like"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
         </LinearLayout>
     </LinearLayout>
 </layout>
