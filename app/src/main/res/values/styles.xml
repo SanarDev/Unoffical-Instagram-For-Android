@@ -42,4 +42,7 @@
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
     </style>
+    <style name="LayoutIncludeReaction">
+        <item name="android:layout_marginLeft">50dp</item>
+    </style>
 </resources>

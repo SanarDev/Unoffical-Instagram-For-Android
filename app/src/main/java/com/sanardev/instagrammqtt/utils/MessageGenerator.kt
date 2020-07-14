@@ -42,6 +42,12 @@ class MessageGenerator {
                 message.reactions = DirectReactions().apply {
                     likes = ArrayList<DirectLikeReactions>().toMutableList()
                 }
+            }else{
+                for(like in message.reactions.likes){
+                    if(like.senderId == userId){
+                        return message
+                    }
+                }
             }
             message.reactions.apply {
                 likesCount += 1

@@ -19,6 +19,7 @@ import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
 import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageResponseEvent
 import com.sanardev.instagrammqtt.datasource.model.realtime.*
+import com.sanardev.instagrammqtt.datasource.model.subscribers.GraphQLSubBaseOptions
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsConnectPacket
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
 import com.sanardev.instagrammqtt.fbns.packethelper.MQTToTConnectionData
@@ -197,8 +198,7 @@ class RealTimeService : Service() {
             val mqttotConnectionClientInfo =
                 MQTTotConnectionClientInfo()
             mqttotConnectionClientInfo.userId = user!!.pk!!
-            mqttotConnectionClientInfo.userAgent =
-                "[FBAN/MQTT;FBAV/${InstagramConstants.APP_VERSION};FBBV/${InstagramConstants.APP_ID};FBDM/{density=4.0,width=${DisplayUtils.getScreenWidth()},height=${DisplayUtils.getScreenHeight()}};FBLC/en_US;FBCR/${""};FBMF/LGE;FBBD/lge;FBPN/com.instagram.android;FBDV/RS988;FBSV/6.0.1;FBLR/0;FBBK/1;FBCA/armeabi-v7a:armeabi;]"
+            mqttotConnectionClientInfo.userAgent = "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
             mqttotConnectionClientInfo.clientCapabilities = 183
             mqttotConnectionClientInfo.endpointCapabilities = 128
             mqttotConnectionClientInfo.publishFormat = 1
@@ -227,15 +227,18 @@ class RealTimeService : Service() {
                 put("X-IG-Capabilities", InstagramConstants.DEVICE_CAPABILITIES)
                 put(
                     "everclear_subscriptions", "{" +
+                            "\"async_ads_subscribe\":${GraphQLSubscriptions.QueryIDs.asyncAdSub}"+
+                            "\"inapp_notification_subscribe_default\":\"17899377895239777\"," +
                             "\"inapp_notification_subscribe_comment\":\"17899377895239777\"," +
                             "\"inapp_notification_subscribe_comment_mention_and_reply\":\"17899377895239777\"," +
                             "\"video_call_participant_state_delivery\":\"17977239895057311\"," +
+                            "\"business_import_page_media_delivery_subscribe\":\"17940467278199720\""+
                             "\"presence_subscribe\":\"17846944882223835\"" +
                             '}'
                 )
                 put(
                     "User-Agent",
-                    "[FBAN/MQTT;FBAV/${InstagramConstants.APP_VERSION};FBBV/${InstagramConstants.APP_ID};FBDM/{density=4.0,width=${DisplayUtils.getScreenWidth()},height=${DisplayUtils.getScreenHeight()}};FBLC/en_US;FBCR/${""};FBMF/LGE;FBBD/lge;FBPN/com.instagram.android;FBDV/RS988;FBSV/6.0.1;FBLR/0;FBBK/1;FBCA/armeabi-v7a:armeabi;]"
+                    "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
                 )
                 put("Accept-Language", "en-US")
                 put("platform", "android")

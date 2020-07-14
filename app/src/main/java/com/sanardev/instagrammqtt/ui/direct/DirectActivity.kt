@@ -15,6 +15,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -301,6 +302,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onMessageResponseEvent(event: MessageResponseEvent) {
         if (event.action == "item_ack" && event.status == "ok" && event.payload.threadId == threadId) {
+            if(event.payload.clientContext == "reactions"){
+                viewModel.onReactionsResponse(event.payload)
+                return
+            }
             for (i in adapter.items.indices) {
                 val item = adapter.items[i]
                 if (item is Message && item.clientContext == event.payload.clientContext) {
@@ -671,6 +676,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         includeReaction.layoutReactionsParent.gravity = Gravity.RIGHT
                     } else {
                         includeReaction.layoutReactionsParent.gravity = Gravity.RIGHT
+//                        (includeReaction.layoutReactionsParent.layoutParams as LinearLayout.LayoutParams).apply {
+//                            leftMargin = resources.dpToPx(50f)
+//                        }
                     }
                     val likes = item.reactions.likes
                     includeReaction.layoutReactionsProfiles.removeAllViews()
@@ -751,6 +759,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             if (layoutMessage != null) {
                 layoutMessage.setOnClickListener(DoubleClick(object : DoubleClickListener {
                     override fun onDoubleClick(view: View?) {
+//                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
                         viewModel.sendReaction(item.itemId,threadId,item.clientContext)
                     }
 

@@ -9,6 +9,7 @@ import androidx.lifecycle.Transformations
 import com.sanardev.instagrammqtt.base.BaseViewModel
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
+import com.sanardev.instagrammqtt.datasource.model.Payload
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
@@ -249,6 +250,14 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
                         messageChangeLiveData.value = MessageGenerator.addLikeReactionToMessage(message,getUserProfile().pk!!,payload.timestamp.toLong(),payload.clientContext)
                     }
                 }
+            }
+        }
+    }
+
+    fun onReactionsResponse(payload: Payload){
+        for (message in messages){
+            if(message.itemId == payload.itemId){
+                messageChangeLiveData.value = MessageGenerator.addLikeReactionToMessage(message,getUserProfile().pk!!,payload.timestamp.toLong(),payload.clientContext)
             }
         }
     }

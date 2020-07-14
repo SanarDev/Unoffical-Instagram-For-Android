@@ -70,15 +70,13 @@
 
                 </LinearLayout>
             </LinearLayout>
-
-            <include
-                android:id="@+id/include_reaction"
-                layout="@layout/layout_reactions_like"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
         </LinearLayout>
-
+        <include
+            style="@style/LayoutIncludeReaction"
+            android:id="@+id/include_reaction"
+            layout="@layout/layout_reactions_like"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
 
     </LinearLayout>
 
