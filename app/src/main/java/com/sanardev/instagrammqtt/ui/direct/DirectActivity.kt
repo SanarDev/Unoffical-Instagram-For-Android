@@ -4,9 +4,12 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.text.Editable
+import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.Gravity
@@ -28,14 +31,14 @@ import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.base.BaseActivity
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.core.BaseAdapter
+import com.sanardev.instagrammqtt.customview.doubleclick.DoubleClick
+import com.sanardev.instagrammqtt.customview.doubleclick.DoubleClickListener
 import com.sanardev.instagrammqtt.databinding.*
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.*
-import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_MarkAsSeen
-import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_SendLike
-import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_SendMessage
+import com.sanardev.instagrammqtt.datasource.model.realtime.*
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.*
 import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
@@ -100,6 +103,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         EmojiManager.install(IosEmojiProvider())
         super.onCreate(savedInstanceState)
 
+        attachKeyboardListeners()
+
         threadId = intent.extras!!.getString("thread_id")!!
         profileImage = intent.extras!!.getString("profile_image")
         username = intent.extras!!.getString("username")
@@ -162,10 +167,24 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
         binding.btnLike.setOnClickListener {
             val clientContext = InstagramHashUtils.getClientContext()
-            RealTimeService.run(this,RealTime_SendLike(threadId,clientContext))
-            val message = MessageGenerator.like(adapter.user.pk!!,clientContext)
+            RealTimeService.run(this, RealTime_SendLike(threadId, clientContext))
+            val message = MessageGenerator.like(adapter.user.pk!!, clientContext)
             EventBus.getDefault().postSticky(MessageEvent(threadId, message))
         }
+
+        binding.edtTextChat.addTextChangedListener(object:TextWatcher{
+            override fun afterTextChanged(s: Editable?) {
+
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                RealTimeService.run(this@DirectActivity,RealTime_SendTypingState(threadId,s!!.isNotEmpty(),InstagramHashUtils.getClientContext()))
+            }
+        })
 
         viewModel.mutableLiveData.observe(this, Observer {
             if (it.status == Resource.Status.LOADING) {
@@ -178,7 +197,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     lastSeenAt =
                         viewModel.convertToStandardTimeStamp(thread!!.lastSeenAt[thread!!.users[0].pk.toString()]!!.timeStamp)
                 }
-                olderMessageExist = it . data !!. thread !!. oldestCursor != null
+                olderMessageExist = it.data!!.thread!!.oldestCursor != null
                 if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
                     adapter.items = it.data!!.thread!!.releasesMessage
                     adapter.notifyDataSetChanged()
@@ -227,6 +246,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         })
         initPlayer()
 
+    }
+
+    override fun onHideKeyboard() {
+        RealTimeService.run(this@DirectActivity,RealTime_SendTypingState(threadId,false,InstagramHashUtils.getClientContext()))
     }
 
     private fun initPlayer() {
@@ -653,7 +676,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
                         includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
                     } else {
-                        RealTimeService.run(this@DirectActivity,RealTime_MarkAsSeen(threadId,item.itemId))
+                        RealTimeService.run(
+                            this@DirectActivity,
+                            RealTime_MarkAsSeen(threadId, item.itemId)
+                        )
                         includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check)
                         includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
                     }
@@ -686,6 +712,23 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
             }
             if (layoutMessage != null) {
+                layoutMessage.setOnClickListener(DoubleClick(object : DoubleClickListener {
+                    override fun onDoubleClick(view: View?) {
+                        RealTimeService.run(
+                            this@DirectActivity,
+                            RealTime_SendReaction(
+                                item.itemId,
+                                "like",
+                                item.clientContext,
+                                threadId,
+                                "created"
+                            )
+                        )
+                    }
+
+                    override fun onSingleClick(view: View?) {
+                    }
+                }))
                 if (item.userId == user.pk) {
                     layoutMessage.background =
                         this@DirectActivity.getDrawable(R.drawable.bg_message)
@@ -1177,8 +1220,15 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
     fun onSendMessageClick(v: View) {
         val clientContext = InstagramHashUtils.getClientContext()
-        RealTimeService.run(this,RealTime_SendMessage(threadId,clientContext,binding.edtTextChat.text.toString()))
-        val message = MessageGenerator.text(binding.edtTextChat.text.toString(),adapter.user.pk!!,clientContext)
+        RealTimeService.run(
+            this,
+            RealTime_SendMessage(threadId, clientContext, binding.edtTextChat.text.toString())
+        )
+        val message = MessageGenerator.text(
+            binding.edtTextChat.text.toString(),
+            adapter.user.pk!!,
+            clientContext
+        )
         EventBus.getDefault().postSticky(MessageEvent(threadId, message))
         binding.edtTextChat.setText("")
     }

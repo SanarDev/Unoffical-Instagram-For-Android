@@ -8,6 +8,7 @@
         android:orientation="vertical">
 
         <LinearLayout
+            style="@style/LayoutMessage"
             android:id="@+id/layout_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

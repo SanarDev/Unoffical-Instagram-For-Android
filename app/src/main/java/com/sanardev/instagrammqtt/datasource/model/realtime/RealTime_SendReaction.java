@@ -47,6 +47,14 @@ public class RealTime_SendReaction extends RealTimeCommand implements Parcelable
         return RealTimeIntent.ACTION_SEND_REACTION;
     }
 
+    public RealTime_SendReaction(String itemId,String reactionType,String clientContext,String threadId,String reactionStatus){
+        this.itemId = itemId;
+        this.reactionStatus = reactionStatus;
+        this.reactionType = reactionType;
+        this.clientContext = clientContext;
+        this.threadId = threadId;
+    }
+
     private String itemId;
     private String reactionType;
     private String clientContext;

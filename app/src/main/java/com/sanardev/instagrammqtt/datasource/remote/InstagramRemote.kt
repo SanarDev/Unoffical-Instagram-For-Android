@@ -99,4 +99,6 @@ interface InstagramRemote {
     @GET("direct_v2/ranked_recipients/")
     fun searchRecipients(@HeaderMap header: Map<String, String>, @Query("mode") mode:String = "raven",@Query("show_threads")showThreads:Boolean=true,@Query("query")query:String):Call<InstagramRecipients>
 
+    @POST("direct_v2/threads/broadcast/reaction/")
+    fun sendReaction(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody)
 }
