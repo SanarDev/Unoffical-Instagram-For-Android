@@ -45,6 +45,7 @@ import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.utils.*
 import com.squareup.picasso.Picasso
+import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.EmojiPopup
 import com.vanniktech.emoji.ios.IosEmojiProvider
@@ -215,6 +216,17 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         viewModel.fileLiveData.observe(this, Observer {
 
 
+        })
+
+        viewModel.messageChangeLiveData.observe(this, Observer {
+            for(i in  adapter.items.indices){
+                val message = adapter.items[i]
+                if(message is Message){
+                    if(message.itemId == it.itemId){
+                        adapter.notifyItemChanged(i)
+                    }
+                }
+            }
         })
 
         binding.recyclerviewChats.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -660,6 +672,31 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     } else {
                         includeReaction.layoutReactionsParent.gravity = Gravity.RIGHT
                     }
+                    val likes = item.reactions.likes
+                    includeReaction.layoutReactionsProfiles.removeAllViews()
+                    for (i in likes.indices){
+                        if(i == 2){
+                            break
+                        }
+                        var profileUrl:String? = null
+                        if(likes[i].senderId == adapter.user.pk){
+                            profileUrl = adapter.user.profilePicUrl
+                        }else{
+                            for(user in thread!!.users){
+                                if(likes[i].senderId == user.pk){
+                                    profileUrl = user.profilePicUrl
+                                }
+                            }
+                        }
+                        if(profileUrl != null){
+                            val image = CircleImageView(this@DirectActivity)
+                            image.layoutParams = android.widget.LinearLayout.LayoutParams(resources.dpToPx(25f),resources.dpToPx(25f))
+                            image.setBackgroundResource(R.drawable.bg_stroke_circluar)
+                            Picasso.get().load(profileUrl).into(image)
+                            image.setPadding(includeReaction.imgHeart.paddingLeft,includeReaction.imgHeart.paddingTop,includeReaction.imgHeart.paddingRight,includeReaction.imgHeart.paddingBottom)
+                            includeReaction.layoutReactionsProfiles.addView(image)
+                        }
+                    }
                     includeReaction.layoutReactionsParent.visibility = View.VISIBLE
                 }
             }
@@ -714,16 +751,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             if (layoutMessage != null) {
                 layoutMessage.setOnClickListener(DoubleClick(object : DoubleClickListener {
                     override fun onDoubleClick(view: View?) {
-                        RealTimeService.run(
-                            this@DirectActivity,
-                            RealTime_SendReaction(
-                                item.itemId,
-                                "like",
-                                item.clientContext,
-                                threadId,
-                                "created"
-                            )
-                        )
+                        viewModel.sendReaction(item.itemId,threadId,item.clientContext)
                     }
 
                     override fun onSingleClick(view: View?) {

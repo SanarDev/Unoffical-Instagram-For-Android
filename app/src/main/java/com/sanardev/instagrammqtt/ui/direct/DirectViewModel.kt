@@ -14,6 +14,7 @@ import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.DisplayUtils
+import com.sanardev.instagrammqtt.utils.MessageGenerator
 import com.sanardev.instagrammqtt.utils.Resource
 import java.io.File
 import java.io.IOException
@@ -37,6 +38,8 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     val fileLiveData = MutableLiveData<File>()
     val mutableLiveData = MutableLiveData<Resource<InstagramChats>>()
     val mutableLiveDataAddMessage = MutableLiveData<Message>()
+    val messageChangeLiveData = MutableLiveData<Message>()
+
     private val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.SUCCESS) {
             messages.addAll(it.data!!.thread!!.messages)
@@ -235,6 +238,19 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         }
         messages.add(0,msg)
         mutableLiveDataAddMessage.postValue(msg)
+    }
+
+    fun sendReaction(itemId: String, threadId: String, clientContext: String) {
+        mUseCase.sendReaction(itemId = itemId,threadId = threadId,clientContext = clientContext).observeForever {
+            if(it.status == Resource.Status.SUCCESS){
+                val payload = it.data!!.payload
+                for (message in messages){
+                    if(message.itemId == payload.itemId){
+                        messageChangeLiveData.value = MessageGenerator.addLikeReactionToMessage(message,getUserProfile().pk!!,payload.timestamp.toLong(),payload.clientContext)
+                    }
+                }
+            }
+        }
     }
 
 

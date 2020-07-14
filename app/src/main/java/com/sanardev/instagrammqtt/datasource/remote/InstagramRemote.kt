@@ -1,6 +1,7 @@
 package com.sanardev.instagrammqtt.datasource.remote
 
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
+import com.sanardev.instagrammqtt.datasource.model.ResponseDirectAction
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
@@ -100,5 +101,5 @@ interface InstagramRemote {
     fun searchRecipients(@HeaderMap header: Map<String, String>, @Query("mode") mode:String = "raven",@Query("show_threads")showThreads:Boolean=true,@Query("query")query:String):Call<InstagramRecipients>
 
     @POST("direct_v2/threads/broadcast/reaction/")
-    fun sendReaction(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody)
+    fun sendReaction(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseDirectAction>
 }

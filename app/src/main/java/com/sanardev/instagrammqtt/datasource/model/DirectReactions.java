@@ -14,4 +14,19 @@ public class DirectReactions {
     @Expose
     private int likesCount;
 
+    public List<DirectLikeReactions> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(List<DirectLikeReactions> likes) {
+        this.likes = likes;
+    }
+
+    public int getLikesCount() {
+        return likesCount;
+    }
+
+    public void setLikesCount(int likesCount) {
+        this.likesCount = likesCount;
+    }
 }

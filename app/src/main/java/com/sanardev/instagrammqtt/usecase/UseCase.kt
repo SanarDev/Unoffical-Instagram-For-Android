@@ -11,10 +11,7 @@ import androidx.lifecycle.Transformations
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
-import com.sanardev.instagrammqtt.datasource.model.Cookie
-import com.sanardev.instagrammqtt.datasource.model.FbnsAuth
-import com.sanardev.instagrammqtt.datasource.model.NotificationContentJson
-import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
+import com.sanardev.instagrammqtt.datasource.model.*
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
@@ -153,6 +150,26 @@ class UseCase(
             headersGenerator = { getHeaders() })
     }
 
+    fun sendReaction(itemId:String,threadId:String,clientContext:String = InstagramHashUtils.getClientContext(),reactionType:String = "like",reactionStatus:String = "created"): MutableLiveData<Resource<ResponseDirectAction>> {
+        val liveData = MutableLiveData<Resource<ResponseDirectAction>>()
+        val cookie = StorageUtils.getCookie(application)
+        val data = HashMap<String,Any>().apply {
+            put("item_type","reaction")
+            put("reaction_type",reactionType)
+            put("action","send_item")
+            put("thread_ids","[$threadId]")
+            put("client_context",clientContext)
+            put("_csrftoken",cookie!!.csrftoken!!)
+            put("mutation_token",clientContext)
+            put("_uuid",cookie.adid)
+            put("node_type","item")
+            put("reaction_status",reactionStatus)
+            put("item_id",itemId)
+            put("device_id",cookie.deviceID)
+        }
+        mInstagramRepository.sendReaction(liveData,{getHeaders()},data,{t -> formUrlEncode(t)})
+        return liveData
+    }
 
     fun checkTwoFactorCode(
         responseLiveData: MediatorLiveData<Resource<InstagramLoginResult>>,

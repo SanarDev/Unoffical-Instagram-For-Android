@@ -12,15 +12,25 @@
             android:id="@+id/layout_reactions_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:background="@drawable/bg_stroke_circluar">
+            android:layoutDirection="ltr">
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <LinearLayout
+                android:id="@+id/layout_reactions_profiles"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
+                android:orientation="horizontal">
+
+            </LinearLayout>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/img_heart"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
                 android:tint="@color/red"
+                android:padding="3dp"
                 android:src="@drawable/ic_heart"/>
 
         </LinearLayout>

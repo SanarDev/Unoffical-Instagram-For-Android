@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.sanardev.instagrammqtt.datasource.local.MessageDataSource
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
+import com.sanardev.instagrammqtt.datasource.model.ResponseDirectAction
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
@@ -218,5 +219,16 @@ class InstagramRepository(
 
     }
 
+    fun sendReaction(
+        result: MutableLiveData<Resource<ResponseDirectAction>>,
+        headersGenerator: () -> Map<String, String>,
+        data: Map<*, *>,
+        encryptor: (Map<*, *>) -> okhttp3.RequestBody
+    ) {
+        NetworkCall<ResponseDirectAction>().makeCall(mInstagramRemote.sendReaction(headersGenerator.invoke(),encryptor.invoke(data))).observeForever {
+            result.value = it
+        }
+
+    }
 
 }
