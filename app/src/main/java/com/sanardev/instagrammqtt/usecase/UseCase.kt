@@ -1,6 +1,9 @@
 package com.sanardev.instagrammqtt.usecase
 
 import android.app.Application
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.util.Log
@@ -21,14 +24,15 @@ import com.sanardev.instagrammqtt.utils.*
 import okhttp3.Headers
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import retrofit2.http.Query
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStream
 import java.io.UnsupportedEncodingException
 import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.text.SimpleDateFormat
+import java.time.OffsetDateTime
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -134,7 +138,7 @@ class UseCase(
                 result,
                 instagramLoginPayload,
                 { getHeaders() },
-                { t -> getPayload(t) }
+                { t -> getSignaturePayload(t) }
             )
         }
     }
@@ -150,24 +154,34 @@ class UseCase(
             headersGenerator = { getHeaders() })
     }
 
-    fun sendReaction(itemId:String,threadId:String,clientContext:String = InstagramHashUtils.getClientContext(),reactionType:String = "like",reactionStatus:String = "created"): MutableLiveData<Resource<ResponseDirectAction>> {
+    fun sendReaction(
+        itemId: String,
+        threadId: String,
+        clientContext: String = InstagramHashUtils.getClientContext(),
+        reactionType: String = "like",
+        reactionStatus: String = "created"
+    ): MutableLiveData<Resource<ResponseDirectAction>> {
         val liveData = MutableLiveData<Resource<ResponseDirectAction>>()
         val cookie = StorageUtils.getCookie(application)
-        val data = HashMap<String,Any>().apply {
-            put("item_type","reaction")
-            put("reaction_type",reactionType)
-            put("action","send_item")
-            put("thread_ids","[$threadId]")
-            put("client_context",clientContext)
-            put("_csrftoken",cookie!!.csrftoken!!)
-            put("mutation_token",clientContext)
-            put("_uuid",cookie.adid)
-            put("node_type","item")
-            put("reaction_status",reactionStatus)
-            put("item_id",itemId)
-            put("device_id",cookie.deviceID)
+        val data = HashMap<String, Any>().apply {
+            put("item_type", "reaction")
+            put("reaction_type", reactionType)
+            put("action", "send_item")
+            put("thread_ids", "[$threadId]")
+            put("client_context", clientContext)
+            put("_csrftoken", cookie!!.csrftoken!!)
+            put("mutation_token", clientContext)
+            put("_uuid", cookie.adid)
+            put("node_type", "item")
+            put("reaction_status", reactionStatus)
+            put("item_id", itemId)
+            put("device_id", cookie.deviceID)
         }
-        mInstagramRepository.sendReaction(liveData,{getHeaders()},data,{t -> formUrlEncode(t)})
+        mInstagramRepository.sendReaction(
+            liveData,
+            { getHeaders() },
+            data,
+            { t -> formUrlEncode(t) })
         return liveData
     }
 
@@ -187,11 +201,11 @@ class UseCase(
             responseLiveData,
             instagramLoginTwoFactorPayload,
             { getHeaders() },
-            { t -> getPayload(t) }
+            { t -> getSignaturePayload(t) }
         )
     }
 
-    private fun getPayload(obj: Any): RequestBody {
+    private fun getSignaturePayload(obj: Any): RequestBody {
         val payload = gson.toJson(obj)
         val signatureBody = InstagramHashUtils.generateSignature(payload)
         return RequestBody.create(
@@ -257,22 +271,139 @@ class UseCase(
         mInstagramRepository.getDirectInbox(responseLiveData) { getHeaders() }
     }
 
+    fun sendMediaVoice(
+        threadId: String,
+        userId: String,
+        filePath: String,
+        type: String
+    ): MutableLiveData<Resource<ResponseBody>> {
+
+        val liveDataGetUrl = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataUploadMedia = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataUploadFinish = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataResult = MutableLiveData<Resource<ResponseBody>>()
+
+        val uploadId = InstagramHashUtils.getClientContext()
+        var hash = File(filePath).name.hashCode()
+        hash = if(hash > 0) -hash else hash
+        val uploadName = "${uploadId}_0_$hash"
+        val byteLength = File(filePath).readBytes().size
+        val mediaDuration = getMediaDuration(filePath)
+        val cookie = StorageUtils.getCookie(application)!!
+        val user = StorageUtils.getUserData(application)!!
+
+        mInstagramRepository.getMediaUploadUrl(
+            liveDataGetUrl,
+            { getUploadMediaUrlHeader(userId, mediaDuration, uploadId) },
+            uploadName
+        )
+        liveDataGetUrl.observeForever {
+            if (it.status == Resource.Status.SUCCESS) {
+                mInstagramRepository.uploadMedia(
+                    liveDataUploadMedia,
+                    uploadName,
+                    {
+                        getUploadMediaHeader(
+                            byteLength,
+                            userId,
+                            mediaDuration,
+                            uploadId,
+                            uploadName,
+                            type
+                        )
+                    },
+                    getMediaRequestBody(filePath)
+                )
+            }
+        }
+        liveDataUploadMedia.observeForever {
+            if(it.status == Resource.Status.SUCCESS){
+                val finishUploadData = HashMap<String,Any>()
+                finishUploadData["timezone_offset"] = TimeUtils.getTimeZoneOffset()
+                finishUploadData["_csrftoken"] = cookie.csrftoken!!
+                finishUploadData["source_type"] ="4"
+                finishUploadData["_uid"] = user.pk.toString()
+                finishUploadData["device_id"] = cookie.deviceID
+                finishUploadData["_uuid"] = cookie.adid
+                finishUploadData["upload_id"] = uploadId
+                finishUploadData["device"] = HashMap<String,String>().apply {
+                    put("manufacturer",android.os.Build.MANUFACTURER)
+                    put("model",android.os.Build.MODEL)
+                    put("android_release", Build.VERSION.RELEASE)
+                    put("android_version", Build.VERSION.SDK_INT.toString())
+                }
+                mInstagramRepository.uploadFinish(liveDataUploadFinish,{getUploadFinishHeader()},getSignaturePayload(finishUploadData))
+            }
+        }
+
+        liveDataUploadFinish.observeForever {
+            if(it.status == Resource.Status.SUCCESS){
+                val clientContext = InstagramHashUtils.getClientContext()
+                val sendMediaVoiceData = HashMap<String,String>()
+                sendMediaVoiceData["action"] = "send_item"
+                sendMediaVoiceData["client_context"] = clientContext
+                sendMediaVoiceData["_csrftoken"] = cookie.csrftoken!!
+                sendMediaVoiceData["device_id"] = cookie.deviceID
+                sendMediaVoiceData["mutation_token"] = clientContext
+                sendMediaVoiceData["_uuid"] = cookie.adid
+                sendMediaVoiceData["waveform"] = "[]"
+                sendMediaVoiceData["waveform_sampling_frequency_hz"] = "10"
+                sendMediaVoiceData["upload_id"] = uploadId
+                sendMediaVoiceData["thread_ids"] = "[$threadId]"
+                mInstagramRepository.sendMediaVoice(liveDataResult,{getUploadFinishHeader()},formUrlEncode(sendMediaVoiceData))
+            }
+        }
+        return liveDataResult
+    }
+
+
+    private fun getMediaRequestBody(filePath: String): RequestBody {
+        val `in`: InputStream = FileInputStream(File(filePath))
+        val buf = ByteArray(`in`.available())
+        while (`in`.read(buf) != -1);
+
+        return RequestBody.create(
+            okhttp3.MediaType.parse("application/octet-stream"),
+            buf
+        )
+    }
+
+    fun getMediaDuration(filePath: String): Int {
+        val uri: Uri = Uri.parse(filePath)
+        val mmr = MediaMetadataRetriever()
+        mmr.setDataSource(application, uri)
+        val durationStr: String =
+            mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+        val millSecond = durationStr.toInt()
+        return millSecond
+    }
+
     fun getLastLoginData(): InstagramLoginPayload? {
         return StorageUtils.getLastLoginData(application)
     }
 
-    fun markAsSeen(threadId: String,itemId:String,clientContext: String = InstagramHashUtils.getClientContext()): MutableLiveData<Resource<ResponseDirectAction>> {
+    fun markAsSeen(
+        threadId: String,
+        itemId: String,
+        clientContext: String = InstagramHashUtils.getClientContext()
+    ): MutableLiveData<Resource<ResponseDirectAction>> {
         val result = MutableLiveData<Resource<ResponseDirectAction>>()
         val cookie = StorageUtils.getCookie(application)
-        val data = HashMap<String,Any>().apply {
-            put("thread_id",threadId)
-            put("action","mark_seen")
-            put("client_context",clientContext)
-            put("_csrftoken",cookie!!.csrftoken!!)
-            put("_uuid",cookie!!.adid)
-            put("offline_threading_id",clientContext)
+        val data = HashMap<String, Any>().apply {
+            put("thread_id", threadId)
+            put("action", "mark_seen")
+            put("client_context", clientContext)
+            put("_csrftoken", cookie!!.csrftoken!!)
+            put("_uuid", cookie!!.adid)
+            put("offline_threading_id", clientContext)
         }
-        mInstagramRepository.markAsSeen(result,{getHeaders()},threadId,itemId,data,{t -> formUrlEncode(t)})
+        mInstagramRepository.markAsSeen(
+            result,
+            { getHeaders() },
+            threadId,
+            itemId,
+            data,
+            { t -> formUrlEncode(t) })
         return result
     }
 
@@ -331,6 +462,78 @@ class UseCase(
         map[InstagramConstants.X_FB_HTTP_ENGINE] = "Liger"
         map[InstagramConstants.CONNECTION] = "keep-alive"
         return map
+    }
+
+
+    fun getUploadMediaUrlHeader(
+        userId: String,
+        uploadMediaDuration: Int,
+        uploadId: String
+    ): Map<String, String> {
+        val map = HashMap<String, String>()
+        map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
+            gson.toJson(HashMap<String, Any>().apply {
+                put("xsharing_user_ids", userId)
+                put("is_direct_voice", true.toString())
+                put("upload_media_duration_ms", uploadMediaDuration)
+                put("upload_id", uploadId)
+                val retryContext = HashMap<String, Any>()
+                retryContext["num_reupload"] = 0
+                retryContext["num_step_auto_retry"] = 0
+                retryContext["num_step_manual_retry"] = 0
+                put("retry_context", retryContext)
+                put("media_type", 11)
+            })
+        map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
+        val header = getHeaders()
+        header.putAll(map)
+        return header
+    }
+
+    fun getUploadMediaHeader(
+        byteLength: Int,
+        userId: String,
+        uploadMediaDuration: Int,
+        uploadId: String,
+        uploadName: String,
+        type: String
+    ): Map<String, String> {
+        val map = HashMap<String, String>()
+        map[InstagramConstants.X_ENTITY_LENGTH] = byteLength.toString()
+        map[InstagramConstants.X_ENTITY_NAME] = uploadName
+        map[InstagramConstants.X_ENTITY_TYPE] = type
+        map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
+        map[InstagramConstants.OFFSET] = 0.toString()
+        map[InstagramConstants.ACCEPT_ENCODING] = "gzip"
+        map[InstagramConstants.CONTENT_TYPE] = "application/octet-stream"
+        map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
+            gson.toJson(HashMap<String, Any>().apply {
+                put("xsharing_user_ids", userId)
+                put("is_direct_voice", true.toString())
+                put("upload_media_duration_ms", uploadMediaDuration)
+                put("upload_id", uploadId)
+                put("retry_context", getRetryContext())
+                put("media_type", 11)
+            })
+        val header = getHeaders()
+        header.putAll(map)
+        return header
+    }
+
+
+    private fun getRetryContext(): HashMap<String, Any> {
+        val retryContext = HashMap<String, Any>()
+        retryContext["num_reupload"] = 0
+        retryContext["num_step_auto_retry"] = 0
+        retryContext["num_step_manual_retry"] = 0
+        return retryContext
+    }
+    private fun getUploadFinishHeader(): Map<String, String> {
+        val map = HashMap<String, String>()
+        map["retry_context"] = gson.toJson(getRetryContext())
+        val header = getHeaders()
+        header.putAll(map)
+        return header
     }
 
     fun resetUserData() {

@@ -44,6 +44,12 @@ public class RealTime_SendMedia extends RealTimeCommand implements Parcelable {
         return RealTimeIntent.ACTION_SEND_MEDIA;
     }
 
+    public RealTime_SendMedia(String text,String mediaId,String threadId,String clientContext){
+        this.text = text;
+        this.mediaId = mediaId;
+        this.threadId = threadId;
+        this.clientContext = clientContext;
+    }
     private String text;
     private String mediaId;
     private String threadId;

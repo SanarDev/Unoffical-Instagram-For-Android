@@ -5,6 +5,7 @@ import com.sanardev.instagrammqtt.datasource.model.Device
 class InstagramConstants {
 
     companion object {
+
         /**
          * Base API URL
          *
@@ -41,6 +42,14 @@ class InstagramConstants {
         const val CONNECTION = "Connection"
         const val X_MID = "x-mid"
 
+        const val X_INSTAGRAM_RUPLOAD_PARAMS = "X-Instagram-Rupload-Params"
+        const val X_FB_VIDEO_WATERFALL_ID = "X_FB_VIDEO_WATERFALL_ID"
+        const val X_ENTITY_LENGTH = "X-Entity-Length"
+        const val X_ENTITY_NAME = "X-Entity-Name"
+        const val X_ENTITY_TYPE = "X-Entity-Type"
+        const val OFFSET = "Offset"
+        const val ACCEPT_ENCODING = "Accept-Encoding"
+
         const val DEVICE_TYPE = "device_type"
         const val IS_MAIN_PUSH_CHANNEL = "is_main_push_channel"
         const val PHONE_ID = "phone_id"
@@ -55,7 +64,8 @@ class InstagramConstants {
         /**
          * API v1 URL
          */
-        const val API_URL = BASE_API_URL + "api/v1/"
+        const val API_VERSION = "api/v1/"
+        const val API_URL = BASE_API_URL + API_VERSION
         /**
          * API Key (extracted from the apk)
          */

@@ -34,6 +34,12 @@ public class MediaShare {
     @SerializedName("image_versions2")
     @Expose
     private ImageVersions2 imageVersions2;
+    @SerializedName("carousel_media_count")
+    @Expose
+    private int carouselMediaCount;
+    @SerializedName("carousel_media")
+    @Expose
+    private List<CarouselMedia> carouselMedias;
     @SerializedName("original_width")
     @Expose
     private Long originalWidth;
@@ -115,6 +121,33 @@ public class MediaShare {
     @SerializedName("organic_tracking_token")
     @Expose
     private String organicTrackingToken;
+    @SerializedName("carousel_share_child_media_id")
+    @Expose
+    private String carouselShareChildMediaId;
+
+    public int getCarouselMediaCount() {
+        return carouselMediaCount;
+    }
+
+    public void setCarouselMediaCount(int carouselMediaCount) {
+        this.carouselMediaCount = carouselMediaCount;
+    }
+
+    public List<CarouselMedia> getCarouselMedia() {
+        return carouselMedias;
+    }
+
+    public void setCarouselMedia(List<CarouselMedia> carouselMedia) {
+        this.carouselMedias = carouselMedia;
+    }
+
+    public String getCarouselShareChildMediaId() {
+        return carouselShareChildMediaId;
+    }
+
+    public void setCarouselShareChildMediaId(String carouselShareChildMediaId) {
+        this.carouselShareChildMediaId = carouselShareChildMediaId;
+    }
 
     public Long getTakenAt() {
         return takenAt;

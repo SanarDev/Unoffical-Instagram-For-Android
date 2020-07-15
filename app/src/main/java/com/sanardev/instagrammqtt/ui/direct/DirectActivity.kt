@@ -135,20 +135,20 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         binding.recordView.setCustomSounds(0, 0, 0);
         binding.recordView.setOnRecordListener(object : OnRecordListener {
             override fun onFinish(recordTime: Long) {
-                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto)
+                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
                 gone(binding.recordView)
                 viewModel.stopRecording()
             }
 
             override fun onLessThanSecond() {
-                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto)
+                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
                 gone(binding.recordView)
                 viewModel.cancelAudioRecording()
             }
 
             override fun onCancel() {
                 vibration(50)
-                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto)
+                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
                 gone(binding.recordView)
                 viewModel.cancelAudioRecording()
             }
@@ -156,7 +156,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             override fun onStart() {
                 vibration(100)
                 visible(binding.recordView)
-                gone(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto)
+                gone(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
                 viewModel.startAudioRecording()
             }
         })
@@ -235,6 +235,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     }
                 }
             }
+        })
+
+        viewModel.sendMediaLiveData.observe(this, Observer {
         })
 
         binding.recyclerviewChats.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -772,7 +775,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             if (layoutParent != null) {
                 if (item.userId == user.pk) {
                     layoutParent.gravity = Gravity.RIGHT
-                    if (item.itemType == InstagramConstants.MessageType.REEL_SHARE.type) {
+                    if (item.itemType == InstagramConstants.MessageType.REEL_SHARE.type ||
+                        item.itemType == InstagramConstants.MessageType.MEDIA_SHARE.type) {
                         layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
                     }
                 } else {
@@ -1053,7 +1057,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     val id = item.mediaShare.id
                     if (media.videoVersions != null) {
                         dataBinding.layoutVideoView.visibility = View.VISIBLE
-                        val videoSrc = item.mediaShare.videoVersions[1].url
+                        val videoSrc = item.mediaShare.videoVersions[0].url
                         if (players[id] == null) {
                             players[id] = SimpleExoPlayer.Builder(this@DirectActivity).build()
                         }
@@ -1098,8 +1102,21 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
                         dataBinding.layoutImageView.layoutParams.apply {
                             val sizeArray = viewModel.getStandardWidthAndHeight(
-                                resources.dpToPx(media.imageVersions2.candidates[1].width.toFloat()),
-                                resources.dpToPx(media.imageVersions2.candidates[1].height.toFloat())
+                                resources.dpToPx(image.candidates[0].width.toFloat()),
+                                resources.dpToPx(image.candidates[0].height.toFloat())
+                            )
+                            width = sizeArray[0]
+                            height = sizeArray[1]
+                        }
+                    } else if (media.carouselMedia != null){
+                        val image = media.carouselMedia[0].imageVersions2
+                        dataBinding.layoutImageView.visibility = View.VISIBLE
+                        Picasso.get().load(image.candidates[0].url)
+                            .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
+                        dataBinding.layoutImageView.layoutParams.apply {
+                            val sizeArray = viewModel.getStandardWidthAndHeight(
+                                resources.dpToPx(image.candidates[0].width.toFloat()),
+                                resources.dpToPx(image.candidates[0].height.toFloat())
                             )
                             width = sizeArray[0]
                             height = sizeArray[1]

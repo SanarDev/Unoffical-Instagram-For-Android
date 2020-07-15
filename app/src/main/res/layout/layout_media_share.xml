@@ -91,6 +91,22 @@
                         </RelativeLayout>
 
                         <RelativeLayout
+                            android:id="@+id/layout_carousel_media"
+                            android:layout_width="240dp"
+                            android:layout_height="240dp"
+                            android:visibility="gone">
+
+                            <androidx.viewpager.widget.ViewPager
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"/>
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/carousel_media"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent" />
+
+                        </RelativeLayout>
+
+                        <RelativeLayout
                             android:id="@+id/layout_video_view"
                             android:layout_width="240dp"
                             android:layout_height="240dp"

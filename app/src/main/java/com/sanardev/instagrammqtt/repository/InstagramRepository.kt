@@ -4,7 +4,6 @@ import android.os.Handler
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.Transformations
 import com.sanardev.instagrammqtt.datasource.local.MessageDataSource
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.ResponseDirectAction
@@ -16,9 +15,6 @@ import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramRecipients
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.datasource.remote.NetworkCall
-import com.sanardev.instagrammqtt.datasource.remote.requests.LoginRequest
-import com.sanardev.instagrammqtt.datasource.remote.requests.TokenRequest
-import com.sanardev.instagrammqtt.datasource.remote.response.LoginResponse
 import com.sanardev.instagrammqtt.utils.Resource
 import okhttp3.*
 import retrofit2.Call
@@ -243,6 +239,34 @@ class InstagramRepository(
                    data: Map<*, *>,
                    encryptor: (Map<*, *>) -> okhttp3.RequestBody){
         NetworkCall<ResponseDirectAction>().makeCall(mInstagramRemote.markAsSeen(headersGenerator.invoke(),threadId,itemId,encryptor.invoke(data))).observeForever {
+            result.value = it
+        }
+    }
+
+    fun getMediaUploadUrl(result:MutableLiveData<Resource<ResponseBody>>,headersGenerator: () -> Map<String, String>,uploadName:String){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.getMediaUploadUrl(headersGenerator.invoke(),uploadName)).observeForever {
+            result.value = it
+        }
+    }
+
+    fun uploadMedia(
+        liveDataUploadMedia: MutableLiveData<Resource<ResponseBody>>,
+        uploadName: String,
+        header: () -> Map<String, String>,
+        mediaRequestBody: RequestBody
+    ) {
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.uploadMedia(header.invoke(),uploadName,mediaRequestBody)).observeForever {
+            liveDataUploadMedia.value = it
+        }
+    }
+    fun uploadFinish(result:MutableLiveData<Resource<ResponseBody>>, header: () -> Map<String, String>, requestBody: RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.uploadFinish(header.invoke(),requestBody)).observeForever {
+            result.value = it
+        }
+    }
+
+    fun sendMediaVoice(result:MutableLiveData<Resource<ResponseBody>>, header: () -> Map<String, String>, requestBody: RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.sendMediaVoice(header.invoke(),requestBody)).observeForever {
             result.value = it
         }
     }

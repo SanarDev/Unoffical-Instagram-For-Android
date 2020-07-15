@@ -7,6 +7,7 @@ import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.datasource.remote.HeaderInterceptor
 import com.sanardev.instagrammqtt.usecase.UseCase
+import com.sanardev.instagrammqtt.utils.DisplayUtils
 import dagger.Module
 import dagger.Provides
 import okhttp3.OkHttpClient
@@ -37,7 +38,7 @@ class ApiModule {
 
         val httpClient = OkHttpClient.Builder().apply {
             //            cache(cache)
-            addNetworkInterceptor(HeaderInterceptor("Instagram 94.0.0.22.116 Android (24/7.0; 480dpi; 1080x1794; HUAWEI/HONOR; PRA-LA1; HWPRA-H; hi6250; en_US; 155374104)"))
+            addNetworkInterceptor(HeaderInterceptor("Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"))
             readTimeout(20, TimeUnit.SECONDS)
             connectTimeout(20, TimeUnit.SECONDS)
         }
@@ -50,7 +51,7 @@ class ApiModule {
         return Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create(gson))
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .baseUrl(InstagramConstants.API_URL)
+            .baseUrl(InstagramConstants.BASE_API_URL)
             .client(okHttpClient)
             .build()
     }

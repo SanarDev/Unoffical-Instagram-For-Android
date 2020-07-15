@@ -41,6 +41,7 @@
     <style name="LayoutMessage">
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
+        <item name="android:layoutDirection">ltr</item>
     </style>
     <style name="LayoutIncludeReaction">
         <item name="android:layout_marginLeft">50dp</item>

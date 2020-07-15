@@ -3,7 +3,7 @@ package com.sanardev.instagrammqtt.utils
 import com.sanardev.instagrammqtt.datasource.model.APIErrors
 import okhttp3.Headers
 
-class Resource<T> private constructor(val status: Resource.Status, var data: T?,var headers: Headers?=null, val apiError:APIErrors<T>?) {
+class Resource<T> private constructor(var status: Resource.Status, var data: T?, var headers: Headers?=null, val apiError:APIErrors<T>?) {
     enum class Status {
         SUCCESS, ERROR, LOADING
     }
