@@ -82,6 +82,16 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 
         val instagramDirectObserver = InstagramDirectObserver()
         viewModel.mutableLiveData.observe(this, instagramDirectObserver)
+        viewModel.threadNewMessageLiveData.observe(this, Observer {
+            for(index in adapter.items.indices){
+                val thread = adapter.items[index]
+                if(thread.threadId == it.first){
+                    thread.messages.add(0,it.second)
+                    adapter.notifyItemMoved(index,0)
+                }
+            }
+        })
+
         user = viewModel.getUser()
         binding.txtToolbarTitle.text = getString(R.string.app_name)
 
@@ -398,6 +408,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     }
                 })
             }
+            Log.i(InstagramConstants.DEBUG_TAG,item.threadId)
             return item
         }
 

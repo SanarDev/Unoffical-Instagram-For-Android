@@ -8,13 +8,13 @@ class Resource<T> private constructor(val status: Resource.Status, var data: T?,
         SUCCESS, ERROR, LOADING
     }
     companion object {
-        fun <T> success(data: T?,headers: Headers?=null): Resource<T> {
+        fun <T> success(data: T?=null,headers: Headers?=null): Resource<T> {
             return Resource(Status.SUCCESS, data, headers,null)
         }
-        fun <T> error(apiError: APIErrors<T>?): Resource<T> {
+        fun <T> error(apiError: APIErrors<T>?=null): Resource<T> {
             return Resource(Status.ERROR, null,null, apiError)
         }
-        fun <T> loading(data: T?): Resource<T> {
+        fun <T> loading(data: T?=null): Resource<T> {
             return Resource(Status.LOADING, data, null,null)
         }
     }

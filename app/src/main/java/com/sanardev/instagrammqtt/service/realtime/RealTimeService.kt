@@ -393,6 +393,15 @@ class RealTimeService : Service() {
         )
         if (realtimeSubDirectDataWrapper.path.startsWith("/direct_v2/threads/")) {
             val param = realtimeSubDirectDataWrapper.path.split("/")
+//            val r = Random().nextInt(5)
+//            val threadId = when(r){
+//                0 -> "340282366841710300949128307061304472486"
+//                1 -> "340282366841710300949128150005151891234"
+//                2 -> "340282366841710300949128416459859281266"
+//                3 -> "340282366841710300949128222260910610954"
+//                4 -> "340282366841710300949128140613727009858"
+//                else -> "340282366841710300949128150005151891234"
+//            }//param[3]
             val threadId = param[3]
             val event = param[4]
             when (event) {

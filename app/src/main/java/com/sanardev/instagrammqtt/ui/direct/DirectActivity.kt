@@ -77,7 +77,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     private var currentPlayerId: String? = null
     private var isLoading = false
     private var olderMessageExist = true
-    private var lastSeenAt: Long = 0
+//    private var lastSeenAt: Long = 0
 
     companion object {
         fun open(context: Context, bundle: Bundle) {
@@ -174,7 +174,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             EventBus.getDefault().postSticky(MessageEvent(threadId, message))
         }
 
-        binding.edtTextChat.addTextChangedListener(object:TextWatcher{
+        binding.edtTextChat.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
 
             }
@@ -184,7 +184,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                RealTimeService.run(this@DirectActivity,RealTime_SendTypingState(threadId,s!!.isNotEmpty(),InstagramHashUtils.getClientContext()))
+                RealTimeService.run(
+                    this@DirectActivity,
+                    RealTime_SendTypingState(
+                        threadId,
+                        s!!.isNotEmpty(),
+                        InstagramHashUtils.getClientContext()
+                    )
+                )
             }
         })
 
@@ -195,10 +202,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             binding.progressbar.visibility = View.GONE
             if (it.status == Resource.Status.SUCCESS) {
                 thread = it.data!!.thread
-                if (thread!!.lastSeenAt[thread!!.users[0].pk.toString()] != null) {
-                    lastSeenAt =
-                        viewModel.convertToStandardTimeStamp(thread!!.lastSeenAt[thread!!.users[0].pk.toString()]!!.timeStamp)
-                }
+//                if (thread!!.lastSeenAt[thread!!.users[0].pk.toString()] != null) {
+//                    lastSeenAt =
+//                        viewModel.convertToStandardTimeStamp(thread!!.lastSeenAt[thread!!.users[0].pk.toString()]!!.timeStamp)
+//                }
                 olderMessageExist = it.data!!.thread!!.oldestCursor != null
                 if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
                     adapter.items = it.data!!.thread!!.releasesMessage
@@ -220,10 +227,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         })
 
         viewModel.messageChangeLiveData.observe(this, Observer {
-            for(i in  adapter.items.indices){
+            for (i in adapter.items.indices) {
                 val message = adapter.items[i]
-                if(message is Message){
-                    if(message.itemId == it.itemId){
+                if (message is Message) {
+                    if (message.itemId == it.itemId) {
                         adapter.notifyItemChanged(i)
                     }
                 }
@@ -262,7 +269,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     }
 
     override fun onHideKeyboard() {
-        RealTimeService.run(this@DirectActivity,RealTime_SendTypingState(threadId,false,InstagramHashUtils.getClientContext()))
+        RealTimeService.run(
+            this@DirectActivity,
+            RealTime_SendTypingState(threadId, false, InstagramHashUtils.getClientContext())
+        )
     }
 
     private fun initPlayer() {
@@ -302,7 +312,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onMessageResponseEvent(event: MessageResponseEvent) {
         if (event.action == "item_ack" && event.status == "ok" && event.payload.threadId == threadId) {
-            if(event.payload.clientContext == "reactions"){
+            if (event.payload.clientContext == "reactions") {
                 viewModel.onReactionsResponse(event.payload)
                 return
             }
@@ -320,7 +330,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onUpdateSeenEvent(event: UpdateSeenEvent) {
         if (event.threadId == threadId) {
-            lastSeenAt = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
+            for (item in thread!!.lastSeenAt.entries) {
+                item.value.timeStamp = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
+            }
             adapter.notifyDataSetChanged()
         }
     }
@@ -682,26 +694,34 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     }
                     val likes = item.reactions.likes
                     includeReaction.layoutReactionsProfiles.removeAllViews()
-                    for (i in likes.indices){
-                        if(i == 2){
+                    for (i in likes.indices) {
+                        if (i == 2) {
                             break
                         }
-                        var profileUrl:String? = null
-                        if(likes[i].senderId == adapter.user.pk){
+                        var profileUrl: String? = null
+                        if (likes[i].senderId == adapter.user.pk) {
                             profileUrl = adapter.user.profilePicUrl
-                        }else{
-                            for(user in thread!!.users){
-                                if(likes[i].senderId == user.pk){
+                        } else {
+                            for (user in thread!!.users) {
+                                if (likes[i].senderId == user.pk) {
                                     profileUrl = user.profilePicUrl
                                 }
                             }
                         }
-                        if(profileUrl != null){
+                        if (profileUrl != null) {
                             val image = CircleImageView(this@DirectActivity)
-                            image.layoutParams = android.widget.LinearLayout.LayoutParams(resources.dpToPx(25f),resources.dpToPx(25f))
+                            image.layoutParams = android.widget.LinearLayout.LayoutParams(
+                                resources.dpToPx(25f),
+                                resources.dpToPx(25f)
+                            )
                             image.setBackgroundResource(R.drawable.bg_stroke_circluar)
                             Picasso.get().load(profileUrl).into(image)
-                            image.setPadding(includeReaction.imgHeart.paddingLeft,includeReaction.imgHeart.paddingTop,includeReaction.imgHeart.paddingRight,includeReaction.imgHeart.paddingBottom)
+                            image.setPadding(
+                                includeReaction.imgHeart.paddingLeft,
+                                includeReaction.imgHeart.paddingTop,
+                                includeReaction.imgHeart.paddingRight,
+                                includeReaction.imgHeart.paddingBottom
+                            )
                             includeReaction.layoutReactionsProfiles.addView(image)
                         }
                     }
@@ -717,10 +737,22 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     includeTime.imgMessageStatus.setImageResource(R.drawable.ic_time)
                     includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
                 } else {
+                    var lastSeenAt: Long = 0
+                    for (ls in thread!!.lastSeenAt.entries) {
+                        if (ls.key.toLong() != item.userId) {
+                            // for example last seen in group is laster seen
+                            viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
+                                if (it > lastSeenAt) {
+                                    lastSeenAt = it
+                                }
+                            }
+                        }
+                    }
                     if (item.timestamp <= lastSeenAt) {
                         includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
                         includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
                     } else {
+//                        viewModel.markAsSeen(threadId, item.itemId)
                         RealTimeService.run(
                             this@DirectActivity,
                             RealTime_MarkAsSeen(threadId, item.itemId)
@@ -760,7 +792,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 layoutMessage.setOnClickListener(DoubleClick(object : DoubleClickListener {
                     override fun onDoubleClick(view: View?) {
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
-                        viewModel.sendReaction(item.itemId,threadId,item.clientContext)
+                        viewModel.sendReaction(item.itemId, threadId, item.clientContext)
                     }
 
                     override fun onSingleClick(view: View?) {
@@ -891,15 +923,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             gone(dataBinding.imgStory, dataBinding.imgProfile)
                         }
 
-                        if (item.timestamp <= lastSeenAt) {
-                            dataBinding.includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
-                            dataBinding.includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
-                        } else {
-
-                            dataBinding.includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check)
-                            dataBinding.includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
-                        }
-
                         if (item.userId == user.pk) {
                             dataBinding.includeTime.imgMessageStatus.visibility = View.VISIBLE
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
@@ -939,16 +962,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         } else {
                             dataBinding.txtMessage.setEmojiSizeRes(R.dimen.emoji_size_normal)
                             dataBinding.txtMessage.text = item.reelShare.text
-                        }
-
-
-                        if (item.timestamp <= lastSeenAt) {
-                            dataBinding.includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
-                            dataBinding.includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
-                        } else {
-
-                            dataBinding.includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check)
-                            dataBinding.includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
                         }
 
                         if (item.userId == user.pk) {

@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.base.BaseViewModel
+import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
@@ -37,6 +38,8 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
     private val result = MediatorLiveData<Resource<InstagramDirects>>()
     private val resultPresence = MediatorLiveData<Resource<PresenceResponse>>()
     val mutableLiveData = MutableLiveData<Resource<InstagramDirects>>()
+    val threadNewMessageLiveData = MutableLiveData<Pair<String, Message>>()
+
     val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.ERROR) {
             if (it.apiError?.data != null) {
@@ -46,7 +49,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                 it.data = instagramInboxResult
             }
         } else if (it.status == Resource.Status.SUCCESS) {
-            if(directs.isEmpty()){
+            if (directs.isEmpty()) {
                 mUseCase.getDirectPresence(resultPresence)
             }
             directs.addAll(it.data!!.inbox.threads)
@@ -92,8 +95,11 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                         isMessageExist = true
                     }
                 }
-                if (!isMessageExist)
+                if (!isMessageExist) {
                     thread.messages.add(0, event.message)
+                    directs.remove(thread)
+                    directs.add(0,thread)
+                }
             }
         }
         mutableLiveData.value = Resource.success(instagramDirect)
@@ -140,7 +146,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                                 thread.lastActivityAt =
                                     (item.value["last_activity_at_ms"] as Double).toLong()
                                 break
-                            }catch (e:Exception){
+                            } catch (e: Exception) {
 
                             }
                         }
@@ -151,19 +157,22 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
         }
     }
 
-    fun onSearch(s: CharSequence, start: Int, before: Int, count: Int){
-        if(directs.isEmpty()){
+    fun onSearch(s: CharSequence, start: Int, before: Int, count: Int) {
+        if (directs.isEmpty()) {
             return
         }
-        if(s.isBlank()){
+        if (s.isBlank()) {
             searchedValue.clear()
             val instagramDirect = mutableLiveData.value!!.data!!
             instagramDirect.inbox.threads = directs
             mutableLiveData.value = Resource.success(instagramDirect)
-        }else{
+        } else {
             searchedValue.clear()
-            for (thread in directs){
-                if(!thread.isGroup && (thread.users[0].fullName.contains(s) || thread.users[0].username.contains(s))){
+            for (thread in directs) {
+                if (!thread.isGroup && (thread.users[0].fullName.contains(s) || thread.users[0].username.contains(
+                        s
+                    ))
+                ) {
                     searchedValue.add(thread)
                 }
             }
@@ -176,11 +185,15 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
     fun onUpdateSeenEvent(event: UpdateSeenEvent) {
         val instagramDirect = mutableLiveData.value!!.data!!
         val threads = instagramDirect.inbox.threads
-        for(thread in threads){
-            if(thread.threadId == event.threadId){
-                thread.lastSeenAt[thread.users[0].pk.toString()]!!.timeStamp = event.seen.timeStamp
-                thread.lastSeenAt[thread.users[0].pk.toString()]!!.itemId = event.seen.itemId
+        for (thread in threads) {
+            if (thread.threadId == event.threadId) {
+                for (item in thread.lastSeenAt.entries) {
+                    item.value.timeStamp =
+                        event.seen.timeStamp
+                    item.value.itemId = event.seen.itemId
+                }
             }
         }
+        mutableLiveData.value = Resource.success(instagramDirect)
     }
 }

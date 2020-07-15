@@ -12,26 +12,7 @@ import retrofit2.Call
 import retrofit2.http.*
 
 interface InstagramRemote {
-    /*
-    @Field("username")
-                  username :String,
-                  @Field("phone_id")
-                  phone_id :String,
-                  @Field("_csrftoken")
-                  _csrftoken :String,
-                  @Field("guid")
-                  guid :String,
-                  @Field("adid")
-                  adid :String,
-                  @Field("device_id")
-                  device_id :String,
-                  @Field("password")
-                  password :String,
-                  @Field("country_codes")
-                  country_codes :String = "country_codes=[{\"country_code\":\"1\",\"source\":[\"default\",\"sim\"]}]",
-                  @Field("login_attempt_account")
-                  login_attempt_account :Int = 0
-     */
+
     @POST("accounts/login/")
     fun login(
         @HeaderMap header: Map<String, String>,
@@ -51,7 +32,7 @@ interface InstagramRemote {
     fun getDirectIndex(
         @HeaderMap header: Map<String, String>,
         @Query("visual_message_return_type") visualMessageReturnType: String = "unseen",
-        @Query("thread_message_limit") threadMessageLimit: Int = 1,
+        @Query("thread_message_limit") threadMessageLimit: Int = 10,
         @Query("persistentBadging") persistentBadging: Boolean = true,
         @Query("limit") limit: Int = 50
     ): Call<InstagramDirects>
@@ -102,4 +83,7 @@ interface InstagramRemote {
 
     @POST("direct_v2/threads/broadcast/reaction/")
     fun sendReaction(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseDirectAction>
+
+    @POST("direct_v2/threads/{thread_id}/items/{item_id}/seen/")
+    fun markAsSeen(@HeaderMap header: Map<String, String>,@Path("thread_id") threadId: String,@Path("item_id") itemId:String,@Body requestBody: RequestBody):Call<ResponseDirectAction>
 }

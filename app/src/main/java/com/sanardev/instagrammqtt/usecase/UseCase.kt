@@ -261,6 +261,21 @@ class UseCase(
         return StorageUtils.getLastLoginData(application)
     }
 
+    fun markAsSeen(threadId: String,itemId:String,clientContext: String = InstagramHashUtils.getClientContext()): MutableLiveData<Resource<ResponseDirectAction>> {
+        val result = MutableLiveData<Resource<ResponseDirectAction>>()
+        val cookie = StorageUtils.getCookie(application)
+        val data = HashMap<String,Any>().apply {
+            put("thread_id",threadId)
+            put("action","mark_seen")
+            put("client_context",clientContext)
+            put("_csrftoken",cookie!!.csrftoken!!)
+            put("_uuid",cookie!!.adid)
+            put("offline_threading_id",clientContext)
+        }
+        mInstagramRepository.markAsSeen(result,{getHeaders()},threadId,itemId,data,{t -> formUrlEncode(t)})
+        return result
+    }
+
     fun getCookie(): Cookie {
         val cookie = StorageUtils.getCookie(application)
         if (cookie != null) {

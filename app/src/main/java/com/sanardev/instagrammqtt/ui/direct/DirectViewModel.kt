@@ -244,12 +244,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     fun sendReaction(itemId: String, threadId: String, clientContext: String) {
         mUseCase.sendReaction(itemId = itemId,threadId = threadId,clientContext = clientContext).observeForever {
             if(it.status == Resource.Status.SUCCESS){
-                val payload = it.data!!.payload
-                for (message in messages){
-                    if(message.itemId == payload.itemId){
-                        messageChangeLiveData.value = MessageGenerator.addLikeReactionToMessage(message,getUserProfile().pk!!,payload.timestamp.toLong(),payload.clientContext)
-                    }
-                }
+                onReactionsResponse(it.data!!.payload)
             }
         }
     }
@@ -259,6 +254,12 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
             if(message.itemId == payload.itemId){
                 messageChangeLiveData.value = MessageGenerator.addLikeReactionToMessage(message,getUserProfile().pk!!,payload.timestamp.toLong(),payload.clientContext)
             }
+        }
+    }
+
+    fun markAsSeen(threadId: String,itemId: String){
+        mUseCase.markAsSeen(threadId,itemId).observeForever {
+
         }
     }
 
