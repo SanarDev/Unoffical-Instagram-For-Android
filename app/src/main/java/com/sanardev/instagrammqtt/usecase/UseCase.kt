@@ -275,13 +275,14 @@ class UseCase(
         threadId: String,
         userId: String,
         filePath: String,
-        type: String
-    ): MutableLiveData<Resource<ResponseBody>> {
+        type: String,
+        clientContext: String
+    ): MutableLiveData<Resource<InstagramSendItemResponse>> {
 
         val liveDataGetUrl = MutableLiveData<Resource<ResponseBody>>()
         val liveDataUploadMedia = MutableLiveData<Resource<ResponseBody>>()
         val liveDataUploadFinish = MutableLiveData<Resource<ResponseBody>>()
-        val liveDataResult = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataResult = MutableLiveData<Resource<InstagramSendItemResponse>>()
 
         val uploadId = InstagramHashUtils.getClientContext()
         var hash = File(filePath).name.hashCode()
@@ -338,7 +339,6 @@ class UseCase(
 
         liveDataUploadFinish.observeForever {
             if(it.status == Resource.Status.SUCCESS){
-                val clientContext = InstagramHashUtils.getClientContext()
                 val sendMediaVoiceData = HashMap<String,String>()
                 sendMediaVoiceData["action"] = "send_item"
                 sendMediaVoiceData["client_context"] = clientContext

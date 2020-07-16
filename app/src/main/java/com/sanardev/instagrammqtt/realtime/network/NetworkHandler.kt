@@ -59,7 +59,7 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                 Log.i(InstagramConstants.DEBUG_TAG, "RealTime ConnAck");
                 ctx!!.pipeline().remove("encoder")
                 realTimeService.onConnAck()
-                sendForegroundState(ctx!!,true,true,90)
+                sendForegroundState(ctx!!,false,false,90)
             }
             MqttMessageType.PUBACK -> {
                 Log.i(

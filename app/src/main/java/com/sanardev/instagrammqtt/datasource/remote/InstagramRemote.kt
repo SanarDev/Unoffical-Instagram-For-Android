@@ -3,10 +3,7 @@ package com.sanardev.instagrammqtt.datasource.remote
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.ResponseDirectAction
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramRecipients
+import com.sanardev.instagrammqtt.datasource.model.response.*
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -102,5 +99,5 @@ interface InstagramRemote {
     fun uploadFinish(@HeaderMap header: Map<String, String>,@Body requestBody: RequestBody):Call<ResponseBody>
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/share_voice/")
-    fun sendMediaVoice(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
+    fun sendMediaVoice(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<InstagramSendItemResponse>
 }

@@ -42,6 +42,8 @@
         app:scrubber_enabled_size="1dp"
         app:scrubber_dragged_size="1dp"
         app:ad_marker_width="1dp"
+        android:clickable="false"
+        android:focusable="false"
         android:layout_weight="1" />
 
 </LinearLayout>

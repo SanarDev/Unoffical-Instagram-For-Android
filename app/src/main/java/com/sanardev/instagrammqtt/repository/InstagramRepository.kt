@@ -9,10 +9,7 @@ import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.ResponseDirectAction
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
-import com.sanardev.instagrammqtt.datasource.model.response.InstagramRecipients
+import com.sanardev.instagrammqtt.datasource.model.response.*
 import com.sanardev.instagrammqtt.datasource.remote.InstagramRemote
 import com.sanardev.instagrammqtt.datasource.remote.NetworkCall
 import com.sanardev.instagrammqtt.utils.Resource
@@ -265,8 +262,8 @@ class InstagramRepository(
         }
     }
 
-    fun sendMediaVoice(result:MutableLiveData<Resource<ResponseBody>>, header: () -> Map<String, String>, requestBody: RequestBody){
-        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.sendMediaVoice(header.invoke(),requestBody)).observeForever {
+    fun sendMediaVoice(result:MutableLiveData<Resource<InstagramSendItemResponse>>, header: () -> Map<String, String>, requestBody: RequestBody){
+        NetworkCall<InstagramSendItemResponse>().makeCall(mInstagramRemote.sendMediaVoice(header.invoke(),requestBody)).observeForever {
             result.value = it
         }
     }

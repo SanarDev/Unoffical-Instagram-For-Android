@@ -4,17 +4,15 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
-import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,6 +24,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.sanardev.instagrammqtt.R
@@ -42,7 +41,6 @@ import com.sanardev.instagrammqtt.datasource.model.event.*
 import com.sanardev.instagrammqtt.datasource.model.realtime.*
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.*
-import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.utils.*
 import com.squareup.picasso.Picasso
@@ -50,12 +48,13 @@ import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.EmojiPopup
 import com.vanniktech.emoji.ios.IosEmojiProvider
+import kotlinx.android.synthetic.main.media_share_exo_controller.view.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import run.tripa.android.extensions.dpToPx
 import run.tripa.android.extensions.vibration
-import java.util.*
+import java.io.File
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -68,7 +67,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     private var username: String? = null
     private var profileImage: String? = null
 
-    private lateinit var dataSourceFactory: DataSource.Factory
+    private lateinit var httpDataSourceFactory: DataSource.Factory
+    private lateinit var dataSourceFactory: DefaultDataSourceFactory
     private val mRxAudioPlayer = RxAudioPlayer.getInstance()
     private lateinit var mPlayarManager: PlayerManager
     private lateinit var adapter: ChatsAdapter
@@ -135,20 +135,20 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         binding.recordView.setCustomSounds(0, 0, 0);
         binding.recordView.setOnRecordListener(object : OnRecordListener {
             override fun onFinish(recordTime: Long) {
-                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
+                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
                 gone(binding.recordView)
                 viewModel.stopRecording()
             }
 
             override fun onLessThanSecond() {
-                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
+                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
                 gone(binding.recordView)
                 viewModel.cancelAudioRecording()
             }
 
             override fun onCancel() {
                 vibration(50)
-                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
+                visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
                 gone(binding.recordView)
                 viewModel.cancelAudioRecording()
             }
@@ -156,7 +156,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             override fun onStart() {
                 vibration(100)
                 visible(binding.recordView)
-                gone(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto,binding.btnLike)
+                gone(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
                 viewModel.startAudioRecording()
             }
         })
@@ -237,6 +237,17 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             }
         })
 
+        viewModel.messageChangeWithClientContextLiveData.observe(this, Observer {
+            for (i in adapter.items.indices) {
+                val message = adapter.items[i]
+                if (message is Message) {
+                    if (message.clientContext == it.clientContext) {
+                        adapter.notifyItemChanged(i)
+                    }
+                }
+            }
+        })
+
         viewModel.sendMediaLiveData.observe(this, Observer {
         })
 
@@ -279,8 +290,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     }
 
     private fun initPlayer() {
-        dataSourceFactory =
+        httpDataSourceFactory =
             DefaultHttpDataSourceFactory(Util.getUserAgent(this, "Instagram"))
+        dataSourceFactory =
+            DefaultDataSourceFactory(this@DirectActivity, Util.getUserAgent(this, "Instagram"))
     }
 
     fun onEmojiClick(v: View) {
@@ -392,7 +405,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             if (item.timestamp.toString().length == 16) {
                 item.timestamp = item.timestamp / 1000
             }
-
 
             val includeTime = when (item.itemType) {
                 InstagramConstants.MessageType.TEXT.type -> {
@@ -776,7 +788,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 if (item.userId == user.pk) {
                     layoutParent.gravity = Gravity.RIGHT
                     if (item.itemType == InstagramConstants.MessageType.REEL_SHARE.type ||
-                        item.itemType == InstagramConstants.MessageType.MEDIA_SHARE.type) {
+                        item.itemType == InstagramConstants.MessageType.MEDIA_SHARE.type
+                    ) {
                         layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
                     }
                 } else {
@@ -1012,14 +1025,33 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
                 InstagramConstants.MessageType.VOICE_MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutVoiceMediaBinding
-                    val audioSrc = item.voiceMediaData.voiceMedia.audio.audioSrc
-                    val id = item.voiceMediaData.voiceMedia.id
+                    val mediaSource: MediaSource
+                    val id:String
+                    val uri :Uri
+                    if (item.voiceMediaData.isLocal) {
+                        id = item.itemId
+                        uri = Uri.fromFile(File(item.voiceMediaData.localFilePath))
+                        mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                            .createMediaSource(uri)
+                    } else {
+                        id = item.voiceMediaData.voiceMedia.id
+                        uri = Uri.parse(item.voiceMediaData.voiceMedia.audio.audioSrc)
+                        mediaSource = ProgressiveMediaSource.Factory(httpDataSourceFactory)
+                            .createMediaSource(uri)
+                        (dataBinding.layoutVoice.layoutParams as LinearLayout.LayoutParams).apply{
+                            width = viewModel.getStandardVoiceWitdh(resources,item.voiceMediaData.voiceMedia.audio.duration)
+                        }
+                    }
+
                     if (players[id] == null) {
                         players[id] = SimpleExoPlayer.Builder(this@DirectActivity).build()
                     }
-                    val mediaSource: MediaSource =
-                        ProgressiveMediaSource.Factory(dataSourceFactory)
-                            .createMediaSource(Uri.parse(audioSrc))
+
+                    dataBinding.videoView.exo_progress.setOnTouchListener(object:View.OnTouchListener{
+                        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                            return true
+                        }
+                    })
                     players[id]!!.prepare(mediaSource)
                     dataBinding.videoView.player = players[id]
                     players[id]!!.addListener(object : Player.EventListener {
@@ -1062,7 +1094,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             players[id] = SimpleExoPlayer.Builder(this@DirectActivity).build()
                         }
                         val mediaSource: MediaSource =
-                            ProgressiveMediaSource.Factory(dataSourceFactory)
+                            ProgressiveMediaSource.Factory(httpDataSourceFactory)
                                 .createMediaSource(Uri.parse(videoSrc))
                         players[id]!!.prepare(mediaSource)
                         players[id]!!.playWhenReady = true
@@ -1108,7 +1140,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             width = sizeArray[0]
                             height = sizeArray[1]
                         }
-                    } else if (media.carouselMedia != null){
+                    } else if (media.carouselMedia != null) {
                         val image = media.carouselMedia[0].imageVersions2
                         dataBinding.layoutImageView.visibility = View.VISIBLE
                         Picasso.get().load(image.candidates[0].url)

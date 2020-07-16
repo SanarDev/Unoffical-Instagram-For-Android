@@ -3,6 +3,7 @@ package com.sanardev.instagrammqtt.utils
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.DirectLikeReactions
 import com.sanardev.instagrammqtt.datasource.model.DirectReactions
+import com.sanardev.instagrammqtt.datasource.model.MediaData
 import com.sanardev.instagrammqtt.datasource.model.Message
 import java.util.*
 
@@ -32,6 +33,21 @@ class MessageGenerator {
                 this.clientContext = clientContext
             }
 
+        fun voiceMedia(userId: Long,clientContext: String,localFilePath:String): Message =
+            Message().apply {
+                this.text = ""
+                this.timestamp = System.currentTimeMillis()
+                this.itemType = InstagramConstants.MessageType.VOICE_MEDIA.type
+                this.userId = userId
+                this.itemId = UUID.randomUUID().toString()
+                this.isDelivered = false
+                this.clientContext = clientContext
+                this.voiceMediaData = MediaData().apply {
+                    this.isLocal = true
+                    this.localFilePath = localFilePath
+                }
+            }
+
         fun addLikeReactionToMessage(
             message: Message,
             userId: Long,
@@ -42,9 +58,9 @@ class MessageGenerator {
                 message.reactions = DirectReactions().apply {
                     likes = ArrayList<DirectLikeReactions>().toMutableList()
                 }
-            }else{
-                for(like in message.reactions.likes){
-                    if(like.senderId == userId){
+            } else {
+                for (like in message.reactions.likes) {
+                    if (like.senderId == userId) {
                         return message
                     }
                 }
@@ -52,11 +68,13 @@ class MessageGenerator {
             message.reactions.apply {
                 likesCount += 1
                 likes.apply {
-                    add(DirectLikeReactions(userId,timestamp,clientContext))
+                    add(DirectLikeReactions(userId, timestamp, clientContext))
                 }
             }
 
             return message
         }
+
+
     }
 }

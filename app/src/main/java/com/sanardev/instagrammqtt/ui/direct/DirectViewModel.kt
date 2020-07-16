@@ -1,6 +1,7 @@
 package com.sanardev.instagrammqtt.ui.direct
 
 import android.app.Application
+import android.content.res.Resources
 import android.media.MediaRecorder
 import androidx.databinding.ObservableField
 import androidx.lifecycle.MediatorLiveData
@@ -16,8 +17,10 @@ import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.DisplayUtils
+import com.sanardev.instagrammqtt.utils.InstagramHashUtils
 import com.sanardev.instagrammqtt.utils.MessageGenerator
 import com.sanardev.instagrammqtt.utils.Resource
+import run.tripa.android.extensions.dpToPx
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -36,17 +39,20 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
 
     private val messages = ArrayList<Message>().toMutableList()
     private var threadId: String = ""
+    private var userId:Long = 0
 
     private val result = MediatorLiveData<Resource<InstagramChats>>()
     val fileLiveData = MutableLiveData<File>()
     val mutableLiveData = MutableLiveData<Resource<InstagramChats>>()
     val mutableLiveDataAddMessage = MutableLiveData<Message>()
     val messageChangeLiveData = MutableLiveData<Message>()
+    val messageChangeWithClientContextLiveData = MutableLiveData<Message>()
     val sendMediaLiveData = MutableLiveData<String>()
 
     private val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.SUCCESS) {
             threadId = it.data!!.thread!!.threadId
+            userId = it!!.data!!.thread!!.viewerId
             messages.addAll(it.data!!.thread!!.messages)
             it!!.data!!.thread!!.releasesMessage = releaseMessages(messages)
         }
@@ -147,9 +153,9 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     }
 
     fun cancelAudioRecording() {
+        stopRecording()
         File(currentVoiceFileName).delete()
         currentVoiceFileName = null
-        stopRecording()
     }
 
     fun startAudioRecording() {
@@ -180,16 +186,25 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     fun stopRecording() {
         mediaRecorder.stop()
         mediaRecorder.release()
-        if (currentVoiceFileName != null) {
+        if (File(currentVoiceFileName!!).exists()) {
+            val clCotext = InstagramHashUtils.getClientContext()
+            val message = MessageGenerator.voiceMedia(userId,clCotext,currentVoiceFileName!!)
+            mutableLiveDataAddMessage.value = message
             val users = mutableLiveData.value!!.data!!.thread!!.users
             mUseCase.sendMediaVoice(
                 threadId,
                 getUsersPk(users),
                 currentVoiceFileName!!,
-                "audio/mp4"
+                "audio/mp4",
+                clCotext
             ).observeForever {
                 if (it.status == Resource.Status.SUCCESS) {
-
+                    messageChangeWithClientContextLiveData.value = message.apply {
+                        isDelivered = true
+                        itemId = it.data!!.messageMetaDatas[0].itemId
+                        timestamp = it.data!!.messageMetaDatas[0].timestamp.toLong()
+                    }
+                    messages.add(0,message)
                 }
             }
         }
@@ -303,6 +318,14 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         mUseCase.markAsSeen(threadId, itemId).observeForever {
 
         }
+    }
+
+    fun getStandardVoiceWitdh(resources: Resources,duration: Long): Int {
+        val maxDuration = 60000
+        val maxWidth = (DisplayUtils.getScreenWidth() * 0.2).toInt()
+        val plus = (DisplayUtils.getScreenWidth() * 0.4).toInt()
+        val standardWidth = ((duration * maxWidth) / maxDuration).toFloat()
+        return resources.dpToPx(standardWidth) + plus
     }
 
 

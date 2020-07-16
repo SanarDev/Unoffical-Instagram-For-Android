@@ -1,5 +1,8 @@
 package com.sanardev.instagrammqtt.datasource.model;
 
+import androidx.room.Ignore;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -25,6 +28,26 @@ public class MediaData {
     @SerializedName("reply_expiring_at_us")
     @Expose
     private Object replyExpiringAtUs;
+    @JsonIgnore
+    private boolean isLocal=false;
+    @JsonIgnore
+    private String localFilePath;
+
+    public boolean isLocal() {
+        return isLocal;
+    }
+
+    public void setLocal(boolean local) {
+        isLocal = local;
+    }
+
+    public String getLocalFilePath() {
+        return localFilePath;
+    }
+
+    public void setLocalFilePath(String localFilePath) {
+        this.localFilePath = localFilePath;
+    }
 
     public Object getReplyExpiringAtUs() {
         return replyExpiringAtUs;
