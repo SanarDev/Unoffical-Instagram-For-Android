@@ -13,13 +13,8 @@ import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.ParsedMessage
 import com.sanardev.instagrammqtt.datasource.model.Seen
-import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
-import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
-import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
-import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
-import com.sanardev.instagrammqtt.datasource.model.event.MessageResponseEvent
+import com.sanardev.instagrammqtt.datasource.model.event.*
 import com.sanardev.instagrammqtt.datasource.model.realtime.*
-import com.sanardev.instagrammqtt.datasource.model.subscribers.GraphQLSubBaseOptions
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsConnectPacket
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
 import com.sanardev.instagrammqtt.fbns.packethelper.MQTToTConnectionData
@@ -31,6 +26,7 @@ import com.sanardev.instagrammqtt.realtime.subcribers.GraphQLSubscriptions
 import com.sanardev.instagrammqtt.realtime.subcribers.SkywalkerSubscriptions
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.DisplayUtils
+import com.sanardev.instagrammqtt.utils.NetworkUtils
 import com.sanardev.instagrammqtt.utils.ZlibUtis
 import dagger.android.AndroidInjection
 import io.netty.bootstrap.Bootstrap
@@ -70,6 +66,7 @@ class RealTimeService : Service() {
     private var seqID: Long = 0
     private var snapShotAt: Long = 0
     private var directCommands: DirectCommands? = null
+    private var newMessageList = ArrayList<MessageEvent>().toMutableList()
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -128,9 +125,13 @@ class RealTimeService : Service() {
 
         when (intent.action) {
             RealTimeIntent.ACTION_CONNECT_SESSION -> {
-                if (mChannel != null) {
+                if (mChannel != null && mChannel!!.isActive) {
                     return super.onStartCommand(intent, flags, startId)
                 }
+                if(NetworkUtils.getConnectionType(applicationContext) == NetworkUtils.NetworkType.NONE){
+                    return super.onStartCommand(intent, flags, startId)
+                }
+                EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTING))
                 val data = intent.extras!!.getParcelable<RealTime_StartService>("data")!!
                 connect(data.seqId,data.snapShotAt)
             }
@@ -227,12 +228,12 @@ class RealTimeService : Service() {
                 put("X-IG-Capabilities", InstagramConstants.DEVICE_CAPABILITIES)
                 put(
                     "everclear_subscriptions", "{" +
-                            "\"async_ads_subscribe\":${GraphQLSubscriptions.QueryIDs.asyncAdSub}"+
-                            "\"inapp_notification_subscribe_default\":\"17899377895239777\"," +
+//                            "\"async_ads_subscribe\":${GraphQLSubscriptions.QueryIDs.asyncAdSub}"+
+//                            "\"inapp_notification_subscribe_default\":\"17899377895239777\"," +
                             "\"inapp_notification_subscribe_comment\":\"17899377895239777\"," +
                             "\"inapp_notification_subscribe_comment_mention_and_reply\":\"17899377895239777\"," +
                             "\"video_call_participant_state_delivery\":\"17977239895057311\"," +
-                            "\"business_import_page_media_delivery_subscribe\":\"17940467278199720\""+
+//                            "\"business_import_page_media_delivery_subscribe\":\"17940467278199720\""+
                             "\"presence_subscribe\":\"17846944882223835\"" +
                             '}'
                 )
@@ -406,14 +407,13 @@ class RealTimeService : Service() {
             val event = param[4]
             when (event) {
                 InstagramConstants.RealTimeEvent.NEW_MESSAGE.id -> {
-                    EventBus.getDefault().postSticky(
-                        MessageEvent(
-                            threadId, mGson.fromJson(
-                                realtimeSubDirectDataWrapper.value,
-                                Message::class.java
-                            )
-                        )
-                    )
+                    val msg = MessageEvent(
+                        threadId,mGson.fromJson(
+                        realtimeSubDirectDataWrapper.value,
+                        Message::class.java
+                    ))
+                    newMessageList.add(msg)
+                    EventBus.getDefault().postSticky(newMessageList)
                 }
 
                 InstagramConstants.RealTimeEvent.ACTIVITY_INDICATOR_ID.id -> {
@@ -453,7 +453,7 @@ class RealTimeService : Service() {
     }
 
     fun onSendMessageResponse(json: String) {
-        val messageResponseEvent = mGson.fromJson(json, MessageResponseEvent::class.java)
+        val messageResponseEvent = mGson.fromJson(json, MessageResponse::class.java)
         EventBus.getDefault().post(messageResponseEvent)
     }
 

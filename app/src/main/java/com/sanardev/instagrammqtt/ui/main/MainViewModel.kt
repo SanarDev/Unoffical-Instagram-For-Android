@@ -72,14 +72,6 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
         mUseCase.getDirectInbox(result)
     }
 
-    fun convertTimeStampToData(lastActivityAt: Long): String {
-        if (lastActivityAt.toString().length == 16) {
-            return mUseCase.getDifferentTimeString(lastActivityAt / 1000, false)
-        } else {
-            return mUseCase.getDifferentTimeString(lastActivityAt, false)
-        }
-    }
-
     fun getUser(): InstagramLoggedUser {
         return mUseCase.getUserData()!!
     }
@@ -87,7 +79,8 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
     fun onMessageReceive(event: MessageEvent) {
         val instagramDirect = result.value!!.data
         val threads = instagramDirect!!.inbox.threads
-        for (thread in threads) {
+        for (index in threads.indices) {
+            val thread = threads[index]
             if (thread.threadId == event.threadId) {
                 var isMessageExist = false
                 for (message in thread.messages) {
@@ -97,7 +90,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                 }
                 if (!isMessageExist) {
                     thread.messages.add(0, event.message)
-                    directs.remove(thread)
+                    directs.removeAt(index)
                     directs.add(0,thread)
                 }
             }
@@ -155,6 +148,10 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                 mutableLiveData.value = Resource.success(direct)
             }
         }
+    }
+    fun reloadDirects(){
+        directs.clear()
+        getDirects()
     }
 
     fun onSearch(s: CharSequence, start: Int, before: Int, count: Int) {

@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.sanardev.instagrammqtt.di.DaggerViewModelFactory
 import com.sanardev.instagrammqtt.di.ViewModelKey
 import com.sanardev.instagrammqtt.ui.direct.DirectViewModel
+import com.sanardev.instagrammqtt.ui.fullscreen.FullScreenViewModel
 import com.sanardev.instagrammqtt.ui.login.LoginViewModel
 import com.sanardev.instagrammqtt.ui.main.MainViewModel
+import com.sanardev.instagrammqtt.ui.playvideo.PlayVideoViewModel
 import com.sanardev.instagrammqtt.ui.startmessage.StartMessageViewModel
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorActivity
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorViewModel
@@ -43,5 +45,15 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(StartMessageViewModel::class)
     abstract fun startMessageViewModel(startMessageViewModel: StartMessageViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(FullScreenViewModel::class)
+    abstract fun fullScreenViewModel(fullScreenViewModel: FullScreenViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(PlayVideoViewModel::class)
+    abstract fun playVideoViewModel(playVideoViewModel: PlayVideoViewModel):ViewModel
 
 }

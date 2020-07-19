@@ -1,10 +1,8 @@
 package com.sanardev.instagrammqtt.utils
 
+import android.content.Context
 import com.sanardev.instagrammqtt.constants.InstagramConstants
-import com.sanardev.instagrammqtt.datasource.model.DirectLikeReactions
-import com.sanardev.instagrammqtt.datasource.model.DirectReactions
-import com.sanardev.instagrammqtt.datasource.model.MediaData
-import com.sanardev.instagrammqtt.datasource.model.Message
+import com.sanardev.instagrammqtt.datasource.model.*
 import java.util.*
 
 class MessageGenerator {
@@ -33,7 +31,7 @@ class MessageGenerator {
                 this.clientContext = clientContext
             }
 
-        fun voiceMedia(userId: Long,clientContext: String,localFilePath:String): Message =
+        fun voiceMedia(context:Context,userId: Long,clientContext: String,localFilePath:String): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -45,6 +43,38 @@ class MessageGenerator {
                 this.voiceMediaData = MediaData().apply {
                     this.isLocal = true
                     this.localFilePath = localFilePath
+                    this.localDuration = MediaUtils.getMediaDuration(context,localFilePath)
+                }
+            }
+
+        fun imageMedia(userId: Long,clientContext: String,localFilePath:String): Message =
+            Message().apply {
+                this.text = ""
+                this.timestamp = System.currentTimeMillis()
+                this.itemType = InstagramConstants.MessageType.MEDIA.type
+                this.userId = userId
+                this.itemId = UUID.randomUUID().toString()
+                this.isDelivered = false
+                this.clientContext = clientContext
+                this.media = Media().apply {
+                    this.isLocal = true
+                    this.localFilePath = localFilePath
+                    this.mediaType = 1
+                }
+            }
+        fun videoMedia(userId: Long,clientContext: String,localFilePath:String): Message =
+            Message().apply {
+                this.text = ""
+                this.timestamp = System.currentTimeMillis()
+                this.itemType = InstagramConstants.MessageType.MEDIA.type
+                this.userId = userId
+                this.itemId = UUID.randomUUID().toString()
+                this.isDelivered = false
+                this.clientContext = clientContext
+                this.media = Media().apply {
+                    this.isLocal = true
+                    this.localFilePath = localFilePath
+                    this.mediaType = 2
                 }
             }
 

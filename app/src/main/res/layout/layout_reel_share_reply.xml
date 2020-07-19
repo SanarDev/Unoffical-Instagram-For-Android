@@ -48,15 +48,15 @@
                         android:layout_marginTop="10dp"
                         android:orientation="horizontal">
 
-                        <View
-                            android:layout_width="2dp"
-                            android:layout_height="match_parent"
-                            android:background="@color/gray" />
-
-                        <androidx.appcompat.widget.AppCompatImageView
+                        <com.makeramen.roundedimageview.RoundedImageView
                             android:id="@+id/img_story"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:adjustViewBounds="true"
+                            android:scaleType="fitCenter"
+                            app:riv_corner_radius="20dip"
+                            app:riv_mutate_background="true"
+                            tools:src="@mipmap/img_story_text" />
 
                     </LinearLayout>
 

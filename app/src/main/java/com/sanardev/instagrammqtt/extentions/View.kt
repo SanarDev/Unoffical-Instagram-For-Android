@@ -69,20 +69,27 @@ fun TextView.stripUnderlines() {
     this.text = s
 }
 
+fun TextView.setTextLinkHTML(
+    context: Context,
+    html: String,
+    haveUnderlineForLink: Boolean = false
+) {
+    val htmlText = html.toLowerCase().replace("\n","<br/>").replace(
+        "(?:(?:https?|ftp):\\/\\/)?[\\w/\\-?=%.]+\\.[\\w/\\-?=%.]+".toRegex(),
+        "<a href=\"$0\">$0</a>"
+    );
+    setTextHTML(context,htmlText,haveUnderlineForLink)
+}
 fun TextView.setTextHTML(
     context: Context,
     html: String,
     haveUnderlineForLink: Boolean = false
 ) {
-    val htmlText = html.replace("\n","<br/>").replace(
-        "(?:(?:https?|ftp):\\/\\/)?[\\w/\\-?=%.]+\\.[\\w/\\-?=%.]+".toRegex(),
-        "<a href=\"$0\">$0</a>"
-    );
     val sequence =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY)
+            Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
         } else {
-            Html.fromHtml(htmlText)
+            Html.fromHtml(html)
         }
     val strBuilder = SpannableStringBuilder(sequence)
     val urls =

@@ -122,20 +122,6 @@
                                 app:repeat_toggle_modes="all"
                                 app:show_timeout="0" />
 
-
-                            <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/btn_replay"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true"
-                                android:layout_alignParentBottom="true"
-                                android:layout_margin="10dp"
-                                android:background="@drawable/bg_circluar"
-                                android:padding="5dp"
-                                android:src="@drawable/ic_replay"
-                                android:tint="@color/white" />
-
-
                             <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/img_volume"
                                 android:layout_width="wrap_content"
@@ -188,32 +174,27 @@
                     android:orientation="vertical">
 
                     <androidx.appcompat.widget.AppCompatImageButton
+                        style="@style/MessageOptionButton"
+                        android:id="@+id/btn_replay"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:background="@drawable/bg_circluar"
-                        android:padding="7dp"
-                        android:src="@drawable/ic_replay"
-                        android:tint="@color/white" />
+                        android:src="@drawable/ic_replay"/>
 
                     <androidx.appcompat.widget.AppCompatImageButton
+                        style="@style/MessageOptionButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:background="@drawable/bg_circluar"
-                        android:padding="7dp"
-                        android:src="@drawable/ic_download"
-                        android:tint="@color/white" />
+                        android:src="@drawable/ic_download"/>
 
 
                     <androidx.appcompat.widget.AppCompatImageButton
+                        style="@style/MessageOptionButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:background="@drawable/bg_circluar"
-                        android:padding="7dp"
-                        android:src="@drawable/ic_share"
-                        android:tint="@color/white" />
+                        android:src="@drawable/ic_forward"/>
 
                 </LinearLayout>
             </LinearLayout>

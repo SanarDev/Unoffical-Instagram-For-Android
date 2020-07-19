@@ -17,6 +17,8 @@ import android.widget.LinearLayout
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.devlomi.record_view.OnRecordListener
 import com.github.piasy.rxandroidaudio.RxAudioPlayer
 import com.google.android.exoplayer2.Player
@@ -42,8 +44,10 @@ import com.sanardev.instagrammqtt.datasource.model.realtime.*
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.*
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
+import com.sanardev.instagrammqtt.ui.fullscreen.FullScreenActivity
+import com.sanardev.instagrammqtt.ui.playvideo.PlayVideoActivity
+import com.sanardev.instagrammqtt.ui.selectimage.SelectImageDialog
 import com.sanardev.instagrammqtt.utils.*
-import com.squareup.picasso.Picasso
 import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.EmojiPopup
@@ -53,6 +57,7 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import run.tripa.android.extensions.dpToPx
+import run.tripa.android.extensions.shareText
 import run.tripa.android.extensions.vibration
 import java.io.File
 import java.util.regex.Pattern
@@ -62,6 +67,8 @@ import kotlin.collections.HashMap
 
 class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
+    private var lastActivityAt: Long = 0
+    private var isActive: Boolean = false
     private var thread: Thread? = null
     private lateinit var threadId: String
     private var username: String? = null
@@ -109,11 +116,15 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
         threadId = intent.extras!!.getString("thread_id")!!
         profileImage = intent.extras!!.getString("profile_image")
+        isActive = intent.extras!!.getBoolean("is_active")
+        lastActivityAt = intent.extras!!.getLong("last_activity_at")
         username = intent.extras!!.getString("username")
         val seqID = intent.extras!!.getInt("seq_id")
 
         binding.txtProfileName.text = username
-        Picasso.get().load(profileImage).into(binding.imgProfileImage)
+        checkUserStatus()
+        Glide.with(applicationContext).load(profileImage).into(binding.imgProfileImage)
+
         viewModel.init(threadId, seqID)
 
         adapter = ChatsAdapter(ArrayList<Any>(), viewModel.getUserProfile())
@@ -157,6 +168,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 vibration(100)
                 visible(binding.recordView)
                 gone(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
+                stopAllMedia()
                 viewModel.startAudioRecording()
             }
         })
@@ -171,9 +183,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             val clientContext = InstagramHashUtils.getClientContext()
             RealTimeService.run(this, RealTime_SendLike(threadId, clientContext))
             val message = MessageGenerator.like(adapter.user.pk!!, clientContext)
-            EventBus.getDefault().postSticky(MessageEvent(threadId, message))
+            EventBus.getDefault().postSticky(arrayListOf(MessageEvent(threadId, message)))
         }
 
+        binding.btnAddPhoto.setOnClickListener {
+            SelectImageDialog {
+                viewModel.uploadMedias(it)
+            }.show(supportFragmentManager, "Dialog")
+        }
         binding.edtTextChat.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
 
@@ -197,15 +214,23 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
         viewModel.mutableLiveData.observe(this, Observer {
             if (it.status == Resource.Status.LOADING) {
-                binding.progressbar.visibility = View.VISIBLE
+                if (adapter.items.isNotEmpty()) {
+                    return@Observer
+                }
+                visible(binding.progressbar)
+                gone(binding.includeLayoutNetwork.root)
+                return@Observer
             }
-            binding.progressbar.visibility = View.GONE
+            gone(binding.progressbar)
+            if (it.status == Resource.Status.ERROR) {
+                if (adapter.items.isEmpty()) {
+                    visible(binding.includeLayoutNetwork.root)
+                }
+                return@Observer
+            }
+            gone(binding.includeLayoutNetwork.root)
             if (it.status == Resource.Status.SUCCESS) {
                 thread = it.data!!.thread
-//                if (thread!!.lastSeenAt[thread!!.users[0].pk.toString()] != null) {
-//                    lastSeenAt =
-//                        viewModel.convertToStandardTimeStamp(thread!!.lastSeenAt[thread!!.users[0].pk.toString()]!!.timeStamp)
-//                }
                 olderMessageExist = it.data!!.thread!!.oldestCursor != null
                 if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
                     adapter.items = it.data!!.thread!!.releasesMessage
@@ -216,11 +241,11 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             }
         })
 
-        viewModel.mutableLiveDataAddMessage.observe(this, Observer {
+        viewModel.funcAddMessage = {
             adapter.items.add(0, it)
             adapter.notifyItemInserted(0)
             binding.recyclerviewChats.scrollToPosition(0)
-        })
+        }
         viewModel.fileLiveData.observe(this, Observer {
 
 
@@ -282,6 +307,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
     }
 
+    private fun checkUserStatus() {
+        if (isActive) {
+            binding.txtProfileDec.text = getString(R.string.online)
+            binding.txtProfileDec.setTextColor(color(R.color.online_color))
+        } else {
+            binding.txtProfileDec.text = String.format(
+                getString(R.string.active_at),
+                TimeUtils.convertTimestampToDate(application, lastActivityAt)
+            )
+            binding.txtProfileDec.setTextColor(color(R.color.text_light))
+        }
+    }
+
     override fun onHideKeyboard() {
         RealTimeService.run(
             this@DirectActivity,
@@ -310,23 +348,27 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         if (threadId == event.threadId) {
             endTypeAtMs = System.currentTimeMillis() + 3 * 1000
             binding.txtProfileDec.text = getString(R.string.typing)
+            binding.txtProfileDec.setTextColor(color(R.color.text_very_light))
             mHandler.postDelayed({
                 if (endTypeAtMs < System.currentTimeMillis()) {
-                    binding.txtProfileDec.text = ""
+                    checkUserStatus()
                 }
             }, 3000)
         }
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageEvent(event: MessageEvent) {
-        if (event.threadId == threadId) {
-            viewModel.onMessageReceive(event)
+    fun onMessageEvents(events: MutableList<MessageEvent>) {
+        for (event in events) {
+            if (event.threadId == threadId) {
+                checkUserStatus()
+                viewModel.onMessageReceive(event)
+            }
         }
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageResponseEvent(event: MessageResponseEvent) {
+    fun onMessageResponseEvent(event: MessageResponse) {
         if (event.action == "item_ack" && event.status == "ok" && event.payload.threadId == threadId) {
             if (event.payload.clientContext == "reactions") {
                 viewModel.onReactionsResponse(event.payload)
@@ -353,9 +395,33 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         }
     }
 
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onPresenceEvent(event: PresenceEvent) { /* Do something */
+        if (thread != null && event.userId.toLong() == thread!!.users[0].pk) {
+            isActive = event.isActive
+            lastActivityAt = event.lastActivityAtMs.toLong()
+            checkUserStatus()
+        }
+    }
+
+
     override fun onStart() {
         super.onStart()
-        EventBus.getDefault().register(this);
+        try {
+            EventBus.getDefault().register(this);
+        } catch (e: Exception) {
+
+        }
+        resumeLastMedia()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        EventBus.getDefault().unregister(this);
+        stopAllMedia()
+    }
+
+    private fun resumeLastMedia() {
         if (currentPlayerId != null) {
             for (item in players.entries) {
                 if (item.key == currentPlayerId) {
@@ -365,9 +431,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        EventBus.getDefault().unregister(this);
+    private fun stopAllMedia() {
         for (item in players.entries) {
             item.value.playWhenReady = false
         }
@@ -376,15 +440,28 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     inner class ChatsAdapter(var items: MutableList<Any>, var user: InstagramLoggedUser) :
         BaseAdapter() {
         override fun onViewRecycled(holder: BaseViewHolder) {
+            var player: SimpleExoPlayer? = null
             if (holder.binding is LayoutMediaShareBinding) {
                 val dataBinding = holder.binding as LayoutMediaShareBinding
                 if (dataBinding.videoView.player != null) {
-                    (dataBinding.videoView.player as SimpleExoPlayer).volume = 0f
-                    for (item in players.entries) {
-                        if (item.value == dataBinding.videoView.player) {
-                            players.remove(item.key)
-                            return
+                    player = (dataBinding.videoView.player as SimpleExoPlayer)
+                }
+            }
+            if (holder.binding is LayoutVoiceMediaBinding) {
+                val dataBinding = holder.binding as LayoutVoiceMediaBinding
+                if (dataBinding.videoView.player != null) {
+                    player = (dataBinding.videoView.player as SimpleExoPlayer)
+                }
+            }
+            if (player != null) {
+                player.volume = 0f
+                for (item in players.entries) {
+                    if (item.value == player) {
+                        if (currentPlayerId == item.key) {
+                            currentPlayerId = null
                         }
+                        players.remove(item.key)
+                        return
                     }
                 }
             }
@@ -456,8 +533,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 //                            (holder.binding as LayoutAnimatedMediaBinding)
                 }
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
-//                            (holder.binding as LayoutFelixShareBinding)
-                    null
+                    (holder.binding as LayoutFelixShareBinding).includeTime
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
                     null
@@ -572,8 +648,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     null
                 }
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
-//                            (holder.binding as LayoutFelixShareBinding).imgThreadProfileImage
-                    null
+                    (holder.binding as LayoutFelixShareBinding).imgThreadProfileImage
+
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
                     null
@@ -650,7 +726,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         }
                         InstagramConstants.ReelType.MENTION.type -> {
                             (holder.binding as LayoutReelShareBinding).includeReaction
-                            null
                         }
                         else -> { // item.reelShare.type == InstagramConstants.ReelType.REACTION.type
                             (holder.binding as LayoutReactionStoryBinding).includeReaction
@@ -730,7 +805,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                                 resources.dpToPx(25f)
                             )
                             image.setBackgroundResource(R.drawable.bg_stroke_circluar)
-                            Picasso.get().load(profileUrl).into(image)
+                            Glide.with(applicationContext).load(profileUrl).into(image)
                             image.setPadding(
                                 includeReaction.imgHeart.paddingLeft,
                                 includeReaction.imgHeart.paddingTop,
@@ -744,6 +819,25 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
             }
 
+            var lastSeenAt: Long = 0
+            for (ls in thread!!.lastSeenAt.entries) {
+                if (ls.key.toLong() != item.userId) {
+                    // for example last seen in group is laster seen
+                    viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
+                        if (it > lastSeenAt) {
+                            lastSeenAt = it
+                        }
+                    }
+                }
+            }
+            if (item.timestamp > lastSeenAt) {
+//                viewModel.markAsSeen(threadId, item.itemId) moshkel ine ke callback barash ok nakardm barate update shodan main activty
+                RealTimeService.run(
+                    this@DirectActivity,
+                    RealTime_MarkAsSeen(threadId, item.itemId)
+                )
+            }
+
             if (includeTime != null) {
                 includeTime.txtTime.text =
                     viewModel.getTimeFromTimeStamps(item.timestamp)
@@ -752,26 +846,11 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     includeTime.imgMessageStatus.setImageResource(R.drawable.ic_time)
                     includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
                 } else {
-                    var lastSeenAt: Long = 0
-                    for (ls in thread!!.lastSeenAt.entries) {
-                        if (ls.key.toLong() != item.userId) {
-                            // for example last seen in group is laster seen
-                            viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
-                                if (it > lastSeenAt) {
-                                    lastSeenAt = it
-                                }
-                            }
-                        }
-                    }
+
                     if (item.timestamp <= lastSeenAt) {
                         includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check_multiple)
                         includeTime.imgMessageStatus.setColorFilter(color(R.color.checked_message_color))
                     } else {
-//                        viewModel.markAsSeen(threadId, item.itemId)
-                        RealTimeService.run(
-                            this@DirectActivity,
-                            RealTime_MarkAsSeen(threadId, item.itemId)
-                        )
                         includeTime.imgMessageStatus.setImageResource(R.drawable.ic_check)
                         includeTime.imgMessageStatus.setColorFilter(color(R.color.text_light))
                     }
@@ -784,11 +863,13 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
             }
 
+
             if (layoutParent != null) {
                 if (item.userId == user.pk) {
                     layoutParent.gravity = Gravity.RIGHT
                     if (item.itemType == InstagramConstants.MessageType.REEL_SHARE.type ||
-                        item.itemType == InstagramConstants.MessageType.MEDIA_SHARE.type
+                        item.itemType == InstagramConstants.MessageType.MEDIA_SHARE.type ||
+                        item.itemType == InstagramConstants.MessageType.FELIX_SHARE.type
                     ) {
                         layoutParent.layoutDirection = View.LAYOUT_DIRECTION_RTL
                     }
@@ -802,7 +883,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     imgThreadProfileImage.visibility = View.GONE
                 } else {
                     imgThreadProfileImage.visibility = View.VISIBLE
-                    Picasso.get().load(profileImage).into(imgThreadProfileImage)
+                    Glide.with(applicationContext).load(profileImage).into(imgThreadProfileImage)
                 }
             }
             if (layoutMessage != null) {
@@ -847,7 +928,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     val dataBinding = holder.binding as LayoutLinkBinding
                     dataBinding.txtMessage.width = (DisplayUtils.getScreenWidth() * 0.6).toInt()
                     val link = item.link
-                    dataBinding.txtMessage.setTextHTML(this@DirectActivity, link.text)
+                    dataBinding.txtMessage.setTextLinkHTML(this@DirectActivity, link.text)
                     if (link.linkContext.linkTitle.isNullOrBlank()) {
                         gone(dataBinding.layoutLinkDes)
                     } else {
@@ -858,7 +939,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     if (link.linkContext.linkImageUrl.isNullOrBlank()) {
                         dataBinding.imgLinkImage.visibility = View.GONE
                     } else {
-                        Picasso.get().load(link.linkContext.linkImageUrl)
+                        Glide.with(applicationContext).load(link.linkContext.linkImageUrl)
                             .placeholder(R.drawable.placeholder_loading)
                             .into(dataBinding.imgLinkImage)
                     }
@@ -868,11 +949,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     if (item.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
                         val dataBinding = holder.binding as LayoutReelShareReplyBinding
                         if (item.reelShare.media?.imageVersions2 != null) {
+                            val image = item.reelShare.media!!.imageVersions2!!.candidates[0]
+                            val size =
+                                viewModel.getStandardWidthAndHeight(image.width, image.height, 0.4f)
                             dataBinding.imgStory.layoutParams.apply {
-                                width = 300
-                                height = 400
+                                width = size[0]
+                                height = size[1]
                             }
-                            Picasso.get()
+                            Glide.with(applicationContext)
                                 .load(item.reelShare.media.imageVersions2.candidates[0].url)
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgStory)
@@ -928,12 +1012,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                                 item.timestamp
                             )
                         if (item.reelShare.media.imageVersions2 != null) {
-                            val images = item.reelShare.media.imageVersions2.candidates
+                            val image = item.reelShare.media!!.imageVersions2!!.candidates[0]
+                            val size =
+                                viewModel.getStandardWidthAndHeight(image.width, image.height, 0.4f)
+                            dataBinding.imgStory.layoutParams.apply {
+                                width = size[0]
+                                height = size[1]
+                            }
                             val user = item.reelShare.media.user
-                            Picasso.get().load(images[1].url)
+                            Glide.with(applicationContext).load(image.url)
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgStory)
-                            Picasso.get().load(user.profilePicUrl).into(dataBinding.imgProfile)
+                            Glide.with(applicationContext).load(user.profilePicUrl)
+                                .into(dataBinding.imgProfile)
                             dataBinding.txtUsername.text = user.username
                         } else {
                             visible(dataBinding.txtNoDataAvailable)
@@ -951,24 +1042,25 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
                             dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
-                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                            Glide.with(applicationContext).load(profileImage)
+                                .into(dataBinding.imgThreadProfileImage)
                         }
 
                     }
                     if (item.reelShare.type == InstagramConstants.ReelType.REACTION.type) {
                         val dataBinding = holder.binding as LayoutReactionStoryBinding
                         if (item.reelShare.media?.imageVersions2 != null) {
+                            val image = item.reelShare.media!!.imageVersions2!!.candidates[0]
+                            val size =
+                                viewModel.getStandardWidthAndHeight(image.width, image.height, 0.4f)
                             dataBinding.imgStory.layoutParams.apply {
-                                width = 300
-                                height = 400
+                                width = size[0]
+                                height = size[1]
                             }
-                            Picasso.get()
-                                .load(item.reelShare.media.imageVersions2.candidates[0].url)
+                            Glide.with(applicationContext)
+                                .load(image.url)
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgStory)
-                        } else {
-
-//                            gone(dataBinding.layoutImgStory)
                         }
                         val textWithoghtEmoji = item.reelShare.text.replace(
                             Pattern.compile("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+").toRegex(), ""
@@ -995,7 +1087,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
                             dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
-                            Picasso.get().load(profileImage).into(dataBinding.imgThreadProfileImage)
+                            Glide.with(applicationContext).load(profileImage)
+                                .into(dataBinding.imgThreadProfileImage)
                             dataBinding.layoutParent.gravity = Gravity.LEFT
                         }
 
@@ -1007,13 +1100,17 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         val dataBinding = holder.binding as LayoutReelShareBinding
                         val images = item.storyShare.media.imageVersions2.candidates
                         val user = item.storyShare.media.user
-                        Picasso.get().load(images[1].url)
+                        Glide.with(applicationContext).load(images[1].url)
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imgStory)
-                        Picasso.get().load(user.profilePicUrl).into(dataBinding.imgProfile)
+                        Glide.with(applicationContext).load(user.profilePicUrl)
+                            .into(dataBinding.imgProfile)
                         dataBinding.txtUsername.text = user.username
                         dataBinding.txtReelStatus.text = String.format(
                             getString(R.string.send_story_from), user.username
                         )
+                        dataBinding.imgStory.setOnClickListener {
+                            FullScreenActivity.open(this@DirectActivity, images[0].url)
+                        }
                     } else {
                         val dataBinding = holder.binding as LayoutStoryShareNotLinkedBinding
                         dataBinding.txtMessage.maxWidth =
@@ -1026,33 +1123,40 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 InstagramConstants.MessageType.VOICE_MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutVoiceMediaBinding
                     val mediaSource: MediaSource
-                    val id:String
-                    val uri :Uri
+                    val id: String
+                    val uri: Uri
+                    val duration: Int
                     if (item.voiceMediaData.isLocal) {
                         id = item.itemId
                         uri = Uri.fromFile(File(item.voiceMediaData.localFilePath))
                         mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                             .createMediaSource(uri)
+                        duration = item.voiceMediaData.localDuration
                     } else {
                         id = item.voiceMediaData.voiceMedia.id
                         uri = Uri.parse(item.voiceMediaData.voiceMedia.audio.audioSrc)
                         mediaSource = ProgressiveMediaSource.Factory(httpDataSourceFactory)
                             .createMediaSource(uri)
-                        (dataBinding.layoutVoice.layoutParams as LinearLayout.LayoutParams).apply{
-                            width = viewModel.getStandardVoiceWitdh(resources,item.voiceMediaData.voiceMedia.audio.duration)
-                        }
+                        duration = item.voiceMediaData.voiceMedia.audio.duration
                     }
 
                     if (players[id] == null) {
                         players[id] = SimpleExoPlayer.Builder(this@DirectActivity).build()
                     }
 
-                    dataBinding.videoView.exo_progress.setOnTouchListener(object:View.OnTouchListener{
+                    (dataBinding.layoutVoice.layoutParams as LinearLayout.LayoutParams).apply {
+                        width = viewModel.getStandardVoiceWitdh(resources, duration)
+                    }
+                    dataBinding.videoView.exo_progress.setOnTouchListener(object :
+                        View.OnTouchListener {
                         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
                             return true
                         }
                     })
-                    players[id]!!.prepare(mediaSource)
+                    // if media is playing we dont stop it
+                    if (currentPlayerId != id) {
+                        players[id]!!.prepare(mediaSource)
+                    }
                     dataBinding.videoView.player = players[id]
                     players[id]!!.addListener(object : Player.EventListener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -1071,9 +1175,54 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 }
                 InstagramConstants.MessageType.MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutMediaBinding
-                    val images = item.media.imageVersions2.candidates
-                    Picasso.get().load(images[0].url).placeholder(R.drawable.placeholder_loading)
-                        .into(dataBinding.imgMedia)
+                    if (item.media.isLocal) {
+                        val originalSize =
+                            MediaUtils.getMediaWidthAndHeight(item.media.localFilePath)
+                        val size = viewModel.getStandardWidthAndHeight(
+                            originalSize[0],
+                            originalSize[1],
+                            0.5f
+                        )
+                        if (item.media.mediaType == 1) {
+                            Glide.with(applicationContext).load(File(item.media.localFilePath))
+                                .override(size[0], size[1])
+                                .placeholder(R.drawable.placeholder_loading)
+                                .into(dataBinding.imgMedia)
+                            gone(dataBinding.btnPlay)
+                        } else {
+                            val options = RequestOptions().frame(0)
+                            Glide.with(this@DirectActivity).asBitmap()
+                                .load(File(item.media.localFilePath))
+                                .override(size[0], size[1])
+                                .centerCrop()
+                                .apply(options)
+                                .into(dataBinding.imgMedia)
+                            visible(dataBinding.btnPlay)
+                        }
+                    } else {
+                        val images = item.media.imageVersions2.candidates[0]
+                        val size =
+                            viewModel.getStandardWidthAndHeight(images.width, images.height, 0.5f)
+                        Glide.with(applicationContext).load(images.url)
+                            .override(size[0], size[1])
+                            .placeholder(R.drawable.placeholder_loading)
+                            .into(dataBinding.imgMedia)
+                        if (item.media.videoVersions != null) {
+                            visible(dataBinding.btnPlay)
+                        } else {
+                            gone(dataBinding.btnPlay)
+                        }
+                        dataBinding.imgMedia.setOnClickListener {
+                            if (item.media.videoVersions != null) {
+                                PlayVideoActivity.playUrl(
+                                    this@DirectActivity,
+                                    item.media.videoVersions[0].url
+                                )
+                            } else {
+                                FullScreenActivity.open(this@DirectActivity, images.url)
+                            }
+                        }
+                    }
                 }
                 InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
                     Log.i("TEST", "TEST")
@@ -1088,6 +1237,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     val user = media.user
                     val id = item.mediaShare.id
                     if (media.videoVersions != null) {
+                        gone(dataBinding.layoutCarouselMedia, dataBinding.layoutImageView)
                         dataBinding.layoutVideoView.visibility = View.VISIBLE
                         val videoSrc = item.mediaShare.videoVersions[0].url
                         if (players[id] == null) {
@@ -1129,8 +1279,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         dataBinding.videoView.player = players[id]!!
                     } else if (media.imageVersions2 != null) {
                         val image = media.imageVersions2
+                        gone(dataBinding.layoutCarouselMedia, dataBinding.layoutVideoView)
                         dataBinding.layoutImageView.visibility = View.VISIBLE
-                        Picasso.get().load(image.candidates[0].url)
+                        Glide.with(applicationContext).load(image.candidates[0].url)
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
                         dataBinding.layoutImageView.layoutParams.apply {
                             val sizeArray = viewModel.getStandardWidthAndHeight(
@@ -1142,8 +1293,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         }
                     } else if (media.carouselMedia != null) {
                         val image = media.carouselMedia[0].imageVersions2
+                        gone(dataBinding.layoutImageView, dataBinding.layoutVideoView)
                         dataBinding.layoutImageView.visibility = View.VISIBLE
-                        Picasso.get().load(image.candidates[0].url)
+                        Glide.with(applicationContext).load(image.candidates[0].url)
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
                         dataBinding.layoutImageView.layoutParams.apply {
                             val sizeArray = viewModel.getStandardWidthAndHeight(
@@ -1155,7 +1307,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         }
                     }
 
-                    Picasso.get().load(user.profilePicUrl).into(dataBinding.imgProfile)
+                    Glide.with(applicationContext).load(user.profilePicUrl)
+                        .into(dataBinding.imgProfile)
                     dataBinding.txtUsername.text = user.username
                     dataBinding.txtCaption.text = media.caption.text
 
@@ -1169,10 +1322,34 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         this.width = width
                         this.height = height
                     }
-                    Picasso.get().load(url).placeholder(R.drawable.load).into(dataBinding.imgAnim)
+                    Glide.with(applicationContext).load(url).placeholder(R.drawable.load)
+                        .into(dataBinding.imgAnim)
                 }
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                    Log.i("TEST", "TEST")
+                    val dataBinding = holder.binding as LayoutFelixShareBinding
+                    val image = item.felixShare.video.imageVersions2
+                    val user = item.felixShare.video.user
+                    val videoUrl = item.felixShare.video.videoVersions[0].url
+                    dataBinding.layoutImage.layoutParams.apply {
+                        val sizeArray = viewModel.getStandardWidthAndHeight(
+                            resources.dpToPx(image.candidates[0].width.toFloat()),
+                            resources.dpToPx(image.candidates[0].height.toFloat()),
+                            0.45f
+                        )
+                        width = sizeArray[0]
+                        height = sizeArray[1]
+                    }
+                    dataBinding.txtThreadFelixShareUsername.text = user.username
+                    Glide.with(applicationContext).load(image.candidates[0].url)
+                        .into(dataBinding.imgMedia)
+                    Glide.with(applicationContext).load(user.profilePicUrl)
+                        .into(dataBinding.imgThreadFelixShareProfile)
+                    dataBinding.layoutImage.setOnClickListener {
+                        PlayVideoActivity.playUrl(this@DirectActivity, videoUrl)
+                    }
+                    dataBinding.btnShareLink.setOnClickListener {
+                        shareText(videoUrl)
+                    }
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
 
@@ -1328,7 +1505,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             adapter.user.pk!!,
             clientContext
         )
-        EventBus.getDefault().postSticky(MessageEvent(threadId, message))
+        EventBus.getDefault().postSticky(arrayListOf(MessageEvent(threadId, message)))
         binding.edtTextChat.setText("")
     }
 

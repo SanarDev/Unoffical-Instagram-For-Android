@@ -38,7 +38,7 @@ public class Message {
     private Media media;
     @SerializedName("visual_media")
     @Expose
-    private RavenMedia ravenMedia;
+    private Object ravenMedia;
     @SerializedName("voice_media")
     @Expose
     private MediaData voiceMediaData;
@@ -59,7 +59,7 @@ public class Message {
     private Boolean showForwardAttribution;
     @SerializedName("felix_share")
     @Expose
-    private Object felixShare;
+    private FelixShare felixShare;
     @SerializedName("animated_media")
     @Expose
     private AnimatedMedia animatedMedia;
@@ -97,11 +97,11 @@ public class Message {
         this.reactions = reactions;
     }
 
-    public Object getFelixShare() {
+    public FelixShare getFelixShare() {
         return felixShare;
     }
 
-    public void setFelixShare(Object felixShare) {
+    public void setFelixShare(FelixShare felixShare) {
         this.felixShare = felixShare;
     }
 
@@ -129,10 +129,13 @@ public class Message {
         this.media = media;
     }
 
-    public RavenMedia getRavenMedia() {
+    public Object getRavenMedia() {
         return ravenMedia;
     }
 
+    public void setRavenMedia(Object ravenMedia) {
+        this.ravenMedia = ravenMedia;
+    }
 
     public AnimatedMedia getAnimatedMedia() {
         return animatedMedia;
@@ -142,9 +145,6 @@ public class Message {
         this.animatedMedia = animatedMedia;
     }
 
-    public void setRavenMedia(RavenMedia ravenMedia) {
-        this.ravenMedia = ravenMedia;
-    }
 
     public String getItemId() {
         return itemId;

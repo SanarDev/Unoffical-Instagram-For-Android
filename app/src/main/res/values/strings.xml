@@ -62,4 +62,21 @@
     <string name="start_new_message">Start New Message</string>
     <string name="select_for_start_messaging">Select for start messaging</string>
     <string name="group_name">%s and %d more</string>
+    <string name="select_media">Select Media</string>
+    <string name="size_kb">%d KB</string>
+    <string name="you_must_select_media">You must select media</string>
+    <string name="send_a_photo">Send a photo</string>
+    <string name="you_share_a_link">You share a link</string>
+    <string name="share_a_link">Share a link</string>
+    <string name="you_send_user_igtv_video">You send %s\'s IGTV video</string>
+    <string name="send_user_igtv_video">Send %s\'s IGTV video</string>
+    <string name="you_send_a_profile">You send a profile</string>
+    <string name="send_a_profile">Send a profile</string>
+    <string name="reacted_to_your_story_with_reaction">Reacted to your story %s</string>
+    <string name="you_reacted_to_user_story">You reacted to %s\'s story</string>
+    <string name="you_send_a_media">You send a media</string>
+    <string name="send_a_media">Send a media</string>
+    <string name="you_text">You : %s</string>
+    <string name="connecting">Connecting ...</string>
+    <string name="waiting_for_network">Waiting for network ...</string>
 </resources>

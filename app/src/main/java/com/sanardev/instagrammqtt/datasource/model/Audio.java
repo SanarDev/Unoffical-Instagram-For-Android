@@ -13,7 +13,7 @@ public class Audio {
     private String audioSrc;
     @SerializedName("duration")
     @Expose
-    private Long duration;
+    private int duration;
     @SerializedName("waveform_data")
     @Expose
     private List<Double> waveformData = null;
@@ -29,11 +29,11 @@ public class Audio {
         this.audioSrc = audioSrc;
     }
 
-    public Long getDuration() {
+    public int getDuration() {
         return duration;
     }
 
-    public void setDuration(Long duration) {
+    public void setDuration(int duration) {
         this.duration = duration;
     }
 

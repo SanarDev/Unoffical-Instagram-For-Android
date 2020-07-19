@@ -64,7 +64,7 @@ class InstagramHashUtils {
         }
 
         @JvmStatic
-        fun generateUploadId(story:Boolean = false):String{
+        fun getUploadId(story:Boolean = false):String{
             var r = if(story) "18" else "37"
             for(i in 0..15){
                 r += (Math.random() * (0 - 9 + 1) + 0).toInt().toString()

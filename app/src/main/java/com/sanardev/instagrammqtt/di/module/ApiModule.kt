@@ -40,6 +40,7 @@ class ApiModule {
             //            cache(cache)
             addNetworkInterceptor(HeaderInterceptor("Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"))
             readTimeout(20, TimeUnit.SECONDS)
+            writeTimeout(5,TimeUnit.MINUTES)
             connectTimeout(20, TimeUnit.SECONDS)
         }
         return httpClient.build()

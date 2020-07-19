@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp">
+
+
+        <com.makeramen.roundedimageview.RoundedImageView
+            android:id="@+id/img_pic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            app:riv_border_width="0dip"
+            app:riv_corner_radius="10dip"
+            app:riv_mutate_background="true"
+            tools:src="@mipmap/example" />
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:gravity="center_vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/txt_selecte_number"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:minWidth="25dp"
+                android:paddingStart="3dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="3dp"
+                android:gravity="center"
+                android:textColor="@color/text_very_light"
+                android:paddingBottom="3dp"
+                android:layout_marginStart="10dp"
+                tools:text="1"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/bg_circle_hightlight"
+                android:tint="@color/theme_item" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/txt_mimeType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_margin="10dp"
+                android:background="@drawable/bg_round_black"
+                android:fontFamily="sans-serif-medium"
+                android:paddingStart="10dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="3dp"
+                android:text="JPG"
+                android:textColor="@color/text_very_light"
+                android:textSize="10sp" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bg_gradient_btt_black"
+            android:paddingStart="10dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/txt_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="Example.jpg"
+                android:visibility="gone"
+                android:textColor="@color/text_very_light"
+                android:textSize="12sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/txt_filesize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:layout_centerVertical="true"
+                android:text="127KB"
+                android:textColor="@color/text_very_light"
+                android:textSize="12sp" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btn_open"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:tint="@color/white"
+                android:padding="15dp"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/ic_open_in_new"/>
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+</layout>

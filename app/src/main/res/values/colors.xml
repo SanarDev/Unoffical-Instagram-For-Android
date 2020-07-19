@@ -7,6 +7,7 @@
     <color name="theme_background_dialog">#2e2e2e</color>
     <color name="theme_background_incoming_message">#2e2e2e</color>
     <color name="theme_item">#1B1B1B</color>
+    <color name="theme_item_with_opacity">#aa1B1B1B</color>
     <color name="text_very_light">#eee</color>
     <color name="text_light">#aaa</color>
     <color name="hint_light">#999</color>
@@ -15,6 +16,7 @@
     <color name="link">#2196F3</color>
     <color name="theme_light">#999</color>
     <color name="theme_button_click">#2e2e2e</color>
+    <color name="theme_highlight_item">@color/text_light</color>
     <color name="white">#fff</color>
     <color name="checked_message_color">@color/online_color</color>
     <color name="profile_border_color">@color/theme_light</color>

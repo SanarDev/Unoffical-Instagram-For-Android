@@ -16,6 +16,7 @@
         android:layout_height="match_parent"
         android:background="@color/theme_background">
 
+
         <LinearLayout
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -42,7 +43,7 @@
                 android:layout_marginStart="10dp"
                 android:src="@mipmap/example"
                 app:civ_border_color="@color/hint_light"
-                app:civ_border_width="2dp"
+                app:civ_border_width="0dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -189,6 +190,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="5dp"
+                android:padding="@dimen/small_padding"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -214,6 +216,16 @@
                 app:slide_to_cancel_text="Slide To Cancel" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <include
+            android:id="@+id/include_layout_network"
+            layout="@layout/layout_internet_connection"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

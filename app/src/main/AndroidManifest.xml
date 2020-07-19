@@ -44,6 +44,17 @@
         <activity android:name=".ui.startmessage.StartMessageActivity">
 
         </activity>
+        <activity android:name=".ui.fullscreen.FullScreenActivity">
+
+        </activity>
+        <activity android:name=".ui.playvideo.PlayVideoActivity">
+
+        </activity>
+        <receiver android:name=".receiver.NetworkChangeReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
 
         <service android:name="com.sanardev.instagrammqtt.service.fbns.FbnsService">
             <intent-filter>

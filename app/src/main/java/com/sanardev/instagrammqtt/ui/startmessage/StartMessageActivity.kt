@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.lifecycle.Observer
+import com.bumptech.glide.Glide
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.base.BaseActivity
 import com.sanardev.instagrammqtt.core.BaseAdapter
@@ -64,7 +65,7 @@ class StartMessageActivity : BaseActivity<ActivityStartMessageBinding, StartMess
             }
             dataBinding.txtFullname.text = user.fullName
             dataBinding.txtUsername.text = user.username
-            Picasso.get().load(user.profilePicUrl).into(dataBinding.imgProfileImage)
+            Glide.with(applicationContext).load(user.profilePicUrl).into(dataBinding.imgProfileImage)
             return item
         }
 

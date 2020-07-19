@@ -3,6 +3,7 @@ package com.sanardev.instagrammqtt.datasource.remote
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.ResponseDirectAction
+import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
 import com.sanardev.instagrammqtt.datasource.model.response.*
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -88,8 +89,18 @@ interface InstagramRemote {
     @GET("rupload_igvideo/{upload_name}")
     fun getMediaUploadUrl(@HeaderMap header: Map<String, String>,@Path("upload_name") uploadName:String):Call<ResponseBody>
 
+    @GET("rupload_igphoto/{upload_name}")
+    fun getMediaImageUploadUrl(@HeaderMap header: Map<String, String>,@Path("upload_name") uploadName:String):Call<ResponseBody>
+
     @POST("rupload_igvideo/{upload_name}")
     fun uploadMedia(
+        @HeaderMap header: Map<String, String>,
+        @Path("upload_name") uploadName: String,
+        @Body mediaRequestBody: RequestBody
+    ):Call<ResponseBody>
+
+    @POST("rupload_igphoto/{upload_name}")
+    fun uploadMediaImage(
         @HeaderMap header: Map<String, String>,
         @Path("upload_name") uploadName: String,
         @Body mediaRequestBody: RequestBody
@@ -100,4 +111,14 @@ interface InstagramRemote {
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/share_voice/")
     fun sendMediaVoice(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<InstagramSendItemResponse>
+
+    @POST(InstagramConstants.API_VERSION + "media/upload_finish/")
+    fun videoUploadFinish(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody,@Query("video") isVideo:Boolean = true):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/configure_video/")
+    fun sendMediaVideo(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<MessageResponse>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/configure_photo/")
+    fun sendMediaImage(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<MessageResponse>
+
 }

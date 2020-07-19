@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import java.io.File
 
 
 fun Context.toast(message: CharSequence) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -136,3 +137,20 @@ fun dpToPx(dp: Float, resources: Resources): Int {
 fun Application.openSharedPref(name:String): SharedPreferences? {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
+
+fun Activity.shareText(shareBody:String){
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, shareBody)
+        type = "text/plain"
+    }
+
+    val shareIntent = Intent.createChooser(sendIntent, null)
+    startActivity(shareIntent)
+}
+
+val File.size get() = if (!exists()) 0.0 else length().toDouble()
+val File.sizeInKb get() = size / 1024
+val File.sizeInMb get() = sizeInKb / 1024
+val File.sizeInGb get() = sizeInMb / 1024
+val File.sizeInTb get() = sizeInGb / 1024

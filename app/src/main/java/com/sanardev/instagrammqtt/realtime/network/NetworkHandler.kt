@@ -2,16 +2,19 @@ package com.sanardev.instagrammqtt.realtime.network
 
 import android.util.Log
 import com.sanardev.instagrammqtt.constants.InstagramConstants
+import com.sanardev.instagrammqtt.datasource.model.event.ConnectionStateEvent
 import com.sanardev.instagrammqtt.realtime.PayloadProcessor
 import com.sanardev.instagrammqtt.realtime.commands.Commands
 import com.sanardev.instagrammqtt.realtime.packethelper.ForegroundStateConfig
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.utils.InstagramHashUtils
+import com.sanardev.instagrammqtt.utils.NetworkUtils
 import com.sanardev.instagrammqtt.utils.ZlibUtis
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandler
 import io.netty.handler.codec.mqtt.*
+import org.greenrobot.eventbus.EventBus
 import java.util.*
 
 
@@ -30,11 +33,16 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
 
     @Throws(Exception::class)
     override fun channelActive(ctx: ChannelHandlerContext) {
+        EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTED))
     }
 
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext) {
-        Log.i(InstagramConstants.DEBUG_TAG, "RealTime Channel closed");
+        if(NetworkUtils.getConnectionType(context = realTimeService.application) == NetworkUtils.NetworkType.NONE){
+            EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NETWORK_DISCONNECTED))
+        }else{
+            EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CHANNEL_DISCONNECTED))
+        }
     }
 
     @Throws(Exception::class)
@@ -53,13 +61,14 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
     }
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
+        EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTED))
         val packet = msg as MqttMessage
         when (packet!!.fixedHeader().messageType()) {
             MqttMessageType.CONNACK -> {
                 Log.i(InstagramConstants.DEBUG_TAG, "RealTime ConnAck");
                 ctx!!.pipeline().remove("encoder")
                 realTimeService.onConnAck()
-                sendForegroundState(ctx!!,false,false,90)
+                sendForegroundState(ctx!!,true,true,90)
             }
             MqttMessageType.PUBACK -> {
                 Log.i(

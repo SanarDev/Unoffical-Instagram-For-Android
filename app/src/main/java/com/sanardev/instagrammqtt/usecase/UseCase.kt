@@ -1,8 +1,6 @@
 package com.sanardev.instagrammqtt.usecase
 
 import android.app.Application
-import android.media.MediaMetadataRetriever
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
@@ -16,6 +14,7 @@ import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.*
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
+import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
 import com.sanardev.instagrammqtt.datasource.model.response.*
@@ -31,8 +30,6 @@ import java.io.UnsupportedEncodingException
 import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.text.SimpleDateFormat
-import java.time.OffsetDateTime
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -271,6 +268,207 @@ class UseCase(
         mInstagramRepository.getDirectInbox(responseLiveData) { getHeaders() }
     }
 
+    fun sendMediaImage(
+        threadId: String,
+        userId: String,
+        filePath: String,
+        clientContext: String
+    ): MutableLiveData<Resource<MessageResponse>> {
+        val liveDataGetUrl = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataUploadMedia = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataUploadFinish = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataResult = MutableLiveData<Resource<MessageResponse>>()
+
+        val uploadId = InstagramHashUtils.getClientContext()
+        val hash = File(filePath).name.hashCode()
+        val uploadName = "${uploadId}_0_$hash"
+        var type = MediaUtils.getMimeType(filePath)?:"image/jpeg"
+
+        val cookie = StorageUtils.getCookie(application)!!
+        val user = StorageUtils.getUserData(application)!!
+        val byteLength = File(filePath).readBytes().size
+
+        mInstagramRepository.getMediaImageUploadUrl(
+            liveDataGetUrl,
+            { getUploadImageUrlHeader(userId, uploadId) },
+            uploadName
+        )
+        liveDataGetUrl.observeForever {
+            if(it.status == Resource.Status.SUCCESS){
+                mInstagramRepository.uploadMediaImage(
+                    liveDataUploadMedia,
+                    uploadName,
+                    {
+                        getUploadImageHeader(
+                            byteLength,
+                            userId,
+                            uploadId,
+                            uploadName,
+                            type
+                        )
+                    },
+                    getMediaRequestBody(filePath)
+                )
+            }
+        }
+//
+//        liveDataUploadMedia.observeForever {
+//            if(it.status == Resource.Status.SUCCESS){
+//                val finishUploadData = HashMap<String, Any>()
+//                finishUploadData["timezone_offset"] = TimeUtils.getTimeZoneOffset()
+//                finishUploadData["_csrftoken"] = cookie.csrftoken!!
+//                finishUploadData["source_type"] = "4"
+//                finishUploadData["_uid"] = user.pk.toString()
+//                finishUploadData["device_id"] = cookie.deviceID
+//                finishUploadData["_uuid"] = cookie.adid
+//                finishUploadData["upload_id"] = uploadId
+//                finishUploadData["device"] = HashMap<String, String>().apply {
+//                    put("manufacturer", android.os.Build.MANUFACTURER)
+//                    put("model", android.os.Build.MODEL)
+//                    put("android_release", Build.VERSION.RELEASE)
+//                    put("android_version", Build.VERSION.SDK_INT.toString())
+//                }
+//                mInstagramRepository.uploadFinish(
+//                    liveDataResult,
+//                    { getUploadFinishHeader() },
+//                    getSignaturePayload(finishUploadData)
+//                )
+//            }
+//        }
+
+        liveDataUploadMedia.observeForever {
+            if(it.status == Resource.Status.SUCCESS){
+                val sendMediaImageData = HashMap<String, String>()
+                sendMediaImageData["action"] = "send_item"
+                sendMediaImageData["thread_ids"] = "[${threadId}]"
+                sendMediaImageData["client_context"] = clientContext
+                sendMediaImageData["_csrftoken"] = cookie.csrftoken!!
+                sendMediaImageData["device_id"] = cookie.deviceID
+                sendMediaImageData["mutation_token"] = clientContext
+                sendMediaImageData["allow_full_aspect_ratio"] = "true"
+                sendMediaImageData["_uuid"] = cookie.adid
+                sendMediaImageData["upload_id"] = uploadId
+                sendMediaImageData["offline_threading_id"] = clientContext
+                mInstagramRepository.sendMediaImage(
+                    liveDataResult,
+                    { getUploadFinishHeader() },
+                    formUrlEncode(sendMediaImageData)
+                )
+            }
+        }
+
+        return liveDataResult
+    }
+
+
+    fun sendMediaVideo(
+        threadId: String,
+        userId: String,
+        filePath: String,
+        clientContext: String
+    ): MutableLiveData<Resource<MessageResponse>> {
+        val liveDataGetUrl = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataUploadMedia = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataUploadFinish = MutableLiveData<Resource<ResponseBody>>()
+        val liveDataResult = MutableLiveData<Resource<MessageResponse>>()
+
+        val uploadId = InstagramHashUtils.getClientContext()
+        val hash = File(filePath).name.hashCode()
+        val uploadName = "${uploadId}-0-$hash"
+        val mediaWidthAndHeight = MediaUtils.getMediaWidthAndHeight(filePath)
+        val mediaWidth = mediaWidthAndHeight[0]
+        val mediaHeight = mediaWidthAndHeight[1]
+        var type = MediaUtils.getMimeType(filePath)
+        type = type
+            ?: "image/jpg" ///////////////////////////////////////////////////////////////////////////
+
+        val cookie = StorageUtils.getCookie(application)!!
+        val user = StorageUtils.getUserData(application)!!
+        val byteLength = File(filePath).readBytes().size
+        val mediaDuration = MediaUtils.getMediaDuration(application, filePath)
+        mInstagramRepository.getMediaUploadUrl(
+            liveDataGetUrl,
+            { getUploadVideoUrlHeader(userId, mediaHeight, mediaWidth, mediaDuration, uploadId) },
+            uploadName
+        )
+        liveDataGetUrl.observeForever {
+            if (it.status == Resource.Status.SUCCESS) {
+                mInstagramRepository.uploadMedia(
+                    liveDataUploadMedia,
+                    uploadName,
+                    {
+                        getUploadVideoHeader(
+                            byteLength,
+                            userId,
+                            mediaDuration,
+                            uploadId,
+                            uploadName,
+                            mediaWidth,
+                            mediaHeight,
+                            type
+                        )
+                    },
+                    getMediaRequestBody(filePath)
+                )
+            }
+        }
+        liveDataUploadMedia.observeForever {
+            val finishUploadData = HashMap<String, Any>()
+            finishUploadData["timezone_offset"] = TimeUtils.getTimeZoneOffset()
+            finishUploadData["_csrftoken"] = cookie.csrftoken!!
+            finishUploadData["source_type"] = "4"
+            finishUploadData["_uid"] = user.pk.toString()
+            finishUploadData["device_id"] = cookie.deviceID
+            finishUploadData["video_result"] = ""
+            finishUploadData["_uuid"] = cookie.adid
+            finishUploadData["upload_id"] = uploadId
+            finishUploadData["length"] = 3.066f
+            finishUploadData["device"] = HashMap<String, String>().apply {
+                put("manufacturer", android.os.Build.MANUFACTURER)
+                put("model", android.os.Build.MODEL)
+                put("android_release", Build.VERSION.RELEASE)
+                put("android_version", Build.VERSION.SDK_INT.toString())
+            }
+            finishUploadData["clips"] = HashMap<String, Any>().apply {
+                put("length", 3.066f)
+                put("source_type", "4")
+            }
+            finishUploadData["extra"] = HashMap<String, Any>().apply {
+                put("source_width", mediaWidth)
+                put("source_height", mediaHeight)
+            }
+            finishUploadData["audio_muted"] = false
+            finishUploadData["poster_frame_index"] = 0
+            mInstagramRepository.uploadFinish(
+                liveDataUploadFinish,
+                { getUploadFinishHeader() },
+                getSignaturePayload(finishUploadData)
+            )
+        }
+        liveDataUploadFinish.observeForever {
+            if (it.status == Resource.Status.SUCCESS) {
+                val sendMediaVoiceData = HashMap<String, String>()
+                sendMediaVoiceData["action"] = "send_item"
+                sendMediaVoiceData["thread_ids"] = "[${threadId}]"
+                sendMediaVoiceData["client_context"] = clientContext
+                sendMediaVoiceData["_csrftoken"] = cookie.csrftoken!!
+                sendMediaVoiceData["video_result"] = ""
+                sendMediaVoiceData["device_id"] = cookie.deviceID
+                sendMediaVoiceData["mutation_token"] = clientContext
+                sendMediaVoiceData["_uuid"] = cookie.adid
+                sendMediaVoiceData["upload_id"] = uploadId
+                sendMediaVoiceData["offline_threading_id"] = clientContext
+                mInstagramRepository.sendMediaVideo(
+                    liveDataResult,
+                    { getUploadFinishHeader() },
+                    formUrlEncode(sendMediaVoiceData)
+                )
+            }
+        }
+
+        return liveDataResult
+    }
+
     fun sendMediaVoice(
         threadId: String,
         userId: String,
@@ -286,10 +484,10 @@ class UseCase(
 
         val uploadId = InstagramHashUtils.getClientContext()
         var hash = File(filePath).name.hashCode()
-        hash = if(hash > 0) -hash else hash
+        hash = if (hash > 0) -hash else hash
         val uploadName = "${uploadId}_0_$hash"
         val byteLength = File(filePath).readBytes().size
-        val mediaDuration = getMediaDuration(filePath)
+        val mediaDuration = MediaUtils.getMediaDuration(application, filePath)
         val cookie = StorageUtils.getCookie(application)!!
         val user = StorageUtils.getUserData(application)!!
 
@@ -318,28 +516,32 @@ class UseCase(
             }
         }
         liveDataUploadMedia.observeForever {
-            if(it.status == Resource.Status.SUCCESS){
-                val finishUploadData = HashMap<String,Any>()
+            if (it.status == Resource.Status.SUCCESS) {
+                val finishUploadData = HashMap<String, Any>()
                 finishUploadData["timezone_offset"] = TimeUtils.getTimeZoneOffset()
                 finishUploadData["_csrftoken"] = cookie.csrftoken!!
-                finishUploadData["source_type"] ="4"
+                finishUploadData["source_type"] = "4"
                 finishUploadData["_uid"] = user.pk.toString()
                 finishUploadData["device_id"] = cookie.deviceID
                 finishUploadData["_uuid"] = cookie.adid
                 finishUploadData["upload_id"] = uploadId
-                finishUploadData["device"] = HashMap<String,String>().apply {
-                    put("manufacturer",android.os.Build.MANUFACTURER)
-                    put("model",android.os.Build.MODEL)
+                finishUploadData["device"] = HashMap<String, String>().apply {
+                    put("manufacturer", android.os.Build.MANUFACTURER)
+                    put("model", android.os.Build.MODEL)
                     put("android_release", Build.VERSION.RELEASE)
                     put("android_version", Build.VERSION.SDK_INT.toString())
                 }
-                mInstagramRepository.uploadFinish(liveDataUploadFinish,{getUploadFinishHeader()},getSignaturePayload(finishUploadData))
+                mInstagramRepository.uploadFinish(
+                    liveDataUploadFinish,
+                    { getUploadFinishHeader() },
+                    getSignaturePayload(finishUploadData)
+                )
             }
         }
 
         liveDataUploadFinish.observeForever {
-            if(it.status == Resource.Status.SUCCESS){
-                val sendMediaVoiceData = HashMap<String,String>()
+            if (it.status == Resource.Status.SUCCESS) {
+                val sendMediaVoiceData = HashMap<String, String>()
                 sendMediaVoiceData["action"] = "send_item"
                 sendMediaVoiceData["client_context"] = clientContext
                 sendMediaVoiceData["_csrftoken"] = cookie.csrftoken!!
@@ -350,7 +552,11 @@ class UseCase(
                 sendMediaVoiceData["waveform_sampling_frequency_hz"] = "10"
                 sendMediaVoiceData["upload_id"] = uploadId
                 sendMediaVoiceData["thread_ids"] = "[$threadId]"
-                mInstagramRepository.sendMediaVoice(liveDataResult,{getUploadFinishHeader()},formUrlEncode(sendMediaVoiceData))
+                mInstagramRepository.sendMediaVoice(
+                    liveDataResult,
+                    { getUploadFinishHeader() },
+                    formUrlEncode(sendMediaVoiceData)
+                )
             }
         }
         return liveDataResult
@@ -366,16 +572,6 @@ class UseCase(
             okhttp3.MediaType.parse("application/octet-stream"),
             buf
         )
-    }
-
-    fun getMediaDuration(filePath: String): Int {
-        val uri: Uri = Uri.parse(filePath)
-        val mmr = MediaMetadataRetriever()
-        mmr.setDataSource(application, uri)
-        val durationStr: String =
-            mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-        val millSecond = durationStr.toInt()
-        return millSecond
     }
 
     fun getLastLoginData(): InstagramLoginPayload? {
@@ -425,7 +621,7 @@ class UseCase(
 //        deviceID = "")
     }
 
-    fun getHeaders(): HashMap<String, String> {
+    private fun getHeaders(): HashMap<String, String> {
         val cookie = getCookie()
         val user = StorageUtils.getUserData(application)
         val map = HashMap<String, String>()
@@ -465,7 +661,124 @@ class UseCase(
     }
 
 
-    fun getUploadMediaUrlHeader(
+    private fun getUploadImageUrlHeader(userId: String, uploadId: String): HashMap<String, String> {
+        val map = HashMap<String, String>()
+        map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
+            gson.toJson(HashMap<String, Any>().apply {
+                put("xsharing_user_ids", userId)
+                put("image_compression", gson.toJson(HashMap<String,String>().apply {
+                    this["lib_name"] = "moz"
+                    this["lib_version"] = "3.1.m"
+                    this["quality"] = "0"
+                }))
+                put("upload_id", uploadId)
+                put("retry_context", getRetryContext())
+                put("media_type", "1")
+            })
+        map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
+        val header = getHeaders()
+        header.putAll(map)
+        return header
+    }
+
+    private fun getUploadImageHeader(
+        byteLength: Int,
+        userId: String,
+        uploadId: String,
+        uploadName: String,
+        type: String
+    ): HashMap<String, String> {
+        val map = HashMap<String, String>()
+        map[InstagramConstants.X_ENTITY_LENGTH] = byteLength.toString()
+        map[InstagramConstants.X_ENTITY_NAME] = uploadName
+        map[InstagramConstants.X_ENTITY_TYPE] = type
+        map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
+        map[InstagramConstants.OFFSET] = 0.toString()
+        map[InstagramConstants.ACCEPT_ENCODING] = "gzip"
+        map[InstagramConstants.CONTENT_TYPE] = "application/octet-stream"
+        map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
+            gson.toJson(HashMap<String, Any>().apply {
+                put("xsharing_user_ids", userId)
+                put("image_compression", gson.toJson(HashMap<String,String>().apply {
+                    this["lib_name"] = "moz"
+                    this["lib_version"] = "3.1.m"
+                    this["quality"] = "0"
+                }))
+                put("upload_id", uploadId)
+                put("retry_context", getRetryContext())
+                put("media_type", "1")
+            })
+        val header = getHeaders()
+        header.putAll(map)
+        return header
+    }
+
+    private fun getUploadVideoUrlHeader(
+        userId: String,
+        uploadMediaHeight: Int,
+        uploadMediaWidth: Int,
+        uploadMediaDuration: Int,
+        uploadId: String
+    ): HashMap<String, String> {
+        val map = HashMap<String, String>()
+        map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
+            gson.toJson(HashMap<String, Any>().apply {
+                put("xsharing_user_ids", userId)
+                put("direct_v2", "1")
+                put("rotate", "0")
+                put("upload_media_width", uploadMediaWidth)
+                put("upload_media_height", uploadMediaHeight)
+                put("hflip", "false")
+                put("upload_media_duration_ms", uploadMediaDuration)
+                put("upload_id", uploadId)
+                put("retry_context", getRetryContext())
+                put("media_type", "2")
+            })
+        map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
+        val header = getHeaders()
+        header.putAll(map)
+        return header
+    }
+
+
+    private fun getUploadVideoHeader(
+        byteLength: Int,
+        userId: String,
+        uploadMediaDuration: Int,
+        uploadId: String,
+        uploadName: String,
+        uploadMediaWidth: Int,
+        uploadMediaHeight: Int,
+        type: String
+    ): HashMap<String, String> {
+        val map = HashMap<String, String>()
+        map[InstagramConstants.X_ENTITY_LENGTH] = byteLength.toString()
+        map[InstagramConstants.X_ENTITY_NAME] = uploadName
+        map[InstagramConstants.X_ENTITY_TYPE] = type
+        map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
+        map[InstagramConstants.OFFSET] = 0.toString()
+        map[InstagramConstants.ACCEPT_ENCODING] = "gzip"
+        map[InstagramConstants.CONTENT_TYPE] = "application/octet-stream"
+        map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
+            gson.toJson(HashMap<String, Any>().apply {
+                put("xsharing_user_ids", userId)
+                put("direct_v2", "1")
+                put("rotate", "0")
+                put("upload_media_width", uploadMediaWidth)
+                put("upload_media_height", uploadMediaHeight)
+                put("hflip", "false")
+                put("upload_media_duration_ms", uploadMediaDuration)
+                put("upload_id", uploadId)
+                put("retry_context", getRetryContext())
+                put("media_type", "2")
+            })
+        map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
+        val header = getHeaders()
+        header.putAll(map)
+        return header
+    }
+
+    private fun getUploadMediaUrlHeader(
         userId: String,
         uploadMediaDuration: Int,
         uploadId: String
@@ -477,11 +790,7 @@ class UseCase(
                 put("is_direct_voice", true.toString())
                 put("upload_media_duration_ms", uploadMediaDuration)
                 put("upload_id", uploadId)
-                val retryContext = HashMap<String, Any>()
-                retryContext["num_reupload"] = 0
-                retryContext["num_step_auto_retry"] = 0
-                retryContext["num_step_manual_retry"] = 0
-                put("retry_context", retryContext)
+                put("retry_context", getRetryContext())
                 put("media_type", 11)
             })
         map[InstagramConstants.X_FB_VIDEO_WATERFALL_ID] = UUID.randomUUID().toString()
@@ -490,7 +799,7 @@ class UseCase(
         return header
     }
 
-    fun getUploadMediaHeader(
+    private fun getUploadMediaHeader(
         byteLength: Int,
         userId: String,
         uploadMediaDuration: Int,
@@ -528,6 +837,7 @@ class UseCase(
         retryContext["num_step_manual_retry"] = 0
         return retryContext
     }
+
     private fun getUploadFinishHeader(): Map<String, String> {
         val map = HashMap<String, String>()
         map["retry_context"] = gson.toJson(getRetryContext())
@@ -594,44 +904,6 @@ class UseCase(
         }
     }
 
-    fun getDifferentTimeString(time: Long, startFromDay: Boolean = true): String {
-        val nowTime = System.currentTimeMillis()
-        val differentTime = (nowTime - time) / 1000
-        val rightNow = (3 * 60)
-        val today = 24 * 60 * 60
-        val month = 30 * 24 * 60 * 60
-        val year = 12 * 30 * 24 * 60 * 60
-        if (differentTime < rightNow && !startFromDay) {
-            return application.getString(R.string.right_now)
-        }
-        if (differentTime < today) {
-            if (startFromDay) {
-                return application.getString(R.string.today)
-            }
-            val hour = differentTime / (60 * 60)
-            if (hour > 0) {
-                return String.format(application.getString(R.string.hours_ago), hour)
-            } else {
-                val min = differentTime / (60)
-                return String.format(application.getString(R.string.min_ago), min)
-            }
-        }
-        if (differentTime < month) {
-            val days = (differentTime / (24 * 60 * 60)).toInt()
-            if (days == 1) {
-                return application.getString(R.string.yesterday)
-            }
-            return String.format(application.getString(R.string.days_ago), days)
-        }
-        if (differentTime < year) {
-            val month = differentTime / (30 * 24 * 60 * 60)
-            return String.format(application.getString(R.string.month_ago), month)
-        }
-        val sdf = SimpleDateFormat("yyyy-MM-dd")
-        val netDate = Date(time)
-        return sdf.format(netDate)
-    }
-
     fun isFileExist(audioSrc: String): Boolean {
         return StorageUtils.isFileExist(application, audioSrc)
     }
@@ -668,7 +940,11 @@ class UseCase(
     }
 
     fun generateFilePath(format: String): String {
-        return Environment.getExternalStorageDirectory()!!.absolutePath + File.separator + format
+        val wallpaperDirectory = File(StorageUtils.APPLICATION_DIR)
+        if(!wallpaperDirectory.exists()){
+            wallpaperDirectory.mkdirs()
+        }
+        return StorageUtils.APPLICATION_DIR+File.separator + format
     }
 
     fun saveFbnsAuthData(fbnsAuth: FbnsAuth) {

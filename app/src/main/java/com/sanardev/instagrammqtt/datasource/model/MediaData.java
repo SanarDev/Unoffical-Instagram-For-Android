@@ -32,6 +32,16 @@ public class MediaData {
     private boolean isLocal=false;
     @JsonIgnore
     private String localFilePath;
+    @JsonIgnore
+    private int localDuration = 0;
+
+    public int getLocalDuration() {
+        return localDuration;
+    }
+
+    public void setLocalDuration(int localDuration) {
+        this.localDuration = localDuration;
+    }
 
     public boolean isLocal() {
         return isLocal;

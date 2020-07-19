@@ -1,5 +1,6 @@
 package com.sanardev.instagrammqtt.datasource.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -35,6 +36,9 @@ public class Media {
     @SerializedName("image_versions2")
     @Expose
     private ImageVersions2 imageVersions2;
+    @SerializedName("video_versions")
+    @Expose
+    private List<VideoVersion> videoVersions = null;
     @SerializedName("original_width")
     @Expose
     private int originalWidth;
@@ -110,6 +114,42 @@ public class Media {
     @SerializedName("story_is_saved_to_archive")
     @Expose
     private boolean storyIsSavedToArchive;
+    @JsonIgnore
+    private boolean isLocal;
+    @JsonIgnore
+    private String localFilePath;
+
+    public boolean isLocal() {
+        return isLocal;
+    }
+
+    public void setLocal(boolean local) {
+        isLocal = local;
+    }
+
+    public String getLocalFilePath() {
+        return localFilePath;
+    }
+
+    public void setLocalFilePath(String localPath) {
+        this.localFilePath = localPath;
+    }
+
+    public List<VideoVersion> getVideoVersions() {
+        return videoVersions;
+    }
+
+    public void setVideoVersions(List<VideoVersion> videoVersions) {
+        this.videoVersions = videoVersions;
+    }
+
+    public boolean isReelMedia() {
+        return isReelMedia;
+    }
+
+    public void setReelMedia(boolean reelMedia) {
+        isReelMedia = reelMedia;
+    }
 
     public long getTakenAt() {
         return takenAt;

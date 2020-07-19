@@ -10,6 +10,7 @@ import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import java.io.*
 
+
 class StorageUtils {
 
     companion object {
@@ -17,6 +18,9 @@ class StorageUtils {
         private const val LAST_LOGIN_DATA_FILE_NAME = "UyUiOOps"
         private const val COOKIE_BEFORE_LOGIN = "IoPkjTyX"
         private const val FBNS_AUTH = "YuiioQwe"
+
+        val APPLICATION_DIR = Environment.getExternalStorageDirectory()!!.absolutePath + File.separator+ "Minista"+ File.separator
+
 
         fun saveLoggedInUserData(context: Context, user: InstagramLoggedUser) {
             removeFile(context, COOKIE_BEFORE_LOGIN)
@@ -159,6 +163,14 @@ class StorageUtils {
                 e.printStackTrace()
             }
         }
+
+        fun deleteDir(fileOrDirectory: File) {
+            if (fileOrDirectory.isDirectory) for (child in fileOrDirectory.listFiles()) deleteDir(
+                child
+            )
+            fileOrDirectory.delete()
+        }
+
 
     }
 }

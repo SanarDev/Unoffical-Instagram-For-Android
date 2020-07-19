@@ -1,28 +1,22 @@
 package com.sanardev.instagrammqtt.ui.main
 
-import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.PersistableBundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.PopupWindow
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
-import com.google.android.material.tabs.TabLayout
-import com.google.gson.internal.LinkedTreeMap
+import com.bumptech.glide.Glide
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.base.BaseActivity
 import com.sanardev.instagrammqtt.constants.InstagramConstants
@@ -30,10 +24,7 @@ import com.sanardev.instagrammqtt.core.BaseAdapter
 import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
 import com.sanardev.instagrammqtt.databinding.LayoutDirectBinding
 import com.sanardev.instagrammqtt.datasource.model.Thread
-import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
-import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
-import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
-import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
+import com.sanardev.instagrammqtt.datasource.model.event.*
 import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_StartService
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
@@ -41,15 +32,13 @@ import com.sanardev.instagrammqtt.extensions.color
 import com.sanardev.instagrammqtt.extensions.gone
 import com.sanardev.instagrammqtt.extensions.setTextViewDrawableColor
 import com.sanardev.instagrammqtt.extensions.visible
-import com.sanardev.instagrammqtt.service.fbns.FbnsIntent
-import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.ui.direct.DirectActivity
 import com.sanardev.instagrammqtt.ui.login.LoginActivity
 import com.sanardev.instagrammqtt.ui.startmessage.StartMessageActivity
 import com.sanardev.instagrammqtt.utils.Resource
+import com.sanardev.instagrammqtt.utils.TimeUtils
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
-import com.squareup.picasso.Picasso
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import org.greenrobot.eventbus.EventBus
@@ -83,11 +72,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         val instagramDirectObserver = InstagramDirectObserver()
         viewModel.mutableLiveData.observe(this, instagramDirectObserver)
         viewModel.threadNewMessageLiveData.observe(this, Observer {
-            for(index in adapter.items.indices){
+            for (index in adapter.items.indices) {
                 val thread = adapter.items[index]
-                if(thread.threadId == it.first){
-                    thread.messages.add(0,it.second)
-                    adapter.notifyItemMoved(index,0)
+                if (thread.threadId == it.first) {
+                    thread.messages.add(0, it.second)
+                    adapter.notifyItemMoved(index, 0)
                 }
             }
         })
@@ -147,22 +136,14 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         override fun onChanged(it: Resource<InstagramDirects>) {
 
             if (it.status == Resource.Status.LOADING) {
-                binding.progressbar.visibility = View.VISIBLE
+                visible(binding.progressbar)
+                gone(binding.recyclerviewDirects,binding.edtSearch,binding.includeLayoutNetwork.root)
                 return
             }
-            binding.progressbar.visibility = View.GONE
+            gone(binding.progressbar,binding.includeLayoutNetwork.root)
             if (it.status == Resource.Status.ERROR) {
                 if (it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code) {
-                    DialogHelper.createDialog(
-                        this@MainActivity,
-                        layoutInflater,
-                        title = getString(R.string.error_internet_connection),
-                        message = getString(R.string.check_your_network),
-                        positiveText = getString(R.string.try_again),
-                        positiveFun = {
-                            viewModel.getDirects()
-                        }
-                    )
+                    visible(binding.includeLayoutNetwork.root)
                     return
                 }
                 if (it.data == null) {
@@ -194,9 +175,13 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 }
                 return
             }
+            visible(binding.recyclerviewDirects,binding.edtSearch)
             seqID = it.data!!.seqId
             val threads = it.data!!.inbox.threads
-            RealTimeService.run(this@MainActivity,RealTime_StartService(it.data!!.seqId.toLong(),it.data!!.snapshotAtMs))
+            RealTimeService.run(
+                this@MainActivity,
+                RealTime_StartService(it.data!!.seqId.toLong(), it.data!!.snapshotAtMs)
+            )
             adapter.items = threads
             adapter.notifyDataSetChanged()
         }
@@ -204,11 +189,34 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
     }
 
 
+    @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
+    fun onConnectionStateEvent(connectionStateEvent: ConnectionStateEvent){
+        when (connectionStateEvent.connection){
+            ConnectionStateEvent.State.CONNECTING ->{
+                binding.txtToolbarTitle.text = getString(R.string.connecting)
+            }
+            ConnectionStateEvent.State.CONNECTED ->{
+                binding.txtToolbarTitle.text = getString(R.string.app_name)
+            }
+            ConnectionStateEvent.State.NETWORK_DISCONNECTED ->{
+                binding.txtToolbarTitle.text = getString(R.string.waiting_for_network)
+            }
+            ConnectionStateEvent.State.CHANNEL_DISCONNECTED ->{
+                viewModel.reloadDirects()
+            }
+            ConnectionStateEvent.State.NETWORK_CONNECTION_RESET ->{
+                viewModel.reloadDirects()
+            }
+            else ->{
 
+            }
+        }
+    }
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageEvent(event: MessageEvent) { /* Do something */
-        viewModel.onMessageReceive(event)
-        Log.i(InstagramConstants.DEBUG_TAG, "message event ${event.message.text}")
+    fun onMessageEvent(events: MutableList<MessageEvent>) {
+        for (event in events) {
+            viewModel.onMessageReceive(event)
+        }
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
@@ -228,16 +236,16 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 
     override fun onStart() {
         super.onStart()
-        EventBus.getDefault().register(this);
-    }
+        try{
+            EventBus.getDefault().register(this);
+        }catch (e:Exception){
 
-    override fun onResume() {
-        super.onResume()
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        EventBus.getDefault().unregister(this);
+//        EventBus.getDefault().unregister(this);
     }
 
     inner class DirectsAdapter(var items: List<Thread>) : BaseAdapter() {
@@ -250,7 +258,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 var unreadMessage = 0
                 for (message in item.messages) {
                     if (message.timestamp > lastSeen) {
-                        unreadMessage++
+                        if (message.userId != user.pk) {
+                            unreadMessage++
+                        }
                     } else {
                         break
                     }
@@ -279,8 +289,16 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     dataBinding.profileDec.setTypeface(null, Typeface.BOLD);
                 } else {
                     when (lastItem.itemType) {
+                        InstagramConstants.MessageType.ACTION_LOG.type -> {
+                            dataBinding.profileDec.text = lastItem.actionLog.description
+                        }
                         InstagramConstants.MessageType.TEXT.type -> {
-                            dataBinding.profileDec.text = lastItem.text
+                            if (lastItem.userId == user.pk) {
+                                dataBinding.profileDec.text =
+                                    String.format(getString(R.string.you_text), lastItem.text)
+                            } else {
+                                dataBinding.profileDec.text = lastItem.text
+                            }
                         }
                         InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
                             dataBinding.profileDec.text = getString(R.string.send_a_sticker)
@@ -307,12 +325,35 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                                         getString(R.string.mentioned_you_in_their_story)
                                 }
                             }
+                            if (lastItem.reelShare.type == InstagramConstants.ReelType.REACTION.type) {
+                                if (lastItem.userId == user.pk) {
+                                    dataBinding.profileDec.text = String.format(
+                                        getString(R.string.you_reacted_to_user_story),
+                                        item.users[0].username
+                                    )
+                                } else {
+                                    dataBinding.profileDec.text = String.format(
+                                        getString(R.string.reacted_to_your_story_with_reaction),
+                                        lastItem.reelShare.text
+                                    )
+                                }
+                            }
                         }
                         InstagramConstants.MessageType.MEDIA_SHARE.type -> {
                             dataBinding.profileDec.text = getString(R.string.share_a_media)
                         }
+                        InstagramConstants.MessageType.MEDIA.type -> {
+                            if (lastItem.userId == user.pk) {
+                                dataBinding.profileDec.text = getString(R.string.you_send_a_media)
+                            } else {
+                                dataBinding.profileDec.text = getString(R.string.send_a_media)
+                            }
+                        }
                         InstagramConstants.MessageType.LIKE.type -> {
                             dataBinding.profileDec.text = lastItem.like
+                        }
+                        InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
+                            dataBinding.profileDec.text = getString(R.string.send_a_photo)
                         }
                         InstagramConstants.MessageType.VOICE_MEDIA.type -> {
                             if (lastItem.userId == user.pk) {
@@ -325,6 +366,35 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                         }
                         InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
                             dataBinding.profileDec.text = lastItem.videoCallEvent.description
+                        }
+                        InstagramConstants.MessageType.LINK.type -> {
+                            if (lastItem.userId == user.pk) {
+                                dataBinding.profileDec.text =
+                                    getString(R.string.you_share_a_link)
+                            } else {
+                                dataBinding.profileDec.text =
+                                    getString(R.string.share_a_link)
+                            }
+                        }
+                        InstagramConstants.MessageType.FELIX_SHARE.type -> {
+                            if (lastItem.userId == user.pk) {
+                                dataBinding.profileDec.text = String.format(
+                                    getString(R.string.you_send_user_igtv_video),
+                                    lastItem.felixShare.video.user.username
+                                )
+                            } else {
+                                dataBinding.profileDec.text = String.format(
+                                    getString(R.string.send_user_igtv_video),
+                                    lastItem.felixShare.video.user.username
+                                )
+                            }
+                        }
+                        InstagramConstants.MessageType.PROFILE.type -> {
+                            if (lastItem.userId == user.pk) {
+                                dataBinding.profileDec.text = getString(R.string.you_send_a_profile)
+                            } else {
+                                dataBinding.profileDec.text = getString(R.string.send_a_profile)
+                            }
                         }
                     }
                 }
@@ -348,7 +418,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     }
                     dataBinding.lastMessageTime.visibility = View.VISIBLE
                     dataBinding.lastMessageTime.text =
-                        viewModel.convertTimeStampToData(lastItem.timestamp)
+                        TimeUtils.convertTimestampToDate(application, lastItem.timestamp)
                 }
             }
             if (item.isGroup) {
@@ -363,12 +433,15 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             if (item.isGroup) {
                 visible(dataBinding.layoutProfileImageGroup)
                 gone(dataBinding.layoutProfileImageUser)
-                Picasso.get().load(item.users[1].profilePicUrl).into(dataBinding.profileImageG1)
-                Picasso.get().load(item.users[0].profilePicUrl).into(dataBinding.profileImageG2)
-            }else{
+                Glide.with(applicationContext).load(item.users[1].profilePicUrl)
+                    .into(dataBinding.profileImageG1)
+                Glide.with(applicationContext).load(item.users[0].profilePicUrl)
+                    .into(dataBinding.profileImageG2)
+            } else {
                 gone(dataBinding.layoutProfileImageGroup)
                 visible(dataBinding.layoutProfileImageUser)
-                Picasso.get().load(item.users[0].profilePicUrl).into(dataBinding.profileImage)
+                Glide.with(applicationContext).load(item.users[0].profilePicUrl)
+                    .into(dataBinding.profileImage)
             }
             dataBinding.profileMoreOption.setOnClickListener {
                 showPopupOptions(item.threadId, dataBinding.profileMoreOption)
@@ -385,7 +458,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 dataBinding.profileLastActivityAt.setTypeface(null, Typeface.NORMAL);
                 dataBinding.profileLastActivityAt.text = String.format(
                     getString(R.string.active_at),
-                    viewModel.convertTimeStampToData(item.lastActivityAt)
+                    TimeUtils.convertTimestampToDate(application, item.lastActivityAt)
                 )
                 dataBinding.imgIsOnline.visibility = View.INVISIBLE
             }
@@ -394,21 +467,24 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     putString("thread_id", item.threadId)
                     putString("profile_image", item.users[0].profilePicUrl)
                     putString("username", item.users[0].username)
+                    putBoolean("is_active", item.active)
                     putLong("last_activity_at", item.lastActivityAt)
                     putInt("seq_id", seqID)
                     if (!item.isGroup) {
-                        if(item.lastSeenAt[item.users[0].pk.toString()] != null){
+                        if (item.lastSeenAt[item.users[0].pk.toString()] != null) {
                             putLong(
                                 "last_seen_at",
                                 item.lastSeenAt[item.users[0].pk.toString()]!!.timeStamp
                             )
-                        }else{
-                            putLong("last_seen_at",0)
+                        } else {
+                            putLong("last_seen_at", 0)
                         }
                     }
                 })
+                if(binding.edtSearch.text.toString().isNotEmpty()){
+                    binding.edtSearch.setText("")
+                }
             }
-            Log.i(InstagramConstants.DEBUG_TAG,item.threadId)
             return item
         }
 
