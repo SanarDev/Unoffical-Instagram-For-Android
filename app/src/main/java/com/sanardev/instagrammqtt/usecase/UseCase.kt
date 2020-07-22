@@ -992,4 +992,8 @@ class UseCase(
         mInstagramRepository.getRecipients(result, query, { getHeaders() })
     }
 
+    fun getUserByRecipients(result:MutableLiveData<Resource<ResponseBody>>,userId: Int,seqId:Int){
+        mInstagramRepository.getByParticipants(result,{getHeaders()},"[[$userId]]",seqId)
+    }
+
 }

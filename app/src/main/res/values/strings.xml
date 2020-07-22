@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Minista</string>
+    <string name="app_name">iDirect</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="login">Login</string>
@@ -79,4 +79,7 @@
     <string name="you_text">You : %s</string>
     <string name="connecting">Connecting ...</string>
     <string name="waiting_for_network">Waiting for network ...</string>
+    <string name="wating">Wating ...</string>
+    <string name="send_first_message">Send first message ...</string>
+    <string name="page_not_found">Page not found</string>
 </resources>

@@ -20,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.devlomi.record_view.OnRecordListener
-import com.github.piasy.rxandroidaudio.RxAudioPlayer
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.MediaSource
@@ -30,7 +29,7 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.sanardev.instagrammqtt.R
-import com.sanardev.instagrammqtt.base.BaseActivity
+import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.core.BaseAdapter
 import com.sanardev.instagrammqtt.customview.doubleclick.DoubleClick
@@ -38,7 +37,6 @@ import com.sanardev.instagrammqtt.customview.doubleclick.DoubleClickListener
 import com.sanardev.instagrammqtt.databinding.*
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
-import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.*
 import com.sanardev.instagrammqtt.datasource.model.realtime.*
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
@@ -51,6 +49,7 @@ import com.sanardev.instagrammqtt.utils.*
 import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.EmojiPopup
+import com.vanniktech.emoji.EmojiTextView
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import kotlinx.android.synthetic.main.media_share_exo_controller.view.*
 import org.greenrobot.eventbus.EventBus
@@ -65,18 +64,10 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
-class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
-
-    private var lastActivityAt: Long = 0
-    private var isActive: Boolean = false
-    private var thread: Thread? = null
-    private lateinit var threadId: String
-    private var username: String? = null
-    private var profileImage: String? = null
+class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), ActionListener {
 
     private lateinit var httpDataSourceFactory: DataSource.Factory
     private lateinit var dataSourceFactory: DefaultDataSourceFactory
-    private val mRxAudioPlayer = RxAudioPlayer.getInstance()
     private lateinit var mPlayarManager: PlayerManager
     private lateinit var adapter: ChatsAdapter
     private lateinit var emojiPopup: EmojiPopup
@@ -87,9 +78,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 //    private var lastSeenAt: Long = 0
 
     companion object {
-        fun open(context: Context, bundle: Bundle) {
+        fun open(context: Context, directBundle: DirectBundle) {
             context.startActivity(Intent(context, DirectActivity::class.java).apply {
-                putExtras(bundle)
+                putExtra("data", directBundle)
             })
         }
 
@@ -114,18 +105,25 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
         attachKeyboardListeners()
 
-        threadId = intent.extras!!.getString("thread_id")!!
-        profileImage = intent.extras!!.getString("profile_image")
-        isActive = intent.extras!!.getBoolean("is_active")
-        lastActivityAt = intent.extras!!.getLong("last_activity_at")
-        username = intent.extras!!.getString("username")
-        val seqID = intent.extras!!.getInt("seq_id")
+        viewModel.init(intent.extras!!.getParcelable<DirectBundle>("data")!!)
 
-        binding.txtProfileName.text = username
+        // profile
+        binding.txtProfileName.text = viewModel.thread.threadTitle
         checkUserStatus()
-        Glide.with(applicationContext).load(profileImage).into(binding.imgProfileImage)
+        if (!viewModel.thread.isGroup) {
+            gone(binding.layoutProfileImageGroup)
+            visible(binding.imgProfileImage)
+            Glide.with(applicationContext).load(viewModel.thread.users[0].profilePicUrl)
+                .into(binding.imgProfileImage)
+        } else {
+            visible(binding.layoutProfileImageGroup)
+            gone(binding.imgProfileImage)
+            Glide.with(applicationContext).load(viewModel.thread.users[1].profilePicUrl)
+                .into(binding.profileImageG1)
+            Glide.with(applicationContext).load(viewModel.thread.users[0].profilePicUrl)
+                .into(binding.profileImageG2)
+        }
 
-        viewModel.init(threadId, seqID)
 
         adapter = ChatsAdapter(ArrayList<Any>(), viewModel.getUserProfile())
         binding.recyclerviewChats.adapter = adapter
@@ -181,9 +179,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
         binding.btnLike.setOnClickListener {
             val clientContext = InstagramHashUtils.getClientContext()
-            RealTimeService.run(this, RealTime_SendLike(threadId, clientContext))
+            RealTimeService.run(this, RealTime_SendLike(viewModel.thread.threadId, clientContext))
             val message = MessageGenerator.like(adapter.user.pk!!, clientContext)
-            EventBus.getDefault().postSticky(arrayListOf(MessageEvent(threadId, message)))
+            EventBus.getDefault()
+                .postSticky(arrayListOf(MessageEvent(viewModel.thread.threadId, message)))
         }
 
         binding.btnAddPhoto.setOnClickListener {
@@ -204,7 +203,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 RealTimeService.run(
                     this@DirectActivity,
                     RealTime_SendTypingState(
-                        threadId,
+                        viewModel.thread.threadId,
                         s!!.isNotEmpty(),
                         InstagramHashUtils.getClientContext()
                     )
@@ -213,64 +212,37 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         })
 
         viewModel.mutableLiveData.observe(this, Observer {
-            if (it.status == Resource.Status.LOADING) {
-                if (adapter.items.isNotEmpty()) {
-                    return@Observer
+            when (it.status) {
+                Resource.Status.LOADING -> {
+                    if (adapter.items.isNotEmpty()) {
+                        return@Observer
+                    }
+                    visible(binding.progressbar)
+                    gone(binding.includeLayoutNetwork.root, binding.txtNoMessage)
                 }
-                visible(binding.progressbar)
-                gone(binding.includeLayoutNetwork.root)
-                return@Observer
-            }
-            gone(binding.progressbar)
-            if (it.status == Resource.Status.ERROR) {
-                if (adapter.items.isEmpty()) {
-                    visible(binding.includeLayoutNetwork.root)
+                Resource.Status.ERROR -> {
+                    if (adapter.items.isEmpty()) {
+                        gone(binding.progressbar)
+                        visible(binding.includeLayoutNetwork.root)
+                    }
                 }
-                return@Observer
-            }
-            gone(binding.includeLayoutNetwork.root)
-            if (it.status == Resource.Status.SUCCESS) {
-                thread = it.data!!.thread
-                olderMessageExist = it.data!!.thread!!.oldestCursor != null
-                if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
-                    adapter.items = it.data!!.thread!!.releasesMessage
-                    adapter.notifyDataSetChanged()
+                Resource.Status.SUCCESS -> {
+                    gone(binding.includeLayoutNetwork.root, binding.progressbar)
+                    olderMessageExist = it.data!!.thread!!.oldestCursor != null
+                    if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
+                        adapter.items = it.data!!.thread!!.releasesMessage
+                        adapter.notifyDataSetChanged()
+                    }
+                    isLoading = false
+                    adapter.setLoading(isLoading)
                 }
-                isLoading = false
-                adapter.setLoading(isLoading)
             }
         })
 
-        viewModel.funcAddMessage = {
-            adapter.items.add(0, it)
-            adapter.notifyItemInserted(0)
-            binding.recyclerviewChats.scrollToPosition(0)
-        }
+        viewModel.mActionListener = this
         viewModel.fileLiveData.observe(this, Observer {
 
 
-        })
-
-        viewModel.messageChangeLiveData.observe(this, Observer {
-            for (i in adapter.items.indices) {
-                val message = adapter.items[i]
-                if (message is Message) {
-                    if (message.itemId == it.itemId) {
-                        adapter.notifyItemChanged(i)
-                    }
-                }
-            }
-        })
-
-        viewModel.messageChangeWithClientContextLiveData.observe(this, Observer {
-            for (i in adapter.items.indices) {
-                val message = adapter.items[i]
-                if (message is Message) {
-                    if (message.clientContext == it.clientContext) {
-                        adapter.notifyItemChanged(i)
-                    }
-                }
-            }
         })
 
         viewModel.sendMediaLiveData.observe(this, Observer {
@@ -293,8 +265,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         if (adapter.items[totalItemCount - 2] is Message) {
                             viewModel.loadMoreItem(
                                 (adapter.items[totalItemCount - 2] as Message).itemId,
-                                threadId,
-                                seqID
+                                viewModel.thread.threadId,
+                                viewModel.seqId
                             )
                             isLoading = true
                             adapter.setLoading(isLoading)
@@ -308,22 +280,30 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     }
 
     private fun checkUserStatus() {
-        if (isActive) {
+        if (!viewModel.thread.isGroup && viewModel.thread.active) {
             binding.txtProfileDec.text = getString(R.string.online)
             binding.txtProfileDec.setTextColor(color(R.color.online_color))
         } else {
-            binding.txtProfileDec.text = String.format(
-                getString(R.string.active_at),
-                TimeUtils.convertTimestampToDate(application, lastActivityAt)
-            )
-            binding.txtProfileDec.setTextColor(color(R.color.text_light))
+            if (viewModel.thread.lastActivityAt == 0.toLong()) {
+                binding.txtProfileDec.text = viewModel.thread.threadTitle
+            } else {
+                binding.txtProfileDec.text = String.format(
+                    getString(R.string.active_at),
+                    TimeUtils.convertTimestampToDate(application, viewModel.thread.lastActivityAt)
+                )
+                binding.txtProfileDec.setTextColor(color(R.color.text_light))
+            }
         }
     }
 
     override fun onHideKeyboard() {
         RealTimeService.run(
             this@DirectActivity,
-            RealTime_SendTypingState(threadId, false, InstagramHashUtils.getClientContext())
+            RealTime_SendTypingState(
+                viewModel.thread.threadId,
+                false,
+                InstagramHashUtils.getClientContext()
+            )
         )
     }
 
@@ -345,7 +325,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onTypingEvent(event: TypingEvent) { /* Do something */
-        if (threadId == event.threadId) {
+        if (viewModel.thread.threadId == event.threadId) {
             endTypeAtMs = System.currentTimeMillis() + 3 * 1000
             binding.txtProfileDec.text = getString(R.string.typing)
             binding.txtProfileDec.setTextColor(color(R.color.text_very_light))
@@ -360,7 +340,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onMessageEvents(events: MutableList<MessageEvent>) {
         for (event in events) {
-            if (event.threadId == threadId) {
+            if (event.threadId == viewModel.thread.threadId) {
                 checkUserStatus()
                 viewModel.onMessageReceive(event)
             }
@@ -369,26 +349,13 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onMessageResponseEvent(event: MessageResponse) {
-        if (event.action == "item_ack" && event.status == "ok" && event.payload.threadId == threadId) {
-            if (event.payload.clientContext == "reactions") {
-                viewModel.onReactionsResponse(event.payload)
-                return
-            }
-            for (i in adapter.items.indices) {
-                val item = adapter.items[i]
-                if (item is Message && item.clientContext == event.payload.clientContext) {
-                    item.timestamp = event.payload.timestamp.toLong()
-                    item.isDelivered = true
-                    adapter.notifyItemChanged(i)
-                }
-            }
-        }
+        viewModel.onMessageResponseEvent(event)
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onUpdateSeenEvent(event: UpdateSeenEvent) {
-        if (event.threadId == threadId) {
-            for (item in thread!!.lastSeenAt.entries) {
+        if (event.threadId == viewModel.thread.threadId) {
+            for (item in viewModel.thread.lastSeenAt.entries) {
                 item.value.timeStamp = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
             }
             adapter.notifyDataSetChanged()
@@ -397,9 +364,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onPresenceEvent(event: PresenceEvent) { /* Do something */
-        if (thread != null && event.userId.toLong() == thread!!.users[0].pk) {
-            isActive = event.isActive
-            lastActivityAt = event.lastActivityAtMs.toLong()
+        if (viewModel.thread != null && event.userId.toLong() == viewModel.thread!!.users[0].pk) {
+            viewModel.thread.active = event.isActive
+            viewModel.thread.lastActivityAt = event.lastActivityAtMs.toLong()
             checkUserStatus()
         }
     }
@@ -483,290 +450,175 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 item.timestamp = item.timestamp / 1000
             }
 
-            val includeTime = when (item.itemType) {
+            var includeTime: LayoutTimeBinding? = null
+            var includeReaction: LayoutReactionsLikeBinding? = null
+            var layoutParent: LinearLayout? = null
+            var layoutMessage: LinearLayout? = null
+            var imgThreadProfileImage: CircleImageView? = null
+            var txtSendername: EmojiTextView? = null
+
+
+            when (item.itemType) {
                 InstagramConstants.MessageType.TEXT.type -> {
-                    (holder.binding as LayoutMessageBinding).includeTime
+                    includeTime = (holder.binding as LayoutMessageBinding).includeTime
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutMessageBinding).imgThreadProfileImage
+                    layoutParent = (holder.binding as LayoutMessageBinding).layoutParent
+                    layoutMessage = (holder.binding as LayoutMessageBinding).layoutMessage
+                    includeReaction = (holder.binding as LayoutMessageBinding).includeReaction
+                    txtSendername = (holder.binding as LayoutMessageBinding).txtSendername
                 }
                 InstagramConstants.MessageType.LINK.type -> {
-                    (holder.binding as LayoutLinkBinding).includeTime
+                    includeTime = (holder.binding as LayoutLinkBinding).includeTime
+                    layoutParent = (holder.binding as LayoutLinkBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutLinkBinding).imgThreadProfileImage
+                    layoutMessage = (holder.binding as LayoutLinkBinding).layoutMessage
+                    includeReaction = (holder.binding as LayoutLinkBinding).includeReaction
+                    txtSendername = (holder.binding as LayoutLinkBinding).txtSendername
                 }
                 InstagramConstants.MessageType.REEL_SHARE.type -> {
                     when (item.reelShare.type) {
                         InstagramConstants.ReelType.REPLY.type -> {
-                            (holder.binding as LayoutReelShareReplyBinding).includeTime
+                            includeTime =
+                                (holder.binding as LayoutReelShareReplyBinding).includeTime
+                            layoutParent =
+                                (holder.binding as LayoutReelShareReplyBinding).layoutParent
+                            imgThreadProfileImage =
+                                (holder.binding as LayoutReelShareReplyBinding).imgThreadProfileImage
+                            layoutMessage =
+                                (holder.binding as LayoutReelShareReplyBinding).layoutMessage
+                            includeReaction =
+                                (holder.binding as LayoutReelShareReplyBinding).includeReaction
                         }
                         InstagramConstants.ReelType.MENTION.type -> {
-                            (holder.binding as LayoutReelShareBinding).includeTime
+                            includeTime = (holder.binding as LayoutReelShareBinding).includeTime
+                            layoutParent = (holder.binding as LayoutReelShareBinding).layoutParent
+                            imgThreadProfileImage =
+                                (holder.binding as LayoutReelShareBinding).imgThreadProfileImage
+                            includeReaction =
+                                (holder.binding as LayoutReelShareBinding).includeReaction
                         }
                         else -> { // item.reelShare.type == InstagramConstants.ReelType.REACTION.type
-                            (holder.binding as LayoutReactionStoryBinding).includeTime
+                            includeTime = (holder.binding as LayoutReactionStoryBinding).includeTime
+                            imgThreadProfileImage =
+                                (holder.binding as LayoutReactionStoryBinding).imgThreadProfileImage
+                            includeReaction =
+                                (holder.binding as LayoutReactionStoryBinding).includeReaction
+                            layoutParent =
+                                (holder.binding as LayoutReactionStoryBinding).layoutParent
                         }
                     }
                 }
                 InstagramConstants.MessageType.STORY_SHARE.type -> {
                     if (item.storyShare.media != null) {
-                        (holder.binding as LayoutReelShareBinding).includeTime
-                    } else
-                        (holder.binding as LayoutStoryShareNotLinkedBinding).includeTime
+                        includeTime = (holder.binding as LayoutReelShareBinding).includeTime
+                        layoutParent = (holder.binding as LayoutReelShareBinding).layoutParent
+                        imgThreadProfileImage =
+                            (holder.binding as LayoutReelShareBinding).imgThreadProfileImage
+                        includeReaction = (holder.binding as LayoutReelShareBinding).includeReaction
+                    } else {
+                        includeTime =
+                            (holder.binding as LayoutStoryShareNotLinkedBinding).includeTime
+                        layoutParent =
+                            (holder.binding as LayoutStoryShareNotLinkedBinding).layoutParent
+                        imgThreadProfileImage =
+                            (holder.binding as LayoutStoryShareNotLinkedBinding).imgThreadProfileImage
+                        layoutMessage =
+                            (holder.binding as LayoutStoryShareNotLinkedBinding).layoutMessage
+                        includeReaction =
+                            (holder.binding as LayoutStoryShareNotLinkedBinding).includeReaction
+                    }
                 }
                 InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    (holder.binding as LayoutVoiceMediaBinding).includeTime
+                    if (item.userId == viewModel.thread.viewerId) {
+                        includeTime = (holder.binding as LayoutVoiceMediaBinding).includeTime
+                        layoutParent = (holder.binding as LayoutVoiceMediaBinding).layoutParent
+                        imgThreadProfileImage =
+                            (holder.binding as LayoutVoiceMediaBinding).imgThreadProfileImage
+                        includeReaction =
+                            (holder.binding as LayoutVoiceMediaBinding).includeReaction
+                        layoutMessage = (holder.binding as LayoutVoiceMediaBinding).layoutMessage
+                        txtSendername = (holder.binding as LayoutVoiceMediaBinding).txtSendername
+                    } else {
+                        includeTime = (holder.binding as LayoutVoiceMediaTwoBinding).includeTime
+                        layoutParent = (holder.binding as LayoutVoiceMediaTwoBinding).layoutParent
+                        imgThreadProfileImage =
+                            (holder.binding as LayoutVoiceMediaTwoBinding).imgThreadProfileImage
+                        includeReaction =
+                            (holder.binding as LayoutVoiceMediaTwoBinding).includeReaction
+                        layoutMessage = (holder.binding as LayoutVoiceMediaTwoBinding).layoutMessage
+                        txtSendername = (holder.binding as LayoutVoiceMediaTwoBinding).txtSendername
+                    }
                 }
                 InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
-                    null
                 }
                 InstagramConstants.MessageType.MEDIA.type -> {
-                    (holder.binding as LayoutMediaBinding).includeTime
+                    includeTime = (holder.binding as LayoutMediaBinding).includeTime
+                    layoutParent = (holder.binding as LayoutMediaBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutMediaBinding).imgThreadProfileImage
+                    layoutMessage = (holder.binding as LayoutMediaBinding).layoutMessage
+                    includeReaction = (holder.binding as LayoutMediaBinding).includeReaction
                 }
                 InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                    (holder.binding as LayoutRavenMediaBinding).includeTime
+                    includeTime = (holder.binding as LayoutRavenMediaBinding).includeTime
+                    layoutParent = (holder.binding as LayoutRavenMediaBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutRavenMediaBinding).imgThreadProfileImage
+                    layoutMessage = (holder.binding as LayoutRavenMediaBinding).layoutMessage
+                    includeReaction = (holder.binding as LayoutRavenMediaBinding).includeReaction
+                    txtSendername = (holder.binding as LayoutRavenMediaBinding).txtSendername
                 }
                 InstagramConstants.MessageType.LIKE.type -> {
-                    (holder.binding as LayoutLikeBinding).includeTime
+                    includeTime = (holder.binding as LayoutLikeBinding).includeTime
+                    layoutParent = (holder.binding as LayoutLikeBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutLikeBinding).imgThreadProfileImage
+                    includeReaction = (holder.binding as LayoutLikeBinding).includeReaction
 //                            holder.binding as LayoutLikeBinding
                 }
                 InstagramConstants.MessageType.MEDIA_SHARE.type -> {
-                    (holder.binding as LayoutMediaShareBinding).includeTime
+                    includeTime = (holder.binding as LayoutMediaShareBinding).includeTime
+                    layoutParent = (holder.binding as LayoutMediaShareBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutMediaShareBinding).imgThreadProfileImage
+                    layoutMessage = (holder.binding as LayoutMediaShareBinding).layoutMessage
+                    includeReaction = (holder.binding as LayoutMediaShareBinding).includeReaction
+                    txtSendername = (holder.binding as LayoutMediaShareBinding).txtSendername
                 }
                 InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
-                    null
-//                            (holder.binding as LayoutAnimatedMediaBinding)
+                    layoutParent = (holder.binding as LayoutAnimatedMediaBinding).layoutParent
+                    includeReaction = (holder.binding as LayoutAnimatedMediaBinding).includeReaction
+//                    imgThreadProfileImage =  (holder.binding as LayoutAnimatedMediaBinding).imgThreadProfileImage
                 }
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                    (holder.binding as LayoutFelixShareBinding).includeTime
+                    includeTime = (holder.binding as LayoutFelixShareBinding).includeTime
+                    layoutParent = (holder.binding as LayoutFelixShareBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutFelixShareBinding).imgThreadProfileImage
+                    layoutMessage = (holder.binding as LayoutFelixShareBinding).layoutMessage
+                    includeReaction = (holder.binding as LayoutFelixShareBinding).includeReaction
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
-                    null
-                }
-                else -> {
-                    (holder.binding as LayoutMessageBinding).includeTime
-                }
-            }
-            val layoutParent = when (item.itemType) {
-                InstagramConstants.MessageType.TEXT.type -> {
-                    (holder.binding as LayoutMessageBinding).layoutParent
-                }
-                InstagramConstants.MessageType.LINK.type -> {
-                    (holder.binding as LayoutLinkBinding).layoutParent
-                }
-                InstagramConstants.MessageType.REEL_SHARE.type -> {
-                    when (item.reelShare.type) {
-                        InstagramConstants.ReelType.REPLY.type -> {
-                            (holder.binding as LayoutReelShareReplyBinding).layoutParent
-                        }
-                        InstagramConstants.ReelType.MENTION.type -> {
-                            (holder.binding as LayoutReelShareBinding).layoutParent
-                        }
-                        else -> { // item.reelShare.type == InstagramConstants.ReelType.REACTION.type
-                            (holder.binding as LayoutReactionStoryBinding).layoutParent
-                        }
-                    }
-                }
-                InstagramConstants.MessageType.STORY_SHARE.type -> {
-                    if (item.storyShare.media != null) {
-                        (holder.binding as LayoutReelShareBinding).layoutParent
-                    } else
-                        (holder.binding as LayoutStoryShareNotLinkedBinding).layoutParent
-                }
-                InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    (holder.binding as LayoutVoiceMediaBinding).layoutParent
-                }
-                InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.MEDIA.type -> {
-                    (holder.binding as LayoutMediaBinding).layoutParent
-                }
-                InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                    (holder.binding as LayoutRavenMediaBinding).layoutParent
-                }
-                InstagramConstants.MessageType.LIKE.type -> {
-                    (holder.binding as LayoutLikeBinding).layoutParent
-                }
-                InstagramConstants.MessageType.MEDIA_SHARE.type -> {
-                    (holder.binding as LayoutMediaShareBinding).layoutParent
-                }
-                InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
-                    (holder.binding as LayoutAnimatedMediaBinding).layoutParent
-                }
-                InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                    (holder.binding as LayoutFelixShareBinding).layoutParent
-                }
-                InstagramConstants.MessageType.ACTION_LOG.type -> {
-                    null
-                }
-                else -> {
-                    (holder.binding as LayoutMessageBinding).layoutParent
-                }
-            }
-            val imgThreadProfileImage = when (item.itemType) {
-                InstagramConstants.MessageType.TEXT.type -> {
-                    (holder.binding as LayoutMessageBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.LINK.type -> {
-                    (holder.binding as LayoutLinkBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.REEL_SHARE.type -> {
-                    when (item.reelShare.type) {
-                        InstagramConstants.ReelType.REPLY.type -> {
-                            (holder.binding as LayoutReelShareReplyBinding).imgThreadProfileImage
-                        }
-                        InstagramConstants.ReelType.MENTION.type -> {
-                            (holder.binding as LayoutReelShareBinding).imgThreadProfileImage
-                        }
-                        else -> { // item.reelShare.type == InstagramConstants.ReelType.REACTION.type
-                            (holder.binding as LayoutReactionStoryBinding).imgThreadProfileImage
-                        }
-                    }
-                }
-                InstagramConstants.MessageType.STORY_SHARE.type -> {
-                    if (item.storyShare.media != null) {
-                        (holder.binding as LayoutReelShareBinding).imgThreadProfileImage
-                    } else
-                        (holder.binding as LayoutStoryShareNotLinkedBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    (holder.binding as LayoutVoiceMediaBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.MEDIA.type -> {
-                    (holder.binding as LayoutMediaBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                    (holder.binding as LayoutRavenMediaBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.LIKE.type -> {
-                    (holder.binding as LayoutLikeBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.MEDIA_SHARE.type -> {
-                    (holder.binding as LayoutMediaShareBinding).imgThreadProfileImage
-                }
-                InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
-//                            (holder.binding as LayoutAnimatedMediaBinding).imgThreadProfileImage
-                    null
-                }
-                InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                    (holder.binding as LayoutFelixShareBinding).imgThreadProfileImage
 
                 }
-                InstagramConstants.MessageType.ACTION_LOG.type -> {
-                    null
+                InstagramConstants.MessageType.PLACE_HOLDER.type -> {
+                    includeTime = (holder.binding as LayoutPlaceholderBinding).includeTime
+                    layoutParent = (holder.binding as LayoutPlaceholderBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutPlaceholderBinding).imgThreadProfileImage
+                    layoutMessage = (holder.binding as LayoutPlaceholderBinding).layoutMessage
+                    txtSendername = (holder.binding as LayoutPlaceholderBinding).txtSendername
                 }
                 else -> {
-                    (holder.binding as LayoutMessageBinding).imgThreadProfileImage
-                }
-            }
-            val layoutMessage = when (item.itemType) {
-                InstagramConstants.MessageType.TEXT.type -> {
-                    (holder.binding as LayoutMessageBinding).layoutMessage
-                }
-                InstagramConstants.MessageType.LINK.type -> {
-                    (holder.binding as LayoutLinkBinding).layoutMessage
-                }
-                InstagramConstants.MessageType.REEL_SHARE.type -> {
-                    when (item.reelShare.type) {
-                        InstagramConstants.ReelType.REPLY.type -> {
-                            (holder.binding as LayoutReelShareReplyBinding).layoutMessage
-                        }
-                        InstagramConstants.ReelType.MENTION.type -> {
-                            null
-                        }
-                        else -> { // item.reelShare.type == InstagramConstants.ReelType.REACTION.type
-                            null
-                        }
-                    }
-                }
-                InstagramConstants.MessageType.STORY_SHARE.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.MEDIA.type -> {
-                    (holder.binding as LayoutMediaBinding).layoutMessage
-                }
-                InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.LIKE.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.MEDIA_SHARE.type -> {
-                    (holder.binding as LayoutMediaShareBinding).layoutMessage
-                }
-                InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                    (holder.binding as LayoutFelixShareBinding).layoutMessage
-                }
-                InstagramConstants.MessageType.ACTION_LOG.type -> {
-                    null
-                }
-                else -> {
-                    (holder.binding as LayoutMessageBinding).layoutMessage
-                }
-            }
-            val includeReaction = when (item.itemType) {
-                InstagramConstants.MessageType.TEXT.type -> {
-                    (holder.binding as LayoutMessageBinding).includeReaction
-                }
-                InstagramConstants.MessageType.LINK.type -> {
-                    (holder.binding as LayoutLinkBinding).includeReaction
-                }
-                InstagramConstants.MessageType.REEL_SHARE.type -> {
-                    when (item.reelShare.type) {
-                        InstagramConstants.ReelType.REPLY.type -> {
-                            (holder.binding as LayoutReelShareReplyBinding).includeReaction
-                        }
-                        InstagramConstants.ReelType.MENTION.type -> {
-                            (holder.binding as LayoutReelShareBinding).includeReaction
-                        }
-                        else -> { // item.reelShare.type == InstagramConstants.ReelType.REACTION.type
-                            (holder.binding as LayoutReactionStoryBinding).includeReaction
-                        }
-                    }
-                }
-                InstagramConstants.MessageType.STORY_SHARE.type -> {
-                    if (item.storyShare.media != null) {
-                        (holder.binding as LayoutReelShareBinding).includeReaction
-                    } else
-                        (holder.binding as LayoutStoryShareNotLinkedBinding).includeReaction
-                }
-                InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    (holder.binding as LayoutVoiceMediaBinding).includeReaction
-                }
-                InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.MEDIA.type -> {
-                    (holder.binding as LayoutMediaBinding).includeReaction
-                }
-                InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                    (holder.binding as LayoutRavenMediaBinding).includeReaction
-                }
-                InstagramConstants.MessageType.LIKE.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.MEDIA_SHARE.type -> {
-                    (holder.binding as LayoutMediaShareBinding).includeReaction
-                }
-                InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
-                    null
-                }
-                InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                    (holder.binding as LayoutFelixShareBinding).includeReaction
-                }
-                InstagramConstants.MessageType.ACTION_LOG.type -> {
-                    null
-                }
-                else -> {
-                    (holder.binding as LayoutMessageBinding).includeReaction
+                    includeTime = (holder.binding as LayoutMessageBinding).includeTime
+                    layoutParent = (holder.binding as LayoutMessageBinding).layoutParent
+                    imgThreadProfileImage =
+                        (holder.binding as LayoutMessageBinding).imgThreadProfileImage
+                    layoutMessage = (holder.binding as LayoutMessageBinding).layoutMessage
+                    includeReaction = (holder.binding as LayoutMessageBinding).includeReaction
+                    txtSendername = (holder.binding as LayoutMessageBinding).txtSendername
                 }
             }
 
@@ -792,7 +644,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         if (likes[i].senderId == adapter.user.pk) {
                             profileUrl = adapter.user.profilePicUrl
                         } else {
-                            for (user in thread!!.users) {
+                            for (user in viewModel.thread.users) {
                                 if (likes[i].senderId == user.pk) {
                                     profileUrl = user.profilePicUrl
                                 }
@@ -820,12 +672,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
             }
 
             var lastSeenAt: Long = 0
-            for (ls in thread!!.lastSeenAt.entries) {
-                if (ls.key.toLong() != item.userId) {
-                    // for example last seen in group is laster seen
-                    viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
-                        if (it > lastSeenAt) {
-                            lastSeenAt = it
+            if (viewModel.thread.lastSeenAt != null) {
+                for (ls in viewModel.thread.lastSeenAt.entries) {
+                    if (ls.key.toLong() != item.userId) {
+                        // for example last seen in group is laster seen
+                        viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
+                            if (it > lastSeenAt) {
+                                lastSeenAt = it
+                            }
                         }
                     }
                 }
@@ -834,7 +688,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
 //                viewModel.markAsSeen(threadId, item.itemId) moshkel ine ke callback barash ok nakardm barate update shodan main activty
                 RealTimeService.run(
                     this@DirectActivity,
-                    RealTime_MarkAsSeen(threadId, item.itemId)
+                    RealTime_MarkAsSeen(viewModel.thread.threadId, item.itemId)
                 )
             }
 
@@ -883,14 +737,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     imgThreadProfileImage.visibility = View.GONE
                 } else {
                     imgThreadProfileImage.visibility = View.VISIBLE
-                    Glide.with(applicationContext).load(profileImage).into(imgThreadProfileImage)
+                    Glide.with(applicationContext).load(viewModel.getProfilePic(item.userId))
+                        .into(imgThreadProfileImage)
                 }
             }
             if (layoutMessage != null) {
                 layoutMessage.setOnClickListener(DoubleClick(object : DoubleClickListener {
                     override fun onDoubleClick(view: View?) {
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
-                        viewModel.sendReaction(item.itemId, threadId, item.clientContext)
+                        viewModel.sendReaction(
+                            item.itemId,
+                            viewModel.thread.threadId,
+                            item.clientContext
+                        )
                     }
 
                     override fun onSingleClick(view: View?) {
@@ -904,7 +763,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         this@DirectActivity.getDrawable(R.drawable.bg_message_2)
                 }
             }
-
+            if (txtSendername != null) {
+                if (viewModel.thread.isGroup && item.userId != viewModel.thread.viewerId) {
+                    visible(txtSendername)
+                    txtSendername.text = viewModel.getUsername(item.userId)
+                } else {
+                    gone(txtSendername)
+                }
+            }
 
 
             when (item.itemType) {
@@ -1000,7 +866,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         if (item.userId == user.pk) {
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
                             dataBinding.txtReelStatus.text = String.format(
-                                getString(R.string.mentioned_person_in_your_story), username
+                                getString(R.string.mentioned_person_in_your_story),
+                                viewModel.thread.users[0].username
                             )
                         } else {
                             dataBinding.txtReelStatus.text =
@@ -1042,7 +909,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
                             dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
-                            Glide.with(applicationContext).load(profileImage)
+                            Glide.with(applicationContext)
+                                .load(viewModel.getProfilePic(item.userId))
                                 .into(dataBinding.imgThreadProfileImage)
                         }
 
@@ -1087,7 +955,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             dataBinding.layoutParent.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
                             dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
-                            Glide.with(applicationContext).load(profileImage)
+                            Glide.with(applicationContext)
+                                .load(viewModel.getProfilePic(item.userId))
                                 .into(dataBinding.imgThreadProfileImage)
                             dataBinding.layoutParent.gravity = Gravity.LEFT
                         }
@@ -1109,7 +978,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             getString(R.string.send_story_from), user.username
                         )
                         dataBinding.imgStory.setOnClickListener {
-                            FullScreenActivity.open(this@DirectActivity, images[0].url)
+                            FullScreenActivity.openUrl(this@DirectActivity, images[0].url)
                         }
                     } else {
                         val dataBinding = holder.binding as LayoutStoryShareNotLinkedBinding
@@ -1121,7 +990,16 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     }
                 }
                 InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    val dataBinding = holder.binding as LayoutVoiceMediaBinding
+                    val layoutMessage = if (item.userId == viewModel.thread.viewerId) {
+                        (holder.binding as LayoutVoiceMediaBinding).layoutMessage
+                    } else {
+                        (holder.binding as LayoutVoiceMediaTwoBinding).layoutMessage
+                    }
+                    val videoView = if (item.userId == viewModel.thread.viewerId) {
+                        (holder.binding as LayoutVoiceMediaBinding).videoView
+                    } else {
+                        (holder.binding as LayoutVoiceMediaTwoBinding).videoView
+                    }
                     val mediaSource: MediaSource
                     val id: String
                     val uri: Uri
@@ -1144,10 +1022,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         players[id] = SimpleExoPlayer.Builder(this@DirectActivity).build()
                     }
 
-                    (dataBinding.layoutVoice.layoutParams as LinearLayout.LayoutParams).apply {
+                    (layoutMessage.layoutParams as LinearLayout.LayoutParams).apply {
                         width = viewModel.getStandardVoiceWitdh(resources, duration)
                     }
-                    dataBinding.videoView.exo_progress.setOnTouchListener(object :
+                    videoView.exo_progress.setOnTouchListener(object :
                         View.OnTouchListener {
                         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
                             return true
@@ -1157,7 +1035,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     if (currentPlayerId != id) {
                         players[id]!!.prepare(mediaSource)
                     }
-                    dataBinding.videoView.player = players[id]
+                    videoView.player = players[id]
                     players[id]!!.addListener(object : Player.EventListener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
                             if (isPlaying) {
@@ -1165,7 +1043,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             }
                         }
                     })
-                    dataBinding.layoutVoice.minimumWidth =
+                    layoutMessage.minimumWidth =
                         (DisplayUtils.getScreenWidth() * 0.6).toInt()
 
                 }
@@ -1219,7 +1097,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                                     item.media.videoVersions[0].url
                                 )
                             } else {
-                                FullScreenActivity.open(this@DirectActivity, images.url)
+                                FullScreenActivity.openUrl(this@DirectActivity, images.url)
                             }
                         }
                     }
@@ -1237,7 +1115,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     val user = media.user
                     val id = item.mediaShare.id
                     if (media.videoVersions != null) {
-                        gone(dataBinding.layoutCarouselMedia, dataBinding.layoutImageView)
+                        gone( dataBinding.layoutImageView,dataBinding.imgMultipleItem)
                         dataBinding.layoutVideoView.visibility = View.VISIBLE
                         val videoSrc = item.mediaShare.videoVersions[0].url
                         if (players[id] == null) {
@@ -1279,7 +1157,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                         dataBinding.videoView.player = players[id]!!
                     } else if (media.imageVersions2 != null) {
                         val image = media.imageVersions2
-                        gone(dataBinding.layoutCarouselMedia, dataBinding.layoutVideoView)
+                        gone(dataBinding.layoutVideoView,dataBinding.imgMultipleItem)
                         dataBinding.layoutImageView.visibility = View.VISIBLE
                         Glide.with(applicationContext).load(image.candidates[0].url)
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
@@ -1291,9 +1169,13 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             width = sizeArray[0]
                             height = sizeArray[1]
                         }
+                        dataBinding.layoutImageView.setOnClickListener {
+                            FullScreenActivity.openUrl(this@DirectActivity,image.candidates[0].url)
+                        }
                     } else if (media.carouselMedia != null) {
                         val image = media.carouselMedia[0].imageVersions2
-                        gone(dataBinding.layoutImageView, dataBinding.layoutVideoView)
+                        gone(dataBinding.layoutVideoView)
+                        visible(dataBinding.imgMultipleItem)
                         dataBinding.layoutImageView.visibility = View.VISIBLE
                         Glide.with(applicationContext).load(image.candidates[0].url)
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
@@ -1304,6 +1186,13 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                             )
                             width = sizeArray[0]
                             height = sizeArray[1]
+                        }
+                        val list = ArrayList<String>().toMutableList()
+                        for(item in media.carouselMedia){
+                            list.add(item.imageVersions2.candidates[0].url)
+                        }
+                        dataBinding.layoutImageView.setOnClickListener {
+                            FullScreenActivity.openUrls(this@DirectActivity,list as ArrayList<String>)
                         }
                     }
 
@@ -1324,6 +1213,18 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     }
                     Glide.with(applicationContext).load(url).placeholder(R.drawable.load)
                         .into(dataBinding.imgAnim)
+                }
+                InstagramConstants.MessageType.PLACE_HOLDER.type -> {
+                    val dataBinding = holder.binding as LayoutPlaceholderBinding
+                    dataBinding.txtMessage.maxWidth = (DisplayUtils.getScreenWidth() * 0.65).toInt()
+                    val title = item.placeHolder.title
+                    val message = item.placeHolder.message
+                    val isLinked = item.placeHolder.isLinked
+                    dataBinding.txtTitle.text = title
+                    dataBinding.txtMessage.text = message
+                    dataBinding.layoutMessage.setOnClickListener {
+
+                    }
                 }
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
                     val dataBinding = holder.binding as LayoutFelixShareBinding
@@ -1352,7 +1253,11 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     }
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
-
+                    val dataBinding = holder.binding as LayoutEventBinding
+                    if (item.actionLog.description.contains("like")) {
+                        gone(dataBinding.txtEventDes)
+                    }
+                    dataBinding.txtEventDes.text = item.actionLog.description
                 }
                 else -> {
                     val dataBinding = holder.binding as LayoutMessageBinding
@@ -1418,7 +1323,11 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                     return R.layout.layout_media_share
                 }
                 InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    return R.layout.layout_voice_media
+                    if (item.userId == viewModel.thread.viewerId) {
+                        return R.layout.layout_voice_media
+                    } else {
+                        return R.layout.layout_voice_media_two
+                    }
                 }
                 InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
                     return R.layout.layout_event
@@ -1465,8 +1374,11 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
                 InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
                     return R.layout.layout_animated_media
                 }
+                InstagramConstants.MessageType.PLACE_HOLDER.type -> {
+                    return R.layout.layout_placeholder
+                }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
-                    return R.layout.layout_nothing
+                    return R.layout.layout_event
                 }
                 else -> {
                     return R.layout.layout_message
@@ -1498,15 +1410,48 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>() {
         val clientContext = InstagramHashUtils.getClientContext()
         RealTimeService.run(
             this,
-            RealTime_SendMessage(threadId, clientContext, binding.edtTextChat.text.toString())
+            RealTime_SendMessage(
+                viewModel.thread.threadId,
+                clientContext,
+                binding.edtTextChat.text.toString()
+            )
         )
         val message = MessageGenerator.text(
             binding.edtTextChat.text.toString(),
             adapter.user.pk!!,
             clientContext
         )
-        EventBus.getDefault().postSticky(arrayListOf(MessageEvent(threadId, message)))
+        EventBus.getDefault()
+            .postSticky(arrayListOf(MessageEvent(viewModel.thread.threadId, message)))
         binding.edtTextChat.setText("")
+    }
+
+    override fun onNewMessage(message: Message) {
+        adapter.items.add(0, message)
+        adapter.notifyItemInserted(0)
+        binding.recyclerviewChats.scrollToPosition(0)
+    }
+
+    override fun onChangeMessage(message: Message) {
+        for (i in adapter.items.indices) {
+            val message = adapter.items[i]
+            if (message is Message) {
+                if (message.itemId == message.itemId) {
+                    adapter.notifyItemChanged(i)
+                }
+            }
+        }
+    }
+
+    override fun onChangeMessageWithClientContext(message: Message) {
+        for (i in adapter.items.indices) {
+            val message = adapter.items[i]
+            if (message is Message) {
+                if (message.clientContext == message.clientContext) {
+                    adapter.notifyItemChanged(i)
+                }
+            }
+        }
     }
 
 

@@ -21,6 +21,7 @@ public class ConnectionStateEvent {
         CONNECTING,
         NETWORK_DISCONNECTED,
         NETWORK_CONNECTION_RESET,
-        CHANNEL_DISCONNECTED
+        CHANNEL_DISCONNECTED,
+        NEED_TO_RESET_CONNECTION
     }
 }

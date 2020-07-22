@@ -3,7 +3,7 @@ package com.sanardev.instagrammqtt.ui.twofactor
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.Observer
-import com.sanardev.instagrammqtt.base.BaseActivity
+import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.databinding.ActivityTwoFactorBinding
@@ -11,7 +11,7 @@ import com.sanardev.instagrammqtt.datasource.model.response.InstagramTwoFactorIn
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
 
-class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding,TwoFactorViewModel>() {
+class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding, TwoFactorViewModel>() {
     override fun layoutRes(): Int {
         return R.layout.activity_two_factor
     }

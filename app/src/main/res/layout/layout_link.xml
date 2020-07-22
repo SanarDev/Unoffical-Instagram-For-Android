@@ -41,8 +41,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_message"
-                        android:orientation="vertical"
-                        android:padding="10dp">
+                        android:orientation="vertical">
+
+                        <com.vanniktech.emoji.EmojiTextView
+                            style="@style/TextSenderName"
+                            android:id="@+id/txt_sendername"
+                            tools:text="Sanardev"/>
 
                         <com.vanniktech.emoji.EmojiTextView
                             android:id="@+id/txt_message"

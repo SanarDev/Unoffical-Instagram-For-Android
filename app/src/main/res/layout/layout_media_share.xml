@@ -40,7 +40,19 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_message"
+                        android:paddingStart="0dp"
+                        android:paddingEnd="0dp"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp"
                         android:orientation="vertical">
+
+                        <com.vanniktech.emoji.EmojiTextView
+                            style="@style/TextSenderName"
+                            android:id="@+id/txt_sendername"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginEnd="10dp"
+                            tools:text="Sanardev"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -81,28 +93,25 @@
                             android:id="@+id/layout_image_view"
                             android:layout_width="240dp"
                             android:layout_height="240dp"
-                            android:visibility="gone">
+                            android:clickable="true"
+                            android:focusable="true">
+
 
                             <androidx.appcompat.widget.AppCompatImageView
                                 android:id="@+id/image_view"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent" />
 
-                        </RelativeLayout>
-
-                        <RelativeLayout
-                            android:id="@+id/layout_carousel_media"
-                            android:layout_width="240dp"
-                            android:layout_height="240dp"
-                            android:visibility="gone">
-
-                            <androidx.viewpager.widget.ViewPager
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"/>
                             <androidx.appcompat.widget.AppCompatImageView
-                                android:id="@+id/carousel_media"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent" />
+                                android:id="@+id/img_multiple_item"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentRight="true"
+                                android:layout_alignParentTop="true"
+                                android:tint="@color/white"
+                                android:layout_margin="10dp"
+                                android:src="@drawable/ic_mutliple_page"/>
+
 
                         </RelativeLayout>
 
@@ -135,6 +144,19 @@
                                 android:tint="@color/white"
                                 android:visibility="gone" />
 
+
+
+                            <androidx.appcompat.widget.AppCompatImageButton
+                                android:id="@+id/btn_replay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="10dp"
+                                android:background="@drawable/bg_circluar"
+                                android:padding="5dp"
+                                android:tint="@color/white"
+                                android:layout_alignParentBottom="true"
+                                android:layout_alignParentRight="true"
+                                android:src="@drawable/ic_replay"/>
 
                         </RelativeLayout>
 
@@ -171,15 +193,16 @@
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="10dp"
                     android:gravity="bottom"
+                    android:visibility="gone"
                     android:orientation="vertical">
 
-                    <androidx.appcompat.widget.AppCompatImageButton
-                        style="@style/MessageOptionButton"
-                        android:id="@+id/btn_replay"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:src="@drawable/ic_replay"/>
+<!--                    <androidx.appcompat.widget.AppCompatImageButton-->
+<!--                        style="@style/MessageOptionButton"-->
+<!--                        android:id="@+id/btn_replay"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_marginTop="5dp"-->
+<!--                        android:src="@drawable/ic_replay"/>-->
 
                     <androidx.appcompat.widget.AppCompatImageButton
                         style="@style/MessageOptionButton"

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/voice_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/theme_background_incoming_message"
     android:gravity="center_vertical">
@@ -13,19 +14,21 @@
 
         <ImageButton
             android:id="@id/exo_play"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="@null"
-            android:src="@drawable/ic_play"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_play_circle"
             android:tint="@color/white"
             android:tintMode="src_in" />
 
         <ImageButton
             android:id="@id/exo_pause"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="@null"
-            android:src="@drawable/ic_pause"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_pause_circle"
             android:tint="@color/white"
             android:tintMode="src_in" />
     </RelativeLayout>
@@ -41,6 +44,8 @@
         app:scrubber_disabled_size="1dp"
         app:scrubber_enabled_size="1dp"
         app:scrubber_dragged_size="1dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         app:ad_marker_width="1dp"
         android:clickable="false"
         android:focusable="false"

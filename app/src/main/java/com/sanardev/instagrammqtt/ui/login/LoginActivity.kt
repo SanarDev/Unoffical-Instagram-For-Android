@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import androidx.lifecycle.Observer
-import com.sanardev.instagrammqtt.base.BaseActivity
+import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.databinding.ActivityLoginBinding

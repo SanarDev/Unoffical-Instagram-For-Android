@@ -67,25 +67,26 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="10dp"
                     android:background="@drawable/bg_message_2"
-                    android:hint="@string/search"
-                    android:textSize="14sp"
-                    android:paddingStart="15dp"
                     android:fontFamily="sans-serif-light"
+                    android:hint="@string/search"
+                    android:visibility="gone"
+                    android:onTextChanged="@{viewModel::onSearch}"
+                    android:paddingStart="15dp"
                     android:paddingTop="10dp"
                     android:paddingEnd="15dp"
                     android:paddingBottom="10dp"
-                    android:onTextChanged="@{viewModel::onSearch}"
                     android:textColor="@color/text_very_light"
-                    android:textColorHint="@color/hint_light" />
+                    android:textColorHint="@color/hint_light"
+                    android:textSize="14sp" />
 
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/collectionTabLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:visibility="gone"
                     app:tabIconTint="@color/text_very_light"
                     app:tabInlineLabel="true"
-                    app:tabTextColor="@color/text_very_light"
-                    android:visibility="gone">
+                    app:tabTextColor="@color/text_very_light">
 
 
                 </com.google.android.material.tabs.TabLayout>
@@ -101,13 +102,21 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
+<!---->
+<!--                    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout-->
+<!--                        android:id="@+id/refreshContainer"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="match_parent">-->
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recyclerview_directs"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        tools:listitem="@layout/layout_direct" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerview_directs"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                            tools:listitem="@layout/layout_direct" />
+
+<!--                    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>-->
 
                     <ProgressBar
                         android:id="@+id/progressbar"
@@ -119,28 +128,29 @@
 
 
             </LinearLayout>
+
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/fab_start_message"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
                 android:layout_alignParentRight="true"
-                app:backgroundTint="@color/theme_item"
-                android:src="@drawable/ic_pen"
-                app:useCompatPadding="true"
+                android:layout_alignParentBottom="true"
                 android:clickable="true"
-                android:focusable="true"
                 android:elevation="10dp"
+                android:focusable="true"
+                android:src="@drawable/ic_pen"
                 android:tint="@color/text_very_light"
+                app:backgroundTint="@color/theme_item"
+                app:fabSize="normal"
                 app:rippleColor="@color/text_very_light"
-                app:fabSize="normal" />
+                app:useCompatPadding="true" />
 
             <include
                 android:id="@+id/include_layout_network"
                 layout="@layout/layout_internet_connection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"/>
+                android:layout_centerInParent="true" />
 
         </RelativeLayout>
 

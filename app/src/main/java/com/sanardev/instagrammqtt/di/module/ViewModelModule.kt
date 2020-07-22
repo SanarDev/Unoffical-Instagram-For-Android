@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.sanardev.instagrammqtt.di.DaggerViewModelFactory
 import com.sanardev.instagrammqtt.di.ViewModelKey
 import com.sanardev.instagrammqtt.ui.direct.DirectViewModel
+import com.sanardev.instagrammqtt.ui.fullscreen.FragmentCollectionViewModel
 import com.sanardev.instagrammqtt.ui.fullscreen.FullScreenViewModel
 import com.sanardev.instagrammqtt.ui.login.LoginViewModel
 import com.sanardev.instagrammqtt.ui.main.MainViewModel
@@ -55,5 +56,10 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(PlayVideoViewModel::class)
     abstract fun playVideoViewModel(playVideoViewModel: PlayVideoViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(FragmentCollectionViewModel::class)
+    abstract fun fragmentCollectionViewModel(fragmentCollectionViewModel: FragmentCollectionViewModel):ViewModel
 
 }

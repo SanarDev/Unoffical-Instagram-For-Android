@@ -188,7 +188,7 @@ class InstagramConstants {
         VOICE_MEDIA("voice_media"),
         ACTION_LOG("action_log"),
         PROFILE("profile"),
-        PLACE_HOLDER("place_holder"),
+        PLACE_HOLDER("placeholder"),
         LOCATION("location"),
         FELIX_SHARE("felix_share"),
         REEL_SHARE("reel_share"),

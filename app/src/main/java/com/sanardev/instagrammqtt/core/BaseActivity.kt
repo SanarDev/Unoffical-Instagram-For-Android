@@ -1,4 +1,4 @@
-package com.sanardev.instagrammqtt.base
+package com.sanardev.instagrammqtt.core
 
 import android.content.Intent
 import android.os.Bundle
@@ -22,7 +22,7 @@ import dagger.android.support.HasSupportFragmentInjector
 import javax.inject.Inject
 
 
-abstract class BaseActivity<B:ViewDataBinding,VM:BaseViewModel> : AppCompatActivity(),
+abstract class BaseActivity<B:ViewDataBinding,VM: BaseViewModel> : AppCompatActivity(),
     HasSupportFragmentInjector {
 
     private val keyboardLayoutListener = OnGlobalLayoutListener {

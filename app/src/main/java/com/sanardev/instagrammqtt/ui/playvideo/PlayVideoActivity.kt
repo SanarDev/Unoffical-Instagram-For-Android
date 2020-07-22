@@ -16,7 +16,7 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.sanardev.instagrammqtt.R
-import com.sanardev.instagrammqtt.base.BaseActivity
+import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.databinding.ActivityPlayVideoBinding
 import java.io.File
 

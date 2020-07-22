@@ -51,6 +51,9 @@ public class Message {
     @SerializedName("video_call_event")
     @Expose
     private VideoCallEvent videoCallEvent;
+    @SerializedName("profile")
+    @Expose
+    private Object profile;
     @SerializedName("client_context")
     @Expose
     private String clientContext;
@@ -60,6 +63,9 @@ public class Message {
     @SerializedName("felix_share")
     @Expose
     private FelixShare felixShare;
+    @SerializedName("placeholder")
+    @Expose
+    private PlaceHolder placeHolder;
     @SerializedName("animated_media")
     @Expose
     private AnimatedMedia animatedMedia;
@@ -73,6 +79,14 @@ public class Message {
     @Expose
     private boolean isDelivered = true;
 
+    public Object getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Object profile) {
+        this.profile = profile;
+    }
+
     public boolean isDelivered() {
         return isDelivered;
     }
@@ -83,6 +97,14 @@ public class Message {
 
     public DirectReactions getReactions() {
         return reactions;
+    }
+
+    public PlaceHolder getPlaceHolder() {
+        return placeHolder;
+    }
+
+    public void setPlaceHolder(PlaceHolder placeHolder) {
+        this.placeHolder = placeHolder;
     }
 
     public Link getLink() {

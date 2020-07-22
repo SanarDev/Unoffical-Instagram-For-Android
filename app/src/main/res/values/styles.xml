@@ -6,6 +6,7 @@
         <item name="colorPrimary">@color/theme_background</item>
         <item name="colorPrimaryDark">@color/theme_background</item>
         <item name="colorAccent">@color/text_highlight</item>
+        <item name="android:layoutDirection">ltr</item>
     </style>
 
     <style name="edtCodeStyle" parent="Widget.AppCompat.EditText">
@@ -42,6 +43,11 @@
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:layoutDirection">ltr</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">5dp</item>
+
     </style>
     <style name="LayoutIncludeReaction">
         <item name="android:layout_marginLeft">50dp</item>
@@ -62,5 +68,12 @@
         <item name="android:background">@drawable/bg_circluar</item>
         <item name="android:padding">7dp</item>
         <item name="android:tint">@color/white</item>
+    </style>
+    <style name="TextSenderName">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">#1976d2</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">14sp</item>
     </style>
 </resources>

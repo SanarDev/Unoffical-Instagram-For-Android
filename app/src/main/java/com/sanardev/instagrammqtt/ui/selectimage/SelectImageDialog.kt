@@ -23,7 +23,6 @@ import com.sanardev.instagrammqtt.ui.playvideo.PlayVideoActivity
 import com.sanardev.instagrammqtt.utils.DisplayUtils
 import com.sanardev.instagrammqtt.utils.MediaUtils
 import com.sanardev.instagrammqtt.utils.StorageUtils
-import com.squareup.picasso.Picasso
 import run.tripa.android.extensions.longToast
 import run.tripa.android.extensions.sizeInKb
 import run.tripa.android.extensions.toast

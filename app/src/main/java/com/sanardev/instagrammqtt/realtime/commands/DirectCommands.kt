@@ -23,8 +23,12 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
 
         val map = HashMap<String, String>()
         map["action"] = action
-        map["thread_id"] = threadId
         map["client_context"] = clientContext
+        if(threadId.contains("[[")){
+            map["recipient_users"] = threadId
+        }else{
+            map["thread_id"] = threadId
+        }
         map.putAll(data)
         val json = gson.toJson(map)
         val packetID = Random().nextInt(65535)

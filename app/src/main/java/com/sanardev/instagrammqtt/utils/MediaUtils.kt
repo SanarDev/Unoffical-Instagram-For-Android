@@ -7,7 +7,6 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
-import com.github.piasy.rxandroidaudio.PlayConfig.uri
 import java.io.File
 
 

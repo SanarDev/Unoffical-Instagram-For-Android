@@ -19,7 +19,7 @@ open class NetworkCall<T>{
         this.call = call
         val callBackKt =
             CallBackKt<T>()
-        callBackKt.result.value = Resource.loading(null)
+        callBackKt.result.postValue(Resource.loading(null))
         this.call.clone().enqueue(callBackKt)
         return callBackKt.result
     }

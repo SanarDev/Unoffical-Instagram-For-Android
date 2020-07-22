@@ -18,7 +18,7 @@ interface InstagramRemote {
         @Body payload: RequestBody
     ): Call<InstagramLoginResult>
 
-    @GET("")
+    @GET("/")
     fun getToken(): Call<ResponseBody>
 
     @POST(InstagramConstants.API_VERSION + "accounts/two_factor_login/")
@@ -120,5 +120,8 @@ interface InstagramRemote {
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/configure_photo/")
     fun sendMediaImage(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<MessageResponse>
+
+    @GET(InstagramConstants.API_VERSION + "direct_v2/threads/get_by_participants/")
+    fun getByParticipants(@HeaderMap header: Map<String, String>, @Path("recipient_users") recipientUsers:String,seqOd:Int,limit: Int=20):Call<ResponseBody>
 
 }

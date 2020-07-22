@@ -40,7 +40,7 @@
                     android:fontFamily="sans-serif-medium"
                     android:text="@string/select_media"
                     android:textColor="@color/text_very_light"
-                    android:textSize="@dimen/chip_title_text_size" />
+                    android:textSize="@dimen/text_title" />
 
 
             </androidx.appcompat.widget.Toolbar>

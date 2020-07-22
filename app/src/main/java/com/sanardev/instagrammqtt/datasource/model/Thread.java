@@ -25,7 +25,7 @@ public class Thread {
     private List<User> users = null;
     @SerializedName("left_users")
     @Expose
-    private List<Object> leftUsers = null;
+    private List<User> leftUsers = null;
     @SerializedName("admin_user_ids")
     @Expose
     private List<Object> adminUserIds = null;
@@ -68,10 +68,10 @@ public class Thread {
     private Integer folder;
     @SerializedName("vc_muted")
     @Expose
-    private Boolean vcMuted;
+    private Boolean vcMuted = false;
     @SerializedName("is_group")
     @Expose
-    private Boolean isGroup;
+    private Boolean isGroup = false;
     @SerializedName("mentions_muted")
     @Expose
     private Boolean mentionsMuted;
@@ -205,11 +205,11 @@ public class Thread {
         this.users = users;
     }
 
-    public List<Object> getLeftUsers() {
+    public List<User> getLeftUsers() {
         return leftUsers;
     }
 
-    public void setLeftUsers(List<Object> leftUsers) {
+    public void setLeftUsers(List<User> leftUsers) {
         this.leftUsers = leftUsers;
     }
 

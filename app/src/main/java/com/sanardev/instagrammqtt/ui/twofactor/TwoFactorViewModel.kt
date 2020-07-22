@@ -8,7 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.R
-import com.sanardev.instagrammqtt.base.BaseViewModel
+import com.sanardev.instagrammqtt.core.BaseViewModel
 import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramTwoFactorInfo

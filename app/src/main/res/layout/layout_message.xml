@@ -38,45 +38,42 @@
 
 
                 <LinearLayout
+                    android:id="@+id/layout_message"
+                    style="@style/LayoutMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:background="@drawable/bg_message"
+                    android:orientation="vertical">
 
-                    <LinearLayout
-                        style="@style/LayoutMessage"
-                        android:id="@+id/layout_message"
+                    <com.vanniktech.emoji.EmojiTextView
+                        style="@style/TextSenderName"
+                        android:id="@+id/txt_sendername"
+                        tools:text="Sanardev"/>
+
+                    <com.vanniktech.emoji.EmojiTextView
+                        android:id="@+id/txt_message"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_message"
-                        android:orientation="vertical"
-                        android:padding="10dp">
+                        android:fontFamily="sans-serif"
+                        android:textColor="@color/text_very_light"
+                        android:textSize="@dimen/chat_message_size"
+                        tools:text="Ok No problem. me a message" />
 
-                        <com.vanniktech.emoji.EmojiTextView
-                            android:id="@+id/txt_message"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif"
-                            android:textColor="@color/text_very_light"
-                            android:textSize="@dimen/chat_message_size"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            tools:text="Ok No problem. me a message" />
-
-                        <include android:id="@+id/include_time"
-                            layout="@layout/layout_time"/>
-
-                    </LinearLayout>
+                    <include
+                        android:id="@+id/include_time"
+                        layout="@layout/layout_time" />
 
                 </LinearLayout>
+
             </LinearLayout>
         </LinearLayout>
+
         <include
-            style="@style/LayoutIncludeReaction"
             android:id="@+id/include_reaction"
+            style="@style/LayoutIncludeReaction"
             layout="@layout/layout_reactions_like"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

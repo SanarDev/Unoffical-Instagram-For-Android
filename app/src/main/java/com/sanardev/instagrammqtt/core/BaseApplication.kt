@@ -11,7 +11,6 @@ import android.net.wifi.WifiManager
 import com.sanardev.instagrammqtt.di.component.DaggerAppComponent
 import com.sanardev.instagrammqtt.receiver.NetworkChangeReceiver
 import com.sanardev.instagrammqtt.utils.StorageUtils
-import com.squareup.leakcanary.LeakCanary
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
@@ -51,13 +50,13 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector 
             addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED)
         }
         registerReceiver(br, filter)
-
+/*
         if (LeakCanary.isInAnalyzerProcess(this)) {
             // This process is dedicated to LeakCanary for heap analysis.
             // You should not init your app in this process.
             return;
         }
-        LeakCanary.install(this);
+        LeakCanary.install(this);*/
     }
     
 

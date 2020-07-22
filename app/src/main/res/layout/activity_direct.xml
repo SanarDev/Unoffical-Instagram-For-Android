@@ -8,6 +8,7 @@
         <variable
             name="viewModel"
             type="com.sanardev.instagrammqtt.ui.direct.DirectViewModel" />
+        <import type="com.sanardev.instagrammqtt.utils.Resource"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -35,6 +36,35 @@
                 android:padding="5dp"
                 android:src="@drawable/ic_back"
                 android:tint="@color/light_button" />
+
+            <RelativeLayout
+                android:id="@+id/layout_profile_image_group"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:visibility="gone"
+                android:layout_marginStart="10dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profile_image_g1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginRight="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:src="@mipmap/example"
+                    app:civ_border_color="@color/white"
+                    app:civ_border_width="0dp" />
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profile_image_g2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginTop="5dp"
+                    android:src="@mipmap/example"
+                    app:civ_border_color="@color/theme_background"
+                    app:civ_border_width="2dp" />
+
+            </RelativeLayout>
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/img_profile_image"
@@ -98,7 +128,8 @@
                 android:id="@+id/progressbar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true" />
+                android:layout_centerInParent="true"
+                android:visibility="gone"/>
         </RelativeLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -217,11 +248,24 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/txt_no_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/send_first_message"
+            android:textColor="@color/text_light"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+
         <include
             android:id="@+id/include_layout_network"
             layout="@layout/layout_internet_connection"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
+            android:visibility="gone"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"

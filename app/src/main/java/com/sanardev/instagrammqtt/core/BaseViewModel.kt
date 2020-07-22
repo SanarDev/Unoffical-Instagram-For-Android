@@ -1,4 +1,4 @@
-package com.sanardev.instagrammqtt.base
+package com.sanardev.instagrammqtt.core
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

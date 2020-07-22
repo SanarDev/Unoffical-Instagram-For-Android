@@ -1,12 +1,13 @@
 package com.sanardev.instagrammqtt.ui.main
 
 import android.app.Application
-import android.view.View
+import android.util.Log
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
-import com.sanardev.instagrammqtt.base.BaseViewModel
+import com.sanardev.instagrammqtt.constants.InstagramConstants
+import com.sanardev.instagrammqtt.core.BaseViewModel
 import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.Thread
@@ -43,6 +44,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
     val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.ERROR) {
             if (it.apiError?.data != null) {
+                Log.i(InstagramConstants.DEBUG_TAG,it.apiError.message)
                 val gson = Gson()
                 val instagramInboxResult =
                     gson.fromJson(it.apiError!!.data!!.string(), InstagramDirects::class.java)
@@ -52,12 +54,25 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
             if (directs.isEmpty()) {
                 mUseCase.getDirectPresence(resultPresence)
             }
-            directs.addAll(it.data!!.inbox.threads)
+            threadValidation(it.data!!.inbox.threads)
             it.data!!.inbox.threads = directs
         }
         return@map it
     }.observeForever {
-        mutableLiveData.value = it
+        mutableLiveData.postValue(it)
+    }
+
+    private fun threadValidation(threads: List<Thread>) {
+        for (thread in threads) {
+            var isThreadExist = false
+            for (direct in directs) {
+                if (direct.threadId == thread.threadId) {
+                    isThreadExist = true
+                }
+            }
+            if (!isThreadExist)
+                directs.add(thread)
+        }
     }
 
     val liveDataPresence = Transformations.map(resultPresence) {
@@ -91,11 +106,11 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                 if (!isMessageExist) {
                     thread.messages.add(0, event.message)
                     directs.removeAt(index)
-                    directs.add(0,thread)
+                    directs.add(0, thread)
                 }
             }
         }
-        mutableLiveData.value = Resource.success(instagramDirect)
+        mutableLiveData.postValue(Resource.success(instagramDirect))
     }
 
     fun onPresenceEvent(event: PresenceEvent) {
@@ -108,7 +123,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                 break
             }
         }
-        mutableLiveData.value = Resource.success(instagramDirect)
+        mutableLiveData.postValue(Resource.success(instagramDirect))
     }
 
     fun onTyping(event: TypingEvent) {
@@ -121,7 +136,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                 break
             }
         }
-        mutableLiveData.value = Resource.success(instagramDirect)
+        mutableLiveData.postValue(Resource.success(instagramDirect))
     }
 
     init {
@@ -145,11 +160,12 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
                         }
                     }
                 }
-                mutableLiveData.value = Resource.success(direct)
+                mutableLiveData.postValue(Resource.success(direct))
             }
         }
     }
-    fun reloadDirects(){
+
+    fun reloadDirects() {
         directs.clear()
         getDirects()
     }
@@ -162,7 +178,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
             searchedValue.clear()
             val instagramDirect = mutableLiveData.value!!.data!!
             instagramDirect.inbox.threads = directs
-            mutableLiveData.value = Resource.success(instagramDirect)
+            mutableLiveData.postValue(Resource.success(instagramDirect))
         } else {
             searchedValue.clear()
             for (thread in directs) {
@@ -175,7 +191,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
             }
             val instagramDirect = mutableLiveData.value!!.data!!
             instagramDirect.inbox.threads = searchedValue
-            mutableLiveData.value = Resource.success(instagramDirect)
+            mutableLiveData.postValue(Resource.success(instagramDirect))
         }
     }
 
@@ -192,5 +208,27 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
             }
         }
         mutableLiveData.value = Resource.success(instagramDirect)
+    }
+
+    fun getUsernameByUserId(threadId: String, userId: Long): String {
+        val instagramDirect = mutableLiveData.value!!.data!!
+        val threads = instagramDirect.inbox.threads
+        for (thread in threads) {
+            if (thread.threadId == threadId) {
+                if (thread.isGroup) {
+                    for (user in thread.users) {
+                        if (user.pk == userId)
+                            return user.username
+                    }
+                } else {
+                    return thread.users[0].username
+                }
+                for (user in thread.leftUsers) {
+                    if (user.pk == userId)
+                        return user.username
+                }
+            }
+        }
+        return ""
     }
 }

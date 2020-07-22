@@ -207,7 +207,7 @@ class InstagramRepository(
         headersGenerator: () -> Map<String, String>
     ) {
         result.addSource(NetworkCall<InstagramRecipients>().makeCall(
-            if (query == null) mInstagramRemote.getRecipients(headersGenerator.invoke()) else mInstagramRemote.searchRecipients(
+            if (query == null || query.isEmpty()) mInstagramRemote.getRecipients(headersGenerator.invoke()) else mInstagramRemote.searchRecipients(
                 headersGenerator.invoke(),
                 query = query
             )
@@ -292,6 +292,12 @@ class InstagramRepository(
     }
     fun sendMediaImage(result:MutableLiveData<Resource<MessageResponse>>, header: () -> Map<String, String>, requestBody: RequestBody){
         NetworkCall<MessageResponse>().makeCall(mInstagramRemote.sendMediaImage(header.invoke(),requestBody)).observeForever {
+            result.value = it
+        }
+    }
+
+    fun getByParticipants(result:MutableLiveData<Resource<ResponseBody>>, header: () -> Map<String, String>, userId: String, seqId:Int, limit: Int=20){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.getByParticipants(header.invoke(),userId,seqId,limit)).observeForever {
             result.value = it
         }
     }

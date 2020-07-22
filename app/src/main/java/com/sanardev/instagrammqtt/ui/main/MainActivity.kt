@@ -18,7 +18,7 @@ import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
 import com.sanardev.instagrammqtt.R
-import com.sanardev.instagrammqtt.base.BaseActivity
+import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.core.BaseAdapter
 import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
@@ -34,6 +34,7 @@ import com.sanardev.instagrammqtt.extensions.setTextViewDrawableColor
 import com.sanardev.instagrammqtt.extensions.visible
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.ui.direct.DirectActivity
+import com.sanardev.instagrammqtt.ui.direct.DirectBundle
 import com.sanardev.instagrammqtt.ui.login.LoginActivity
 import com.sanardev.instagrammqtt.ui.startmessage.StartMessageActivity
 import com.sanardev.instagrammqtt.utils.Resource
@@ -111,8 +112,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             setIcon(R.drawable.ic_online)
         }
         binding.fabStartMessage.setOnClickListener {
-            StartMessageActivity.open(this@MainActivity)
+            StartMessageActivity.open(this@MainActivity, seqID)
         }
+//        binding.refreshContainer.setOnRefreshListener {
+//            viewModel.reloadDirects()
+//            binding.refreshContainer.isRefreshing = false
+//        }
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
@@ -137,10 +142,10 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 
             if (it.status == Resource.Status.LOADING) {
                 visible(binding.progressbar)
-                gone(binding.recyclerviewDirects,binding.edtSearch,binding.includeLayoutNetwork.root)
+                gone(binding.recyclerviewDirects, binding.includeLayoutNetwork.root)
                 return
             }
-            gone(binding.progressbar,binding.includeLayoutNetwork.root)
+            gone(binding.progressbar, binding.includeLayoutNetwork.root)
             if (it.status == Resource.Status.ERROR) {
                 if (it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code) {
                     visible(binding.includeLayoutNetwork.root)
@@ -175,7 +180,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 }
                 return
             }
-            visible(binding.recyclerviewDirects,binding.edtSearch)
+            visible(binding.recyclerviewDirects)
             seqID = it.data!!.seqId
             val threads = it.data!!.inbox.threads
             RealTimeService.run(
@@ -189,29 +194,34 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
     }
 
 
-    @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
-    fun onConnectionStateEvent(connectionStateEvent: ConnectionStateEvent){
-        when (connectionStateEvent.connection){
-            ConnectionStateEvent.State.CONNECTING ->{
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onConnectionStateEvent(connectionStateEvent: ConnectionStateEvent) {
+        when (connectionStateEvent.connection) {
+            ConnectionStateEvent.State.CONNECTING -> {
                 binding.txtToolbarTitle.text = getString(R.string.connecting)
             }
-            ConnectionStateEvent.State.CONNECTED ->{
+            ConnectionStateEvent.State.CONNECTED -> {
                 binding.txtToolbarTitle.text = getString(R.string.app_name)
             }
-            ConnectionStateEvent.State.NETWORK_DISCONNECTED ->{
+            ConnectionStateEvent.State.NETWORK_DISCONNECTED -> {
                 binding.txtToolbarTitle.text = getString(R.string.waiting_for_network)
             }
-            ConnectionStateEvent.State.CHANNEL_DISCONNECTED ->{
+            ConnectionStateEvent.State.CHANNEL_DISCONNECTED -> {
                 viewModel.reloadDirects()
             }
-            ConnectionStateEvent.State.NETWORK_CONNECTION_RESET ->{
+            ConnectionStateEvent.State.NETWORK_CONNECTION_RESET -> {
                 viewModel.reloadDirects()
             }
-            else ->{
+            ConnectionStateEvent.State.NEED_TO_RESET_CONNECTION -> {
+                EventBus.getDefault().removeStickyEvent(connectionStateEvent)
+                viewModel.reloadDirects()
+            }
+            else -> {
 
             }
         }
     }
+
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onMessageEvent(events: MutableList<MessageEvent>) {
         for (event in events) {
@@ -236,16 +246,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 
     override fun onStart() {
         super.onStart()
-        try{
-            EventBus.getDefault().register(this);
-        }catch (e:Exception){
-
-        }
+        EventBus.getDefault().register(this);
     }
 
     override fun onStop() {
         super.onStop()
-//        EventBus.getDefault().unregister(this);
+        EventBus.getDefault().unregister(this);
     }
 
     inner class DirectsAdapter(var items: List<Thread>) : BaseAdapter() {
@@ -253,16 +259,20 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             val item = items[position]
             val dataBinding = holder.binding as LayoutDirectBinding
             if (item.messages != null) {
-                val lastSeen =
-                    item.lastSeenAt[user.pk.toString()]!!.timeStamp
                 var unreadMessage = 0
-                for (message in item.messages) {
-                    if (message.timestamp > lastSeen) {
-                        if (message.userId != user.pk) {
-                            unreadMessage++
+                if (item.lastSeenAt != null) {
+                    item.lastSeenAt[user.pk.toString()].also {
+                        if (it != null) {
+                            for (message in item.messages) {
+                                if (message.timestamp > it.timeStamp) {
+                                    if (message.userId != user.pk) {
+                                        unreadMessage++
+                                    }
+                                } else {
+                                    break
+                                }
+                            }
                         }
-                    } else {
-                        break
                     }
                 }
                 val lastItem = item.messages[0]
@@ -288,20 +298,25 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     dataBinding.profileDec.setTextColor(Color.WHITE)
                     dataBinding.profileDec.setTypeface(null, Typeface.BOLD);
                 } else {
+                    val prefix = if (lastItem.userId == user.pk) {
+                        "You: "
+                    } else {
+                        if (item.isGroup) {
+                            viewModel.getUsernameByUserId(item.threadId, lastItem.userId) + ": "
+                        } else {
+                            ""
+                        }
+                    }
                     when (lastItem.itemType) {
                         InstagramConstants.MessageType.ACTION_LOG.type -> {
                             dataBinding.profileDec.text = lastItem.actionLog.description
                         }
                         InstagramConstants.MessageType.TEXT.type -> {
-                            if (lastItem.userId == user.pk) {
-                                dataBinding.profileDec.text =
-                                    String.format(getString(R.string.you_text), lastItem.text)
-                            } else {
-                                dataBinding.profileDec.text = lastItem.text
-                            }
+                            dataBinding.profileDec.text = prefix + lastItem.text
                         }
                         InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
-                            dataBinding.profileDec.text = getString(R.string.send_a_sticker)
+                            dataBinding.profileDec.text =
+                                prefix + getString(R.string.send_a_sticker)
                         }
                         InstagramConstants.MessageType.REEL_SHARE.type -> {
                             if (lastItem.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
@@ -340,61 +355,38 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                             }
                         }
                         InstagramConstants.MessageType.MEDIA_SHARE.type -> {
-                            dataBinding.profileDec.text = getString(R.string.share_a_media)
+                            dataBinding.profileDec.text = prefix + getString(R.string.share_a_media)
                         }
                         InstagramConstants.MessageType.MEDIA.type -> {
-                            if (lastItem.userId == user.pk) {
-                                dataBinding.profileDec.text = getString(R.string.you_send_a_media)
-                            } else {
-                                dataBinding.profileDec.text = getString(R.string.send_a_media)
-                            }
+                            dataBinding.profileDec.text = prefix + getString(R.string.send_a_media)
                         }
                         InstagramConstants.MessageType.LIKE.type -> {
-                            dataBinding.profileDec.text = lastItem.like
+                            dataBinding.profileDec.text = prefix + lastItem.like
                         }
                         InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                            dataBinding.profileDec.text = getString(R.string.send_a_photo)
+                            dataBinding.profileDec.text = prefix + getString(R.string.send_a_photo)
                         }
                         InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                            if (lastItem.userId == user.pk) {
-                                dataBinding.profileDec.text =
-                                    getString(R.string.you_send_a_voice_message)
-                            } else {
-                                dataBinding.profileDec.text =
+                            dataBinding.profileDec.text = prefix +
                                     getString(R.string.send_a_voice_message)
-                            }
                         }
                         InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
-                            dataBinding.profileDec.text = lastItem.videoCallEvent.description
+                            dataBinding.profileDec.text =
+                                prefix + lastItem.videoCallEvent.description
                         }
                         InstagramConstants.MessageType.LINK.type -> {
-                            if (lastItem.userId == user.pk) {
-                                dataBinding.profileDec.text =
-                                    getString(R.string.you_share_a_link)
-                            } else {
-                                dataBinding.profileDec.text =
+                            dataBinding.profileDec.text = prefix +
                                     getString(R.string.share_a_link)
-                            }
                         }
                         InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                            if (lastItem.userId == user.pk) {
-                                dataBinding.profileDec.text = String.format(
-                                    getString(R.string.you_send_user_igtv_video),
-                                    lastItem.felixShare.video.user.username
-                                )
-                            } else {
-                                dataBinding.profileDec.text = String.format(
-                                    getString(R.string.send_user_igtv_video),
-                                    lastItem.felixShare.video.user.username
-                                )
-                            }
+                            dataBinding.profileDec.text = prefix + String.format(
+                                getString(R.string.send_user_igtv_video),
+                                lastItem.felixShare.video.user.username
+                            )
                         }
                         InstagramConstants.MessageType.PROFILE.type -> {
-                            if (lastItem.userId == user.pk) {
-                                dataBinding.profileDec.text = getString(R.string.you_send_a_profile)
-                            } else {
-                                dataBinding.profileDec.text = getString(R.string.send_a_profile)
-                            }
+                            dataBinding.profileDec.text =
+                                prefix + getString(R.string.send_a_profile)
                         }
                     }
                 }
@@ -421,22 +413,33 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                         TimeUtils.convertTimestampToDate(application, lastItem.timestamp)
                 }
             }
-            if (item.isGroup) {
-                dataBinding.profileName.text = String.format(
-                    getString(R.string.group_name),
-                    item.users[0].username,
-                    item.users.size - 1
-                )
+            if (item.isGroup && item.threadTitle == null) {
+                if (item.users.size >= 2) {
+                    dataBinding.profileName.text = String.format(
+                        getString(R.string.group_name),
+                        item.users[0].username,
+                        item.users.size - 1
+                    )
+                } else {
+                    dataBinding.profileName.text = item.users[0].username
+                }
             } else {
                 dataBinding.profileName.text = item.threadTitle
             }
             if (item.isGroup) {
                 visible(dataBinding.layoutProfileImageGroup)
                 gone(dataBinding.layoutProfileImageUser)
-                Glide.with(applicationContext).load(item.users[1].profilePicUrl)
-                    .into(dataBinding.profileImageG1)
-                Glide.with(applicationContext).load(item.users[0].profilePicUrl)
-                    .into(dataBinding.profileImageG2)
+                if (item.users.size >= 2) {
+                    Glide.with(applicationContext).load(item.users[1].profilePicUrl)
+                        .into(dataBinding.profileImageG1)
+                    Glide.with(applicationContext).load(item.users[0].profilePicUrl)
+                        .into(dataBinding.profileImageG2)
+                } else {
+                    Glide.with(applicationContext).load(user.profilePicUrl)
+                        .into(dataBinding.profileImageG1)
+                    Glide.with(applicationContext).load(item.users[0].profilePicUrl)
+                        .into(dataBinding.profileImageG2)
+                }
             } else {
                 gone(dataBinding.layoutProfileImageGroup)
                 visible(dataBinding.layoutProfileImageUser)
@@ -463,25 +466,27 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 dataBinding.imgIsOnline.visibility = View.INVISIBLE
             }
             dataBinding.root.setOnClickListener {
-                DirectActivity.open(this@MainActivity, Bundle().apply {
-                    putString("thread_id", item.threadId)
-                    putString("profile_image", item.users[0].profilePicUrl)
-                    putString("username", item.users[0].username)
-                    putBoolean("is_active", item.active)
-                    putLong("last_activity_at", item.lastActivityAt)
-                    putInt("seq_id", seqID)
-                    if (!item.isGroup) {
-                        if (item.lastSeenAt[item.users[0].pk.toString()] != null) {
-                            putLong(
-                                "last_seen_at",
-                                item.lastSeenAt[item.users[0].pk.toString()]!!.timeStamp
-                            )
-                        } else {
-                            putLong("last_seen_at", 0)
-                        }
+                DirectActivity.open(this@MainActivity, DirectBundle().apply {
+                    threadId = item.threadId
+                    profileImage = item.users[0].profilePicUrl
+                    if (item.users.size >= 2) {
+                        profileImage2 = item.users[1].profilePicUrl
+                    } else {
+                        profileImage2 = user.profilePicUrl
+                    }
+                    username = item.users[0].username
+                    isActive = item.active
+                    lastActivityAt = item.lastActivityAt
+                    seqId = seqID
+                    userId = item.users[0].pk
+                    isGroup = item.isGroup
+                    if (item.isGroup && item.threadTitle.isNotEmpty()) {
+                        threadTitle = item.threadTitle
+                    } else {
+                        threadTitle = username
                     }
                 })
-                if(binding.edtSearch.text.toString().isNotEmpty()){
+                if (binding.edtSearch.text.toString().isNotEmpty()) {
                     binding.edtSearch.setText("")
                 }
             }
