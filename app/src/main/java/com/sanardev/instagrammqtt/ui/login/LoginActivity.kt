@@ -14,7 +14,7 @@ import com.sanardev.instagrammqtt.ui.main.MainActivity
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorActivity
-import run.tripa.android.extensions.hideKeyboard
+import com.sanardev.instagrammqtt.extentions.hideKeyboard
 
 class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
 

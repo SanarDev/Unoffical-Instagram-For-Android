@@ -55,19 +55,26 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <com.google.android.exoplayer2.ui.PlayerView
-                            android:id="@+id/video_view"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="center"
-                            android:background="@android:color/transparent"
-                            app:controller_layout_id="@layout/custom_exo_controller_view"
-                            app:hide_on_touch="false"
-                            app:repeat_toggle_modes="none"
-                            app:resize_mode="fixed_width"
-                            app:show_timeout="0"
-                            app:shutter_background_color="@android:color/transparent"
-                            app:use_controller="true" />
+
+                        <androidx.appcompat.widget.AppCompatImageButton
+                            android:id="@+id/btn_play_pause"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:src="@drawable/ic_play_circle"
+                            android:scaleType="centerCrop"
+                            android:tag="start"
+                            android:tint="@color/white"
+                            android:background="@null"/>
+
+                        <ProgressBar
+                            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                            android:id="@+id/seekbar_play"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:progressTint="@color/white"/>
 
                     </LinearLayout>
 

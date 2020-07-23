@@ -86,6 +86,9 @@ interface InstagramRemote {
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/{thread_id}/items/{item_id}/seen/")
     fun markAsSeen(@HeaderMap header: Map<String, String>,@Path("thread_id") threadId: String,@Path("item_id") itemId:String,@Body requestBody: RequestBody):Call<ResponseDirectAction>
 
+    @POST(InstagramConstants.API_VERSION + "direct_v2/visual_threads/{thread_id}/item_seen/")
+    fun markAsSeenRavenMedia(@HeaderMap header: Map<String, String>, @Path("thread_id")threadId: String,@Body requestBody: RequestBody):Call<ResponseBody>
+
     @GET("rupload_igvideo/{upload_name}")
     fun getMediaUploadUrl(@HeaderMap header: Map<String, String>,@Path("upload_name") uploadName:String):Call<ResponseBody>
 
@@ -123,5 +126,8 @@ interface InstagramRemote {
 
     @GET(InstagramConstants.API_VERSION + "direct_v2/threads/get_by_participants/")
     fun getByParticipants(@HeaderMap header: Map<String, String>, @Path("recipient_users") recipientUsers:String,seqOd:Int,limit: Int=20):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/link/")
+    fun sendLinkMessage(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<MessageResponse>
 
 }

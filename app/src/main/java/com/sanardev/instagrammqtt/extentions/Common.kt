@@ -1,4 +1,4 @@
-package run.tripa.android.extensions
+package com.sanardev.instagrammqtt.extentions
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import com.sanardev.instagrammqtt.datasource.model.User
 import java.io.File
 
 
@@ -116,6 +117,20 @@ fun openUrl(context: Context, url: String) {
             "Choose browser"
         )
     ) // Choose browser is arbitrary :)
+}
+
+fun List<Any>.toStringList(): String {
+    var str = "["
+    for (i in this.indices) {
+        val user = this[i]
+        if (i < this.size - 1) {
+            str += "\"${this[i]}\","
+        } else {
+            str += "\"${this[i]}\""
+        }
+    }
+    str += "]"
+    return str
 }
 
 fun Activity.hideKeyboard(){

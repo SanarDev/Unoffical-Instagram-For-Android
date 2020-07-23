@@ -3,12 +3,14 @@ package com.sanardev.instagrammqtt.ui.direct
 import android.app.Application
 import android.content.res.Resources
 import android.media.MediaRecorder
+import android.view.View
 import androidx.databinding.ObservableField
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.sanardev.instagrammqtt.core.BaseViewModel
 import com.sanardev.instagrammqtt.constants.InstagramConstants
+import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.Payload
@@ -17,16 +19,20 @@ import com.sanardev.instagrammqtt.datasource.model.User
 import com.sanardev.instagrammqtt.datasource.model.event.ConnectionStateEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
+import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_SendMessage
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
+import com.sanardev.instagrammqtt.extensions.REGEX_FIND_URL
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.*
 import org.greenrobot.eventbus.EventBus
-import run.tripa.android.extensions.dpToPx
+import com.sanardev.instagrammqtt.extentions.dpToPx
+import com.sanardev.instagrammqtt.extentions.toStringList
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
@@ -48,6 +54,8 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     val mutableLiveData = MutableLiveData<Resource<InstagramChats>>()
     var mActionListener: ActionListener? = null
     val sendMediaLiveData = MutableLiveData<String>()
+    val messageText = ObservableField<String>()
+    private var mPatternRegexUrl = Pattern.compile(REGEX_FIND_URL)
 
     private val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.SUCCESS) {
@@ -66,21 +74,25 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
             mUseCase.getChats(result, 20, directBundle.threadId, directBundle.seqId)
         }
         this.thread = Thread().apply {
-            if(directBundle.threadId != null){
+            if (directBundle.threadId != null) {
                 threadId = directBundle.threadId
-            }else{
+            } else {
                 threadId = "[[${directBundle.userId}]]"
             }
-            viewerId = directBundle.userId
+            viewerId = getUserProfile().pk!!
             active = directBundle.isActive
             isGroup = directBundle.isGroup
             threadTitle = directBundle.threadTitle
             lastActivityAt = directBundle.lastActivityAt
             users = arrayListOf(User().apply {
+                this.pk = directBundle.userId
                 profilePicUrl = directBundle.profileImage
-            },User().apply {
-                profilePicUrl = directBundle.profileImage2
             })
+            if (isGroup) {
+                users.add(User().apply {
+                    profilePicUrl = directBundle.profileImage2
+                })
+            }
         }
         seqId = directBundle.seqId
     }
@@ -225,6 +237,9 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
             ).observeForever {
                 if (it.status == Resource.Status.SUCCESS) {
                     mActionListener?.onChangeMessageWithClientContext(message.apply {
+                        if (BaseApplication.currentPlayerId == this.itemId) {
+                            BaseApplication.currentPlayerId = it.data!!.messageMetaDatas[0].itemId
+                        }
                         isDelivered = true
                         itemId = it.data!!.messageMetaDatas[0].itemId
                         timestamp = it.data!!.messageMetaDatas[0].timestamp.toLong()
@@ -236,17 +251,47 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     }
 
     private fun getUsersPk(users: List<User>): String {
-        var str = "["
+        var pkList = ArrayList<Long>().toMutableList()
         for (i in users.indices) {
-            val user = users[i]
-            if (i < users.size - 1) {
-                str += user.pk.toString() + ","
-            } else {
-                str += user.pk.toString()
-            }
+            pkList.add(users[i].pk)
         }
-        str += "]"
-        return str
+        return pkList.toStringList()
+    }
+
+    fun onSendMessageClick(v: View) {
+        val clientContext = InstagramHashUtils.getClientContext()
+        mActionListener?.realTimeCommand(
+            RealTime_SendMessage(
+                thread.threadId,
+                clientContext,
+                messageText.get()
+            )
+        )
+        val matcher = mPatternRegexUrl.matcher(messageText.get()!!.toLowerCase(Locale.ROOT))
+        val message = if (matcher.find()) {
+            val linkList = ArrayList<String>().toMutableList()
+            for (index in 0..matcher.groupCount()) {
+                matcher.group(index)?.let {
+                    linkList.add(it)
+                }
+            }
+            MessageGenerator.textLink(
+                messageText.get()!!,
+                linkList,
+                thread.viewerId,
+                clientContext
+            )
+        } else {
+            MessageGenerator.text(
+                messageText.get()!!,
+                thread.viewerId,
+                clientContext
+            )
+        }
+        sendMessageToCloud(arrayListOf(message))
+        EventBus.getDefault()
+            .postSticky(arrayListOf(MessageEvent(thread.threadId, message)))
+        messageText.set("")
     }
 
     fun getStandardWidthAndHeight(width: Int, height: Int, scale: Float = 0.7f): Array<Int> {
@@ -365,7 +410,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         val list = ArrayList<Message>().toMutableList()
         for (item in items) {
             val clientContext = InstagramHashUtils.getClientContext()
-            var mimeType = MediaUtils.getMimeType(item)?:"image/jpeg"
+            var mimeType = MediaUtils.getMimeType(item) ?: "image/jpeg"
             val message = when {
                 mimeType!!.contains("image") -> {
                     MessageGenerator.imageMedia(thread.viewerId, clientContext, item)
@@ -385,54 +430,73 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
 
     }
 
+
     private fun sendMessageToCloud(list: MutableList<Message>) {
         if (list.isEmpty()) {
             return
         }
         val msg = list[0]
-        val users = mutableLiveData.value!!.data!!.thread!!.users
-        if (msg.media.mediaType == 1) {
-            mUseCase.sendMediaImage(
-                thread.threadId,
-                getUsersPk(users),
-                msg.media.localFilePath,
-                msg.clientContext
-            )
-                .observeForever {
+        when (msg.itemType) {
+            InstagramConstants.MessageType.MEDIA.type -> {
+                val users = thread.users
+                if (msg.media.mediaType == 1) {
+                    mUseCase.sendMediaImage(
+                        thread.threadId,
+                        getUsersPk(users),
+                        msg.media.localFilePath,
+                        msg.clientContext
+                    )
+                        .observeForever() {
+                            if (it.status == Resource.Status.SUCCESS) {
+                                changeMessageDelivery(it.data!!)
+                                list.removeAt(0)
+                                sendMessageToCloud(list)
+                            }
+                        }
+                } else {
+                    mUseCase.sendMediaVideo(
+                        thread.threadId,
+                        getUsersPk(users),
+                        msg.media.localFilePath,
+                        msg.clientContext
+                    )
+                        .observeForever {
+                            if (it.status == Resource.Status.SUCCESS) {
+                                changeMessageDelivery(it.data!!)
+                                list.removeAt(0)
+                                sendMessageToCloud(list)
+                            }
+                        }
+                }
+            }
+            InstagramConstants.MessageType.LINK.type -> {
+                mUseCase.sendLinkMessage(
+                    msg.link.text,
+                    msg.link.linkList,
+                    thread.threadId,
+                    msg.clientContext
+                ).observeForever {
                     if (it.status == Resource.Status.SUCCESS) {
                         changeMessageDelivery(it.data!!)
                         list.removeAt(0)
                         sendMessageToCloud(list)
                     }
                 }
-        } else {
-            mUseCase.sendMediaVideo(
-                thread.threadId,
-                getUsersPk(users),
-                msg.media.localFilePath,
-                msg.clientContext
-            )
-                .observeForever {
-                    if (it.status == Resource.Status.SUCCESS) {
-                        changeMessageDelivery(it.data!!)
-                        list.removeAt(0)
-                        sendMessageToCloud(list)
-                    }
-                }
+            }
         }
     }
 
     fun getProfilePic(userId: Long): String {
         if (thread.isGroup) {
-            for(user in thread.users){
-                if(user.pk == userId)
+            for (user in thread.users) {
+                if (user.pk == userId)
                     return user.profilePicUrl
             }
         } else {
             return thread.users[0].profilePicUrl
         }
-        for(user in thread.leftUsers){
-            if(user.pk == userId)
+        for (user in thread.leftUsers) {
+            if (user.pk == userId)
                 return user.profilePicUrl
         }
         return ""
@@ -440,15 +504,15 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
 
     fun getUsername(userId: Long): String {
         if (thread.isGroup) {
-            for(user in thread.users){
-                if(user.pk == userId)
+            for (user in thread.users) {
+                if (user.pk == userId)
                     return user.username
             }
         } else {
             return thread.users[0].username
         }
-        for(user in thread.leftUsers){
-            if(user.pk == userId)
+        for (user in thread.leftUsers) {
+            if (user.pk == userId)
                 return user.username
         }
         return ""
@@ -457,18 +521,23 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
 
     fun onMessageResponseEvent(event: MessageResponse) {
         if (event.action == "item_ack" && event.status == "ok") {
-            for(item in messages){
+            for (item in messages) {
                 if (item is Message && item.clientContext == event.payload.clientContext) {
                     item.timestamp = event.payload.timestamp.toLong()
                     item.isDelivered = true
-                    if(thread.threadId != event.payload.threadId){
-                        EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_RESET_CONNECTION))
+                    if (thread.threadId != event.payload.threadId) {
+                        EventBus.getDefault()
+                            .postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT))
                         thread.threadId = event.payload.threadId
                     }
                     mActionListener?.onChangeMessageWithClientContext(item)
                 }
             }
         }
+    }
+
+    fun markAsSeenRavenMedia(itemId: String, messageClientContext: String) {
+        mUseCase.markAsSeenRavenMedia(thread.threadId, messageClientContext, itemId)
     }
 
 }

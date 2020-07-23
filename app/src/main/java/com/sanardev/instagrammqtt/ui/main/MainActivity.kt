@@ -212,7 +212,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             ConnectionStateEvent.State.NETWORK_CONNECTION_RESET -> {
                 viewModel.reloadDirects()
             }
-            ConnectionStateEvent.State.NEED_TO_RESET_CONNECTION -> {
+            ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT -> {
                 EventBus.getDefault().removeStickyEvent(connectionStateEvent)
                 viewModel.reloadDirects()
             }

@@ -241,6 +241,16 @@ class InstagramRepository(
         }
     }
 
+    fun markAsSeenRavenMedia(result: MutableLiveData<Resource<ResponseBody>>,
+                   headersGenerator: () -> Map<String, String>,
+                   threadId: String,
+                   data: Map<*, *>,
+                   encryptor: (Map<*, *>) -> okhttp3.RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.markAsSeenRavenMedia(headersGenerator.invoke(),threadId,encryptor.invoke(data))).observeForever {
+            result.value = it
+        }
+    }
+
     fun getMediaUploadUrl(result:MutableLiveData<Resource<ResponseBody>>,headersGenerator: () -> Map<String, String>,uploadName:String){
         NetworkCall<ResponseBody>().makeCall(mInstagramRemote.getMediaUploadUrl(headersGenerator.invoke(),uploadName)).observeForever {
             result.value = it
@@ -298,6 +308,12 @@ class InstagramRepository(
 
     fun getByParticipants(result:MutableLiveData<Resource<ResponseBody>>, header: () -> Map<String, String>, userId: String, seqId:Int, limit: Int=20){
         NetworkCall<ResponseBody>().makeCall(mInstagramRemote.getByParticipants(header.invoke(),userId,seqId,limit)).observeForever {
+            result.value = it
+        }
+    }
+
+    fun sendLinkMessage(result:MutableLiveData<Resource<MessageResponse>>, header: () -> Map<String, String>,data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
+        NetworkCall<MessageResponse>().makeCall(mInstagramRemote.sendLinkMessage(header.invoke(),encryptor.invoke(data))).observeForever {
             result.value = it
         }
     }

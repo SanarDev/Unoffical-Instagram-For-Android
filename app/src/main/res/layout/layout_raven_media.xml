@@ -30,6 +30,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
+                    android:padding="10dp"
                     android:background="@drawable/bg_message">
 
                     <com.vanniktech.emoji.EmojiTextView
@@ -38,9 +39,12 @@
                         tools:text="Sanardev"/>
 
                     <LinearLayout
+                        android:id="@+id/layout_media"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="bottom"
+                        android:clickable="true"
+                        android:focusable="true"
                         android:orientation="horizontal">
 
                         <androidx.appcompat.widget.AppCompatImageView
@@ -50,6 +54,7 @@
                             android:tint="@color/white" />
 
                         <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/txt_message"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
                             android:gravity="center"

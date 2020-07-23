@@ -69,6 +69,13 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                 ctx!!.pipeline().remove("encoder")
                 realTimeService.onConnAck()
                 sendForegroundState(ctx!!,true,true,90)
+
+                Thread{
+                    while (true){
+                        Thread.sleep(20000)
+                        ctx!!.writeAndFlush(MqttMessage.PINGREQ)
+                    }
+                }.start()
             }
             MqttMessageType.PUBACK -> {
                 Log.i(

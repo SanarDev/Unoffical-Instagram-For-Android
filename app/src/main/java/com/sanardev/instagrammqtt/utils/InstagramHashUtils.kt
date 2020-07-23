@@ -2,7 +2,7 @@
 package com.sanardev.instagrammqtt.utils
 
 import com.sanardev.instagrammqtt.constants.InstagramConstants
-import run.tripa.android.extensions.toHexString
+import com.sanardev.instagrammqtt.extentions.toHexString
 import java.lang.StringBuilder
 import java.net.URLEncoder
 import java.security.Key

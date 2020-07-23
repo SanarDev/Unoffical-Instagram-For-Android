@@ -15,7 +15,7 @@ import android.text.style.URLSpan
 import android.view.View
 import android.widget.TextView
 import com.sanardev.instagrammqtt.utils.URLSpanNoUnderline
-import run.tripa.android.extensions.openUrl
+import com.sanardev.instagrammqtt.extentions.openUrl
 
 
 fun View.startWidthAnim(startSize: Int, endSize: Int, duration: Int = 300) {
@@ -69,13 +69,14 @@ fun TextView.stripUnderlines() {
     this.text = s
 }
 
+const val REGEX_FIND_URL = "(?:(?:https?|ftp):\\/\\/)?[\\w/\\-?=%.]+\\.[\\w/\\-?=%.]+"
 fun TextView.setTextLinkHTML(
     context: Context,
     html: String,
     haveUnderlineForLink: Boolean = false
 ) {
     val htmlText = html.toLowerCase().replace("\n","<br/>").replace(
-        "(?:(?:https?|ftp):\\/\\/)?[\\w/\\-?=%.]+\\.[\\w/\\-?=%.]+".toRegex(),
+        REGEX_FIND_URL.toRegex(),
         "<a href=\"$0\">$0</a>"
     );
     setTextHTML(context,htmlText,haveUnderlineForLink)

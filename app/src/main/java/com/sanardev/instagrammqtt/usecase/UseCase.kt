@@ -18,6 +18,7 @@ import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
 import com.sanardev.instagrammqtt.datasource.model.response.*
+import com.sanardev.instagrammqtt.extentions.toStringList
 import com.sanardev.instagrammqtt.repository.InstagramRepository
 import com.sanardev.instagrammqtt.utils.*
 import okhttp3.Headers
@@ -31,6 +32,7 @@ import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
@@ -268,6 +270,24 @@ class UseCase(
         mInstagramRepository.getDirectInbox(responseLiveData) { getHeaders() }
     }
 
+    fun sendLinkMessage(text:String,link:List<String>,threadId: String,clientContext: String): MutableLiveData<Resource<MessageResponse>> {
+        val result = MutableLiveData<Resource<MessageResponse>>()
+        val cookie = StorageUtils.getCookie(application)!!
+        val data = HashMap<String,String>().apply {
+            put("link_text",text)
+            put("link_urls",link.toStringList())
+            put("action","send_item")
+            put("thread_ids","[$threadId]")
+            put("client_context",clientContext)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("device_id",cookie.deviceID)
+            put("mutation_token",clientContext)
+            put("offline_threading_id",clientContext)
+            put("_uuid",cookie.adid)
+        }
+        mInstagramRepository.sendLinkMessage(result,{getHeaders()},data,{formUrlEncode(it)})
+        return result
+    }
     fun sendMediaImage(
         threadId: String,
         userId: String,
@@ -283,10 +303,16 @@ class UseCase(
         val hash = File(filePath).name.hashCode()
         val uploadName = "${uploadId}_0_$hash"
         var type = MediaUtils.getMimeType(filePath)?:"image/jpeg"
-
+        val path = if(type.contains("png")){
+            val p = generateFilePath("$uploadId.jpeg")
+            MediaUtils.convertImageFormatToJpeg(filePath,p)
+            p
+        }else{
+            filePath
+        }
         val cookie = StorageUtils.getCookie(application)!!
         val user = StorageUtils.getUserData(application)!!
-        val byteLength = File(filePath).readBytes().size
+        val byteLength = File(path).readBytes().size
 
         mInstagramRepository.getMediaImageUploadUrl(
             liveDataGetUrl,
@@ -307,7 +333,7 @@ class UseCase(
                             type
                         )
                     },
-                    getMediaRequestBody(filePath)
+                    getMediaRequestBody(path)
                 )
             }
         }
@@ -578,6 +604,21 @@ class UseCase(
         return StorageUtils.getLastLoginData(application)
     }
 
+    fun markAsSeenRavenMedia(threadId: String,messageClientContext:String,itemId: String): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = StorageUtils.getCookie(application)!!
+        val user = StorageUtils.getUserData(application)
+        val data = HashMap<String,String>().apply {
+            put("_csrftoken",cookie.csrftoken!!)
+            put("_uid",user!!.pk.toString())
+            put("_uuid",cookie.adid)
+            put("original_message_client_context",messageClientContext)
+            put("item_ids","[$itemId]")
+            put("target_item_type","raven_media")
+        }
+        mInstagramRepository.markAsSeenRavenMedia(result,{getHeaders()},threadId,data,{t -> getSignaturePayload(t)})
+        return result
+    }
     fun markAsSeen(
         threadId: String,
         itemId: String,
@@ -939,12 +980,12 @@ class UseCase(
         )
     }
 
-    fun generateFilePath(format: String): String {
+    fun generateFilePath(filename: String): String {
         val wallpaperDirectory = File(StorageUtils.APPLICATION_DIR)
         if(!wallpaperDirectory.exists()){
             wallpaperDirectory.mkdirs()
         }
-        return StorageUtils.APPLICATION_DIR+File.separator + format
+        return StorageUtils.APPLICATION_DIR+File.separator + filename
     }
 
     fun saveFbnsAuthData(fbnsAuth: FbnsAuth) {

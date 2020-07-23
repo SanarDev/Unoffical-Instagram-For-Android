@@ -2,13 +2,13 @@ package com.sanardev.instagrammqtt.utils
 
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
-import java.io.File
-
+import java.io.FileOutputStream
 
 class MediaUtils {
     companion object {
@@ -82,6 +82,17 @@ class MediaUtils {
                 type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
             }
             return type
+        }
+
+        fun convertImageFormatToJpeg(inputPath:String,outputPath:String){
+            try {
+                val bmp = BitmapFactory.decodeFile(inputPath)
+                val out = FileOutputStream(outputPath)
+                bmp.compress(Bitmap.CompressFormat.JPEG, 100, out) //100-best quality
+                out.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 

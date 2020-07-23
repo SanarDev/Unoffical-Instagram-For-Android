@@ -15,7 +15,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -28,17 +27,17 @@
                     android:src="@mipmap/example" />
 
                 <LinearLayout
+                    android:id="@+id/layout_story"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="10dp"
                     tools:background="@color/theme_background">
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/txt_reel_status"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-medium"
+                        android:fontFamily="sans-serif-light"
                         android:text="@string/mentioned_you_in_their_story"
                         android:textColor="@color/hint_light"
                         android:textSize="12sp" />
@@ -52,9 +51,9 @@
                         android:orientation="vertical">
 
                         <RelativeLayout
+                            android:id="@+id/layout_img_story"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp">
+                            android:layout_height="wrap_content">
 
 
                             <androidx.appcompat.widget.AppCompatTextView
@@ -99,9 +98,25 @@
 
                         </RelativeLayout>
 
-                        <include
-                            android:id="@+id/include_time"
-                            layout="@layout/layout_time" />
+
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|right"
+                            android:background="@drawable/bg_circluar"
+                            android:layout_marginTop="10dp"
+                            android:paddingStart="10dp"
+                            android:paddingTop="2dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="2dp">
+
+                            <include
+                                android:id="@+id/include_time"
+                                layout="@layout/layout_time"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+                        </FrameLayout>
+
 
                     </LinearLayout>
                 </LinearLayout>

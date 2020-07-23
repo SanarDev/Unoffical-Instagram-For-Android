@@ -38,7 +38,7 @@ public class Message {
     private Media media;
     @SerializedName("visual_media")
     @Expose
-    private Object ravenMedia;
+    private RavenMedia ravenMedia;
     @SerializedName("voice_media")
     @Expose
     private MediaData voiceMediaData;
@@ -151,11 +151,11 @@ public class Message {
         this.media = media;
     }
 
-    public Object getRavenMedia() {
+    public RavenMedia getRavenMedia() {
         return ravenMedia;
     }
 
-    public void setRavenMedia(Object ravenMedia) {
+    public void setRavenMedia(RavenMedia ravenMedia) {
         this.ravenMedia = ravenMedia;
     }
 

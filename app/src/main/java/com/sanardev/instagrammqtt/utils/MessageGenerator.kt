@@ -3,6 +3,7 @@ package com.sanardev.instagrammqtt.utils
 import android.content.Context
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.*
+import com.sanardev.instagrammqtt.extentions.toStringList
 import java.util.*
 
 class MessageGenerator {
@@ -31,7 +32,12 @@ class MessageGenerator {
                 this.clientContext = clientContext
             }
 
-        fun voiceMedia(context:Context,userId: Long,clientContext: String,localFilePath:String): Message =
+        fun voiceMedia(
+            context: Context,
+            userId: Long,
+            clientContext: String,
+            localFilePath: String
+        ): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -43,11 +49,11 @@ class MessageGenerator {
                 this.voiceMediaData = MediaData().apply {
                     this.isLocal = true
                     this.localFilePath = localFilePath
-                    this.localDuration = MediaUtils.getMediaDuration(context,localFilePath)
+                    this.localDuration = MediaUtils.getMediaDuration(context, localFilePath)
                 }
             }
 
-        fun imageMedia(userId: Long,clientContext: String,localFilePath:String): Message =
+        fun imageMedia(userId: Long, clientContext: String, localFilePath: String): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -62,7 +68,8 @@ class MessageGenerator {
                     this.mediaType = 1
                 }
             }
-        fun videoMedia(userId: Long,clientContext: String,localFilePath:String): Message =
+
+        fun videoMedia(userId: Long, clientContext: String, localFilePath: String): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -105,6 +112,24 @@ class MessageGenerator {
             return message
         }
 
-
+        fun textLink(
+            text: String,
+            linkList: MutableList<String>,
+            userId: Long,
+            clientContext: String
+        ): Message = Message().apply {
+            this.link = Link().apply {
+                this.text = text
+                this.mutationToken = UUID.randomUUID().toString()
+                this.clientContext = clientContext
+                this.linkList = linkList
+            }
+            this.itemType = InstagramConstants.MessageType.LINK.type
+            this.userId = userId
+            this.timestamp = System.currentTimeMillis()
+            this.isDelivered = false
+            this.itemId = UUID.randomUUID().toString()
+            this.clientContext = clientContext
+        }
     }
 }

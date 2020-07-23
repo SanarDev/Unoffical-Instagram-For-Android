@@ -1,12 +1,9 @@
 package com.sanardev.instagrammqtt.utils
 
 import android.app.Application
-import android.os.Build
-import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.Cookie
-import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import okhttp3.Headers
-import run.tripa.android.extensions.openSharedPref
+import com.sanardev.instagrammqtt.extentions.openSharedPref
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap

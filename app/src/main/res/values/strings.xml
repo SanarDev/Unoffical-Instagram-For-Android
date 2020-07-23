@@ -27,7 +27,7 @@
     <string name="category">Category</string>
     <string name="export_chat">Export chat</string>
     <string name="note">Note</string>
-    <string name="SavedMessage">Saved message</string>
+    <string name="SavedMessages">Saved Messages</string>
     <string name="remove">Remove</string>
     <string name="today">Today</string>
     <string name="days_ago">%dd ago</string>
@@ -82,4 +82,6 @@
     <string name="wating">Wating ...</string>
     <string name="send_first_message">Send first message ...</string>
     <string name="page_not_found">Page not found</string>
+    <string name="media_expired">Media Expired</string>
+    <string name="view_video">View Video</string>
 </resources>

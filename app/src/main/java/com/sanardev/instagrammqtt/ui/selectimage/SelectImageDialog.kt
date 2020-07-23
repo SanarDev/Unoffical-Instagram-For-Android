@@ -4,14 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import com.google.android.material.snackbar.Snackbar
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.core.BaseAdapter
 import com.sanardev.instagrammqtt.databinding.ItemSelectingImageBinding
@@ -22,11 +20,9 @@ import com.sanardev.instagrammqtt.ui.fullscreen.FullScreenActivity
 import com.sanardev.instagrammqtt.ui.playvideo.PlayVideoActivity
 import com.sanardev.instagrammqtt.utils.DisplayUtils
 import com.sanardev.instagrammqtt.utils.MediaUtils
-import com.sanardev.instagrammqtt.utils.StorageUtils
-import run.tripa.android.extensions.longToast
-import run.tripa.android.extensions.sizeInKb
-import run.tripa.android.extensions.toast
-import run.tripa.android.extensions.vibration
+import com.sanardev.instagrammqtt.extentions.sizeInKb
+import com.sanardev.instagrammqtt.extentions.toast
+import com.sanardev.instagrammqtt.extentions.vibration
 import java.io.File
 
 

@@ -93,6 +93,7 @@
                             android:id="@+id/layout_image_view"
                             android:layout_width="240dp"
                             android:layout_height="240dp"
+                            android:visibility="gone"
                             android:clickable="true"
                             android:focusable="true">
 
@@ -119,17 +120,13 @@
                             android:id="@+id/layout_video_view"
                             android:layout_width="240dp"
                             android:layout_height="240dp"
-                            android:visibility="gone">
+                            android:layout_margin="1dp"
+                            android:visibility="visible">
 
-                            <com.google.android.exoplayer2.ui.PlayerView
-                                android:id="@+id/video_view"
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/img_preview_video"
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:layout_margin="1dp"
-                                app:controller_layout_id="@layout/media_share_exo_controller"
-                                app:hide_on_touch="false"
-                                app:repeat_toggle_modes="all"
-                                app:show_timeout="0" />
+                                android:layout_height="match_parent"/>
 
                             <androidx.appcompat.widget.AppCompatImageButton
                                 android:id="@+id/img_volume"
@@ -144,19 +141,27 @@
                                 android:tint="@color/white"
                                 android:visibility="gone" />
 
-
-
-                            <androidx.appcompat.widget.AppCompatImageButton
-                                android:id="@+id/btn_replay"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_margin="10dp"
-                                android:background="@drawable/bg_circluar"
-                                android:padding="5dp"
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:layout_centerInParent="true"
+                                android:scaleType="centerCrop"
                                 android:tint="@color/white"
-                                android:layout_alignParentBottom="true"
-                                android:layout_alignParentRight="true"
-                                android:src="@drawable/ic_replay"/>
+                                android:src="@drawable/ic_play_circle"
+                                />
+
+
+<!--                            <androidx.appcompat.widget.AppCompatImageButton-->
+<!--                                android:id="@+id/btn_replay"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:layout_margin="10dp"-->
+<!--                                android:background="@drawable/bg_circluar"-->
+<!--                                android:padding="5dp"-->
+<!--                                android:tint="@color/white"-->
+<!--                                android:layout_alignParentBottom="true"-->
+<!--                                android:layout_alignParentRight="true"-->
+<!--                                android:src="@drawable/ic_replay"/>-->
 
                         </RelativeLayout>
 

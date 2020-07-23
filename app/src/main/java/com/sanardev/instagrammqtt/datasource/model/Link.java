@@ -1,7 +1,11 @@
 package com.sanardev.instagrammqtt.datasource.model;
 
+import androidx.room.Ignore;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
 
 public class Link {
 
@@ -17,7 +21,16 @@ public class Link {
     @SerializedName("mutation_token")
     @Expose
     private String mutationToken;
+    @Ignore
+    private List<String> linkList;
 
+    public List<String> getLinkList() {
+        return linkList;
+    }
+
+    public void setLinkList(List<String> linkList) {
+        this.linkList = linkList;
+    }
 
     public String getText() {
         return text;

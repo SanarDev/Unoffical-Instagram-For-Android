@@ -15,7 +15,7 @@ import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoginResult
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.ui.main.MainActivity
 import com.sanardev.instagrammqtt.usecase.UseCase
-import run.tripa.android.extensions.toast
+import com.sanardev.instagrammqtt.extentions.toast
 import javax.inject.Inject
 import kotlin.reflect.KClass
 import com.google.gson.Gson

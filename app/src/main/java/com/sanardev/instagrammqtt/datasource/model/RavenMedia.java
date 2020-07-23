@@ -19,7 +19,7 @@ public class RavenMedia {
     private Media media;
     @SerializedName("seen_user_ids")
     @Expose
-    private List<Object> seenUserIds = null;
+    private List<Long> seenUserIds = null;
     @SerializedName("view_mode")
     @Expose
     private String viewMode;
@@ -54,11 +54,11 @@ public class RavenMedia {
         this.media = media;
     }
 
-    public List<Object> getSeenUserIds() {
+    public List<Long> getSeenUserIds() {
         return seenUserIds;
     }
 
-    public void setSeenUserIds(List<Object> seenUserIds) {
+    public void setSeenUserIds(List<Long> seenUserIds) {
         this.seenUserIds = seenUserIds;
     }
 

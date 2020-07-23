@@ -11,6 +11,7 @@ import com.sanardev.instagrammqtt.core.BaseViewModel
 import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.Thread
+import com.sanardev.instagrammqtt.datasource.model.User
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
 import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
@@ -44,7 +45,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
     val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.ERROR) {
             if (it.apiError?.data != null) {
-                Log.i(InstagramConstants.DEBUG_TAG,it.apiError.message)
+                Log.i(InstagramConstants.DEBUG_TAG, it.apiError.message)
                 val gson = Gson()
                 val instagramInboxResult =
                     gson.fromJson(it.apiError!!.data!!.string(), InstagramDirects::class.java)
@@ -63,6 +64,21 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
     }
 
     private fun threadValidation(threads: List<Thread>) {
+        val loggedUser = getUser()
+        for (thread in threads) {
+            if (thread.users == null || thread.users.size == 0) {
+                thread.users = ArrayList<User>().toMutableList().apply {
+                    add(User().apply {
+                        this.profilePicUrl = loggedUser.profilePicUrl
+                        this.pk = loggedUser.pk!!
+                        this.fullName = loggedUser.fullName
+                        this.username = loggedUser.username
+                        this.isPrivate = loggedUser.isPrivate
+                    })
+                }
+                thread.threadTitle = loggedUser.username
+            }
+        }
         for (thread in threads) {
             var isThreadExist = false
             for (direct in directs) {
