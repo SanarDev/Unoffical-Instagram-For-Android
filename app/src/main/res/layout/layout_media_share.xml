@@ -233,8 +233,7 @@
                 layout="@layout/layout_reactions_like"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="60dp"
-                android:layout_marginStart="60dp"/>
+                android:layout_marginLeft="60dp"/>
         </LinearLayout>
 
     </LinearLayout>

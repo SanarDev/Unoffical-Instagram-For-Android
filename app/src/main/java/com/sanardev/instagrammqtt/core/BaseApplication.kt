@@ -25,7 +25,6 @@ import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.di.component.DaggerAppComponent
 import com.sanardev.instagrammqtt.receiver.NetworkChangeReceiver
 import com.sanardev.instagrammqtt.utils.StorageUtils
-import com.squareup.leakcanary.LeakCanary
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector

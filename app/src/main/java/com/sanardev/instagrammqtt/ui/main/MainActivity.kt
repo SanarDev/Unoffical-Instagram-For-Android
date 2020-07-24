@@ -16,6 +16,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.core.BaseActivity
@@ -56,6 +58,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         return MainViewModel::class.java
     }
 
+    private lateinit var layoutManager: LinearLayoutManager
+    private var isLoadingMoreDirects: Boolean = false
+    private var isMoreDirectExist: Boolean = true
     private val mHandler = Handler()
     private lateinit var user: InstagramLoggedUser
     var seqID: Int = 0
@@ -67,15 +72,16 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         EmojiManager.install(IosEmojiProvider())
         super.onCreate(savedInstanceState)
 
-        adapter = DirectsAdapter(emptyList())
+        adapter = DirectsAdapter(emptyList<Any>().toMutableList())
         binding.recyclerviewDirects.adapter = adapter
+        layoutManager = (binding.recyclerviewDirects.layoutManager as LinearLayoutManager)
 
         val instagramDirectObserver = InstagramDirectObserver()
         viewModel.mutableLiveData.observe(this, instagramDirectObserver)
         viewModel.threadNewMessageLiveData.observe(this, Observer {
             for (index in adapter.items.indices) {
                 val thread = adapter.items[index]
-                if (thread.threadId == it.first) {
+                if (thread is Thread && thread.threadId == it.first) {
                     thread.messages.add(0, it.second)
                     adapter.notifyItemMoved(index, 0)
                 }
@@ -118,6 +124,23 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 //            viewModel.reloadDirects()
 //            binding.refreshContainer.isRefreshing = false
 //        }
+
+        binding.recyclerviewDirects.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (!isLoadingMoreDirects && isMoreDirectExist) {
+                    val totalItemCount = layoutManager.itemCount
+                    if (layoutManager != null && layoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
+                        if (totalItemCount - 2 < 0) {
+                            return
+                        }
+                        viewModel.loadMoreItem()
+                        isLoadingMoreDirects = true
+                        adapter.setLoading(isLoadingMoreDirects)
+                    }
+                }
+            }
+        })
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
@@ -140,55 +163,66 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
     private inner class InstagramDirectObserver : Observer<Resource<InstagramDirects>> {
         override fun onChanged(it: Resource<InstagramDirects>) {
 
-            if (it.status == Resource.Status.LOADING) {
-                visible(binding.progressbar)
-                gone(binding.recyclerviewDirects, binding.includeLayoutNetwork.root)
-                return
-            }
-            gone(binding.progressbar, binding.includeLayoutNetwork.root)
-            if (it.status == Resource.Status.ERROR) {
-                if (it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code) {
-                    visible(binding.includeLayoutNetwork.root)
-                    return
+            when (it.status) {
+                Resource.Status.LOADING -> {
+                    if (!isLoadingMoreDirects) {
+                        visible(binding.progressbar)
+                        gone(binding.recyclerviewDirects, binding.includeLayoutNetwork.root)
+                    }
                 }
-                if (it.data == null) {
-                    DialogHelper.createDialog(
+                Resource.Status.ERROR -> {
+                    gone(binding.progressbar, binding.includeLayoutNetwork.root)
+                    if (it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code) {
+                        visible(binding.includeLayoutNetwork.root)
+                        return
+                    }
+                    if (it.data == null) {
+                        DialogHelper.createDialog(
+                            this@MainActivity,
+                            layoutInflater,
+                            title = getString(R.string.error),
+                            message = getString(R.string.unknownError),
+                            positiveText = getString(R.string.try_again),
+                            positiveFun = {
+                                viewModel.getDirects()
+                            }
+                        )
+                        return
+                    }
+                    if (it.data!!.message == InstagramConstants.Error.LOGIN_REQUIRED.msg) {
+                        DialogHelper.createDialog(
+                            this@MainActivity,
+                            layoutInflater,
+                            title = it.data!!.errorTitle!!,
+                            message = it.data!!.errorMessage!!,
+                            positiveText = getString(R.string.login),
+                            positiveFun = {
+                                viewModel.resetUserData()
+                                LoginActivity.open(this@MainActivity)
+                                finish()
+                            }
+                        )
+                    }
+                }
+                Resource.Status.SUCCESS -> {
+                    gone(binding.progressbar, binding.includeLayoutNetwork.root)
+                    visible(binding.recyclerviewDirects)
+
+                    isLoadingMoreDirects = false
+                    if(it.data!!.inbox.oldestCursor == null){
+                        isMoreDirectExist = false
+                    }
+                    adapter.setLoading(isLoadingMoreDirects)
+                    seqID = it.data!!.seqId
+                    val threads = it.data!!.inbox.threads
+                    RealTimeService.run(
                         this@MainActivity,
-                        layoutInflater,
-                        title = getString(R.string.error),
-                        message = getString(R.string.unknownError),
-                        positiveText = getString(R.string.try_again),
-                        positiveFun = {
-                            viewModel.getDirects()
-                        }
+                        RealTime_StartService(it.data!!.seqId.toLong(), it.data!!.snapshotAtMs)
                     )
-                    return
+                    adapter.items = threads.toMutableList()
+                    adapter.notifyDataSetChanged()
                 }
-                if (it.data!!.message == InstagramConstants.Error.LOGIN_REQUIRED.msg) {
-                    DialogHelper.createDialog(
-                        this@MainActivity,
-                        layoutInflater,
-                        title = it.data!!.errorTitle!!,
-                        message = it.data!!.errorMessage!!,
-                        positiveText = getString(R.string.login),
-                        positiveFun = {
-                            viewModel.resetUserData()
-                            LoginActivity.open(this@MainActivity)
-                            finish()
-                        }
-                    )
-                }
-                return
             }
-            visible(binding.recyclerviewDirects)
-            seqID = it.data!!.seqId
-            val threads = it.data!!.inbox.threads
-            RealTimeService.run(
-                this@MainActivity,
-                RealTime_StartService(it.data!!.seqId.toLong(), it.data!!.snapshotAtMs)
-            )
-            adapter.items = threads
-            adapter.notifyDataSetChanged()
         }
 
     }
@@ -254,9 +288,14 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         EventBus.getDefault().unregister(this);
     }
 
-    inner class DirectsAdapter(var items: List<Thread>) : BaseAdapter() {
+    inner class DirectsAdapter(var items: MutableList<Any>) : BaseAdapter() {
         override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]
+
+            if(item is LoadingEvent){
+               return item
+            }
+            item as Thread
             val dataBinding = holder.binding as LayoutDirectBinding
             if (item.messages != null) {
                 var unreadMessage = 0
@@ -493,7 +532,24 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             return item
         }
 
+        fun setLoading(isLoading: Boolean) {
+            if (isLoading) {
+                items.add(LoadingEvent())
+                notifyItemInserted(items.size - 1)
+                binding.recyclerviewDirects.scrollToPosition(items.size - 1)
+            } else {
+                for (i in items.indices) {
+                    if (items[i] is LoadingEvent) {
+                        items.removeAt(i)
+                        notifyItemRemoved(i)
+                    }
+                }
+            }
+        }
         override fun getLayoutIdForPosition(position: Int): Int {
+            if(items[position] is LoadingEvent){
+                return R.layout.layout_loading
+            }
             return R.layout.layout_direct
         }
 

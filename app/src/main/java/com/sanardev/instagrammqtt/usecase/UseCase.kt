@@ -267,7 +267,11 @@ class UseCase(
     }
 
     fun getDirectInbox(responseLiveData: MediatorLiveData<Resource<InstagramDirects>>) {
-        mInstagramRepository.getDirectInbox(responseLiveData) { getHeaders() }
+        mInstagramRepository.getDirectInbox(responseLiveData,{ getHeaders() },20)
+    }
+
+    fun getMoreDirectItems(responseLiveData: MediatorLiveData<Resource<InstagramDirects>>,seqId: Int,cursor: String){
+        mInstagramRepository.loadMoreDirects(responseLiveData,{getHeaders()},seqId,cursor)
     }
 
     fun sendLinkMessage(text:String,link:List<String>,threadId: String,clientContext: String): MutableLiveData<Resource<MessageResponse>> {

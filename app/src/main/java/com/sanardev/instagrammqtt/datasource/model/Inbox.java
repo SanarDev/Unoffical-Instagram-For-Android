@@ -20,6 +20,9 @@ public class Inbox {
     @SerializedName("unseen_count_ts")
     @Expose
     private long unseenCountTs;
+    @SerializedName("oldest_cursor")
+    @Expose
+    private String oldestCursor;
     @SerializedName("prev_cursor")
     @Expose
     private PrevCursor prevCursor;
@@ -29,6 +32,14 @@ public class Inbox {
     @SerializedName("blended_inbox_enabled")
     @Expose
     private Boolean blendedInboxEnabled;
+
+    public String getOldestCursor() {
+        return oldestCursor;
+    }
+
+    public void setOldestCursor(String oldestCursor) {
+        this.oldestCursor = oldestCursor;
+    }
 
     public List<Thread> getThreads() {
         return threads;

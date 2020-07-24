@@ -65,6 +65,7 @@ import java.util.regex.Pattern
 
 class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), ActionListener {
 
+    private lateinit var layoutManager: LinearLayoutManager
     private lateinit var httpDataSourceFactory: DataSource.Factory
     private lateinit var dataSourceFactory: DefaultDataSourceFactory
     private lateinit var mPlayarManager: PlayerManager
@@ -73,7 +74,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     private var currentPlayerId: String? = null
     private var isLoading = false
     private var olderMessageExist = true
-    private val mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private lateinit var mAudioManager : AudioManager
 //    private var lastSeenAt: Long = 0
 
     companion object {
@@ -101,6 +102,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     override fun onCreate(savedInstanceState: Bundle?) {
         EmojiManager.install(IosEmojiProvider())
         super.onCreate(savedInstanceState)
+        mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         attachKeyboardListeners()
 
@@ -126,6 +128,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
         adapter = ChatsAdapter(ArrayList<Any>(), viewModel.getUserProfile())
         binding.recyclerviewChats.adapter = adapter
+        layoutManager = (binding.recyclerviewChats.layoutManager as LinearLayoutManager)
 
         emojiPopup =
             EmojiPopup.Builder.fromRootView(binding.layoutParent)
@@ -261,13 +264,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         binding.recyclerviewChats.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-
-                val layoutManager = (binding.recyclerviewChats.layoutManager as LinearLayoutManager)
-                val visibleItemCount = binding.recyclerviewChats.childCount
-                val totalItemCount = layoutManager.itemCount
-                val firstVisibleItemIndex = layoutManager.findFirstVisibleItemPosition()
-
                 if (!isLoading && olderMessageExist) {
+                    val totalItemCount = layoutManager.itemCount
                     if (layoutManager != null && layoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
                         if (totalItemCount - 2 < 0) {
                             return
