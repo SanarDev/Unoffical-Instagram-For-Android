@@ -1,45 +1,38 @@
-package com.sanardev.instagrammqtt.datasource.model.realtime;
+package com.sanardev.instagrammqtt.realtime.commands;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.sanardev.instagrammqtt.service.realtime.RealTimeIntent;
 
-public class RealTime_SendLocation extends RealTimeCommand implements Parcelable {
+public class RealTime_SendHashTag  extends RealTimeCommand implements Parcelable {
 
-    protected RealTime_SendLocation(Parcel in) {
+    protected RealTime_SendHashTag(Parcel in) {
         text = in.readString();
-        locationId = in.readString();
+        hashTag = in.readString();
         threadId = in.readString();
         clientContext = in.readString();
     }
 
-    public static final Creator<RealTime_SendLocation> CREATOR = new Creator<RealTime_SendLocation>() {
+    public static final Creator<RealTime_SendHashTag> CREATOR = new Creator<RealTime_SendHashTag>() {
         @Override
-        public RealTime_SendLocation createFromParcel(Parcel in) {
-            return new RealTime_SendLocation(in);
+        public RealTime_SendHashTag createFromParcel(Parcel in) {
+            return new RealTime_SendHashTag(in);
         }
 
         @Override
-        public RealTime_SendLocation[] newArray(int size) {
-            return new RealTime_SendLocation[size];
+        public RealTime_SendHashTag[] newArray(int size) {
+            return new RealTime_SendHashTag[size];
         }
     };
 
     @Override
     public String getAction() {
-        return RealTimeIntent.ACTION_SEND_LOCATION;
-    }
-
-    public RealTime_SendLocation(String text, String locationId, String threadId, String clientContext){
-        this.text = text;
-        this.locationId = locationId;
-        this.threadId = threadId;
-        this.clientContext = clientContext;
+        return RealTimeIntent.ACTION_SEND_HASH_TAG;
     }
 
     private String text;
-    private String locationId;
+    private String hashTag;
     private String threadId;
     private String clientContext;
 
@@ -51,12 +44,12 @@ public class RealTime_SendLocation extends RealTimeCommand implements Parcelable
         this.text = text;
     }
 
-    public String getLocationId() {
-        return locationId;
+    public String getHashTag() {
+        return hashTag;
     }
 
-    public void setLocationId(String locationId) {
-        this.locationId = locationId;
+    public void setHashTag(String hashTag) {
+        this.hashTag = hashTag;
     }
 
     public String getThreadId() {
@@ -83,7 +76,7 @@ public class RealTime_SendLocation extends RealTimeCommand implements Parcelable
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(text);
-        dest.writeString(locationId);
+        dest.writeString(hashTag);
         dest.writeString(threadId);
         dest.writeString(clientContext);
     }

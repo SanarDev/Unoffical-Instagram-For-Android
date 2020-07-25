@@ -6,6 +6,7 @@ import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.FbnsAuth
 import com.sanardev.instagrammqtt.datasource.model.NotificationContentJson
 import com.sanardev.instagrammqtt.datasource.model.PushNotification
+import com.sanardev.instagrammqtt.extentions.toast
 import com.sanardev.instagrammqtt.service.fbns.FbnsService
 import com.sanardev.instagrammqtt.utils.ZlibUtis
 import io.netty.buffer.ByteBuf
@@ -108,7 +109,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
                 val json = String(ZlibUtis.decompress(compressedData))
                 val topicName = publishMessage.variableHeader().topicName().toInt()
 
-                Log.i(InstagramConstants.DEBUG_TAG,"Publish $json on Topic $topicName ${publishMessage.variableHeader().packetId()}");
+                Log.i(InstagramConstants.DEBUG_TAG,"FBNS: Publish $json on Topic $topicName ${publishMessage.variableHeader().packetId()}");
                 when (topicName) {
                     InstagramConstants.TopicIds.RegResp.id -> {
                         onRegisterResponse(json)

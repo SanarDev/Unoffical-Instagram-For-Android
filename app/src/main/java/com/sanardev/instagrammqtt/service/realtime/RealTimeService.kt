@@ -20,7 +20,7 @@ import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
 import com.sanardev.instagrammqtt.fbns.packethelper.MQTToTConnectionData
 import com.sanardev.instagrammqtt.fbns.packethelper.MQTTotConnectionClientInfo
 import com.sanardev.instagrammqtt.realtime.PayloadProcessor
-import com.sanardev.instagrammqtt.realtime.commands.DirectCommands
+import com.sanardev.instagrammqtt.realtime.commands.*
 import com.sanardev.instagrammqtt.realtime.network.NetworkHandler
 import com.sanardev.instagrammqtt.realtime.subcribers.GraphQLSubscriptions
 import com.sanardev.instagrammqtt.realtime.subcribers.SkywalkerSubscriptions

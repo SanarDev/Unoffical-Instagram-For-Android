@@ -1,5 +1,6 @@
 package com.sanardev.instagrammqtt.ui.main
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Typeface
@@ -27,13 +28,14 @@ import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
 import com.sanardev.instagrammqtt.databinding.LayoutDirectBinding
 import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.*
-import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_StartService
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_StartService
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.color
 import com.sanardev.instagrammqtt.extensions.gone
 import com.sanardev.instagrammqtt.extensions.setTextViewDrawableColor
 import com.sanardev.instagrammqtt.extensions.visible
+import com.sanardev.instagrammqtt.service.fbns.FbnsIntent
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.ui.direct.DirectActivity
 import com.sanardev.instagrammqtt.ui.direct.DirectBundle
@@ -141,6 +143,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 }
             }
         })
+
+        initFbns()
+    }
+
+    private fun initFbns() {
+        startService(Intent(FbnsIntent.ACTION_CONNECT_SESSION).setPackage("com.sanardev.instagrammqtt"))
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
@@ -217,7 +225,10 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     val threads = it.data!!.inbox.threads
                     RealTimeService.run(
                         this@MainActivity,
-                        RealTime_StartService(it.data!!.seqId.toLong(), it.data!!.snapshotAtMs)
+                        RealTime_StartService(
+                            it.data!!.seqId.toLong(),
+                            it.data!!.snapshotAtMs
+                        )
                     )
                     adapter.items = threads.toMutableList()
                     adapter.notifyDataSetChanged()

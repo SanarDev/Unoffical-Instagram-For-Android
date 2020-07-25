@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -17,6 +18,8 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,12 +43,15 @@ import com.sanardev.instagrammqtt.databinding.*
 import com.sanardev.instagrammqtt.datasource.model.DirectDate
 import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.event.*
-import com.sanardev.instagrammqtt.datasource.model.realtime.*
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.*
 import com.sanardev.instagrammqtt.extentions.dpToPx
 import com.sanardev.instagrammqtt.extentions.shareText
 import com.sanardev.instagrammqtt.extentions.vibration
+import com.sanardev.instagrammqtt.realtime.commands.RealTimeCommand
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_MarkAsSeen
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_SendLike
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_SendTypingState
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.ui.fullscreen.FullScreenActivity
 import com.sanardev.instagrammqtt.ui.playvideo.PlayVideoActivity
@@ -74,7 +80,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     private var currentPlayerId: String? = null
     private var isLoading = false
     private var olderMessageExist = true
-    private lateinit var mAudioManager : AudioManager
+    private lateinit var mAudioManager: AudioManager
 //    private var lastSeenAt: Long = 0
 
     companion object {
@@ -85,6 +91,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         }
 
         const val TAG = "TEST"
+        const val PERMISSION_READ_EXTERNAL_STORAGE_CODE = 101
+        const val PERMISSION_RECORD_AUDIO_CODE = 102
     }
 
     override fun layoutRes(): Int {
@@ -98,7 +106,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     private val mHandler = Handler()
     private var endTypeAtMs: Long = 0
 
-    private var currentAudioId: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         EmojiManager.install(IosEmojiProvider())
         super.onCreate(savedInstanceState)
@@ -144,6 +151,21 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         binding.recordView.setCounterTimeColor(color(R.color.counter_voice_time_color));
         binding.recordView.setSmallMicColor(color(R.color.voice_mic_color));
         binding.recordView.setCustomSounds(0, 0, 0);
+        if (ContextCompat.checkSelfPermission(
+                this@DirectActivity,
+                android.Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            binding.btnVoice.isListenForRecord = false
+        }else{
+            binding.btnVoice.isListenForRecord = true
+        }
+        binding.btnVoice.setOnClickListener {
+            ActivityCompat.requestPermissions(
+                this@DirectActivity, arrayOf(android.Manifest.permission.RECORD_AUDIO),
+                PERMISSION_RECORD_AUDIO_CODE
+            )
+        }
         binding.recordView.setOnRecordListener(object : OnRecordListener {
             override fun onFinish(recordTime: Long) {
                 visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
@@ -165,11 +187,16 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             }
 
             override fun onStart() {
-                vibration(100)
-                visible(binding.recordView)
-                gone(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
-                stopAllMedia()
-                viewModel.startAudioRecording()
+                    vibration(100)
+                    visible(binding.recordView)
+                    gone(
+                        binding.btnEmoji,
+                        binding.edtTextChat,
+                        binding.btnAddPhoto,
+                        binding.btnLike
+                    )
+                    viewModel.startAudioRecording()
+
             }
         })
         binding.edtTextChat.setOnClickListener {
@@ -181,13 +208,33 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
         binding.btnLike.setOnClickListener {
             val clientContext = InstagramHashUtils.getClientContext()
-            RealTimeService.run(this, RealTime_SendLike(viewModel.thread.threadId, clientContext))
+            RealTimeService.run(this,
+                RealTime_SendLike(
+                    viewModel.thread.threadId,
+                    clientContext
+                )
+            )
             val message = MessageGenerator.like(adapter.user.pk!!, clientContext)
             EventBus.getDefault()
                 .postSticky(arrayListOf(MessageEvent(viewModel.thread.threadId, message)))
         }
 
         binding.btnAddPhoto.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(
+                    this@DirectActivity,
+                    android.Manifest.permission.READ_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this@DirectActivity,
+                    arrayOf(
+                        android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ),
+                    PERMISSION_READ_EXTERNAL_STORAGE_CODE
+                )
+                return@setOnClickListener
+            }
             SelectImageDialog {
                 viewModel.uploadMedias(it)
             }.show(supportFragmentManager, "Dialog")
@@ -285,6 +332,24 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         })
         initPlayer()
 
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == PERMISSION_READ_EXTERNAL_STORAGE_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                binding.btnAddPhoto.callOnClick()
+            }
+        }else if(requestCode == PERMISSION_RECORD_AUDIO_CODE){
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                binding.btnVoice.isListenForRecord = true
+            }
+        }
     }
 
     private fun checkUserStatus() {
@@ -404,27 +469,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
     override fun onStart() {
         super.onStart()
-        try {
-            EventBus.getDefault().register(this);
-        } catch (e: Exception) {
-
-        }
-        resumeLastMedia()
+        EventBus.getDefault().register(this);
     }
 
     override fun onStop() {
         super.onStop()
         EventBus.getDefault().unregister(this);
-        stopAllMedia()
     }
 
-    private fun resumeLastMedia() {
-
-    }
-
-    private fun stopAllMedia() {
-
-    }
 
     inner class ChatsAdapter(var items: MutableList<Any>, var user: InstagramLoggedUser) :
         BaseAdapter() {
@@ -680,7 +732,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 //                viewModel.markAsSeen(threadId, item.itemId) moshkel ine ke callback barash ok nakardm barate update shodan main activty
                 RealTimeService.run(
                     this@DirectActivity,
-                    RealTime_MarkAsSeen(viewModel.thread.threadId, item.itemId)
+                    RealTime_MarkAsSeen(
+                        viewModel.thread.threadId,
+                        item.itemId
+                    )
                 )
             }
 
@@ -805,7 +860,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
                 }
                 InstagramConstants.MessageType.REEL_SHARE.type -> {
-                    var layoutImgStory:ViewGroup? = null
+                    var layoutImgStory: ViewGroup? = null
                     if (item.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
                         val dataBinding = holder.binding as LayoutReelShareReplyBinding
                         layoutImgStory = dataBinding.layoutImgStory
@@ -1103,7 +1158,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     if (media.imageVersions2 != null) {
                         dataBinding.txtMessage.text = getString(R.string.view_photo)
                         dataBinding.layoutMedia.setOnClickListener {
-                            viewModel.markAsSeenRavenMedia(item.itemId,item.clientContext)
+                            viewModel.markAsSeenRavenMedia(item.itemId, item.clientContext)
                             FullScreenActivity.openUrl(
                                 this@DirectActivity,
                                 media.imageVersions2.candidates[0].url
@@ -1112,8 +1167,11 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     } else if (media.videoVersions != null) {
                         dataBinding.txtMessage.text = getString(R.string.view_video)
                         dataBinding.layoutMedia.setOnClickListener {
-                            viewModel.markAsSeenRavenMedia(item.itemId,item.clientContext)
-                            PlayVideoActivity.playUrl(this@DirectActivity,media.videoVersions[0].url)
+                            viewModel.markAsSeenRavenMedia(item.itemId, item.clientContext)
+                            PlayVideoActivity.playUrl(
+                                this@DirectActivity,
+                                media.videoVersions[0].url
+                            )
                         }
                     } else {
                         dataBinding.txtMessage.text = getString(R.string.media_expired)
@@ -1129,13 +1187,13 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     val user = media.user
                     val id = item.mediaShare.id
                     if (media.videoVersions != null) {
-                        gone( dataBinding.layoutImageView,dataBinding.imgMultipleItem)
+                        gone(dataBinding.layoutImageView, dataBinding.imgMultipleItem)
                         dataBinding.layoutVideoView.visibility = View.VISIBLE
                         val videoSrc = item.mediaShare.videoVersions[0].url
                         val image = item.mediaShare.imageVersions2.candidates[1].url
                         Glide.with(applicationContext).load(image).into(dataBinding.imgPreviewVideo)
                         dataBinding.layoutVideoView.setOnClickListener {
-                            PlayVideoActivity.playUrl(this@DirectActivity,videoSrc)
+                            PlayVideoActivity.playUrl(this@DirectActivity, videoSrc)
                         }
                     } else if (media.imageVersions2 != null) {
                         val image = media.imageVersions2
@@ -1243,7 +1301,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     val dataBinding = holder.binding as LayoutEventBinding
                     if (item.actionLog.description.toLowerCase().contains("like")) {
                         gone(dataBinding.txtEventDes)
-                    }else{
+                    } else {
                         visible(dataBinding.txtEventDes)
                     }
                     dataBinding.txtEventDes.text = item.actionLog.description
@@ -1261,6 +1319,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             if (isLoading) {
                 items.add(LoadingEvent())
                 notifyItemInserted(items.size - 1)
+                binding.recyclerviewChats.scrollToPosition(items.size - 1)
             } else {
                 for (i in items.indices) {
                     if (items[i] is LoadingEvent) {
@@ -1431,7 +1490,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     }
 
     override fun realTimeCommand(realTimeCommand: RealTimeCommand) {
-        RealTimeService.run(this@DirectActivity,realTimeCommand)
+        RealTimeService.run(this@DirectActivity, realTimeCommand)
     }
 
 

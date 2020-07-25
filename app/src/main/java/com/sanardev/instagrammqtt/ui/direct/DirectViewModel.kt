@@ -19,7 +19,7 @@ import com.sanardev.instagrammqtt.datasource.model.User
 import com.sanardev.instagrammqtt.datasource.model.event.ConnectionStateEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
-import com.sanardev.instagrammqtt.datasource.model.realtime.RealTime_SendMessage
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_SendMessage
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.REGEX_FIND_URL
@@ -216,8 +216,12 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
     }
 
     fun stopRecording() {
-        mediaRecorder.stop()
-        mediaRecorder.release()
+        try {
+            mediaRecorder.stop()
+            mediaRecorder.release()
+        } catch (e: Exception) {
+
+        }
         if (currentVoiceFileName != null && File(currentVoiceFileName).exists()) {
             val clCotext = InstagramHashUtils.getClientContext()
             val message = MessageGenerator.voiceMedia(

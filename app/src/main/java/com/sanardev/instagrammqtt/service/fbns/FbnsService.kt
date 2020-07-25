@@ -2,8 +2,10 @@ package com.sanardev.instagrammqtt.service.fbns
 
 import android.app.Service
 import android.content.Intent
+import android.os.Handler
 import android.os.IBinder
 import com.sanardev.instagrammqtt.constants.InstagramConstants
+import com.sanardev.instagrammqtt.extentions.toast
 import com.sanardev.instagrammqtt.fbns.network.NetworkHandler
 import com.sanardev.instagrammqtt.fbns.network.PayloadProcessor
 import com.sanardev.instagrammqtt.fbns.packethelper.*
@@ -49,8 +51,10 @@ class FbnsService : Service() {
         super.onCreate()
 
         sslContext = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).sslProvider(SslProvider.JDK).build()
+    }
 
-        Thread {
+    inner class ConnectivityThread : Thread(){
+        override fun run() {
             try {
                 val fbns = mUseCase.getFbnsAuthData()
                 val mqttotConnectionClientInfo =
@@ -112,7 +116,23 @@ class FbnsService : Service() {
                 mChannel!!.writeAndFlush(fbnsConnectPacket)
             } finally {
             }
+        }
+    }
+
+    protected val mHandler = Handler()
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+//        if(mChannel == null || !mChannel!!.isActive){
+//            ConnectivityThread().start()
+//        }
+        Thread{
+            while (true){
+                Thread.sleep(10000)
+                mHandler.post {
+                    toast("a")
+                }
+            }
         }.start()
+        return START_STICKY
     }
     /*
        MqttConnectMessage(
@@ -121,6 +141,10 @@ class FbnsService : Service() {
                     MqttConnectPayload()
                 )
      */
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null

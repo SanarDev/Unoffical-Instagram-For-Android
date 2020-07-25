@@ -1,4 +1,4 @@
-package com.sanardev.instagrammqtt.datasource.model.realtime;
+package com.sanardev.instagrammqtt.realtime.commands;
 
 import android.os.Parcel;
 import android.os.Parcelable;

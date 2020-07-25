@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.sanardev.instagrammqtt.datasource.model.event.ConnectionStateEvent
+import com.sanardev.instagrammqtt.service.fbns.FbnsIntent
 import com.sanardev.instagrammqtt.utils.NetworkUtils
 import org.greenrobot.eventbus.EventBus
 

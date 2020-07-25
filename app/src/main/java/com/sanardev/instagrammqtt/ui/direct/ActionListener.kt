@@ -1,7 +1,7 @@
 package com.sanardev.instagrammqtt.ui.direct
 
 import com.sanardev.instagrammqtt.datasource.model.Message
-import com.sanardev.instagrammqtt.datasource.model.realtime.RealTimeCommand
+import com.sanardev.instagrammqtt.realtime.commands.RealTimeCommand
 
 interface ActionListener {
 
