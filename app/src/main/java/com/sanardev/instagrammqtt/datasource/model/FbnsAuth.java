@@ -2,6 +2,8 @@ package com.sanardev.instagrammqtt.datasource.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.UUID;
+
 public class FbnsAuth {
 
 
@@ -10,7 +12,7 @@ public class FbnsAuth {
     @SerializedName("cs")
     private String password = "";
     @SerializedName("di")
-    private String deviceID = "";
+    private String deviceID = UUID.randomUUID().toString();
     private String clientID= "";
     @SerializedName("ds")
     private String deviceSecret= "";

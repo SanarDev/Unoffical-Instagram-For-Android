@@ -43,6 +43,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="left"
+                        android:visibility="gone"
                         android:background="@null"
                         android:padding="10dp"
                         android:src="@drawable/ic_menu"
@@ -58,6 +59,16 @@
                         android:textColor="@color/text_very_light"
                         android:textSize="16sp"
                         tools:text="TheSanardev" />
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/btn_setting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:padding="10dp"
+                        android:tint="@color/text_very_light"
+                        android:layout_gravity="right"
+                        android:src="@drawable/ic_setting"/>
 
                 </androidx.appcompat.widget.Toolbar>
 
@@ -158,6 +169,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="start"
+            android:visibility="gone"
             android:background="@color/navigation_background"
             app:headerLayout="@layout/nav_header_main"
             app:itemIconTint="@color/text_very_light"

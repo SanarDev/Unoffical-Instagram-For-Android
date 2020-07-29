@@ -84,4 +84,17 @@
     <string name="page_not_found">Page not found</string>
     <string name="media_expired">Media Expired</string>
     <string name="view_video">View Video</string>
+    <string name="packageName">com.sanardev.instagram</string>
+    <string name="reply_label">Reply</string>
+    <string name="label">Test 1</string>
+    <string name="followers">Followers</string>
+    <string name="logout">Log Out</string>
+    <string name="setting">Setting</string>
+    <string name="notifications">Notifications</string>
+    <string name="options">Options</string>
+    <string name="seen_message">Seen Message</string>
+    <string name="posts">Posts</string>
+    <string name="following">Following</string>
+    <string name="logout_message">Are you sure?</string>
+    <string name="cancel">Cancel</string>
 </resources>

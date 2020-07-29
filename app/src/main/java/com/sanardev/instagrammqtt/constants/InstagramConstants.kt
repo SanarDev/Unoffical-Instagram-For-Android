@@ -233,4 +233,15 @@ class InstagramConstants {
         ACTIVITY_INDICATOR_ID("activity_indicator_id"), // for type event
         PARTICIPANTS("participants") // for update last seen
     }
+
+    enum class MediaType(){
+        VIDEO,
+        IMAGE
+    }
+
+    enum class SharedPref(name:String){
+        USER("user"),
+        NOTIFICATION_DATA("notification_data"),
+        FBNS_DATA("fbns_data"),
+    }
 }

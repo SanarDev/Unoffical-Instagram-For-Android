@@ -1,6 +1,7 @@
 package com.sanardev.instagrammqtt.repository
 
 import android.os.Handler
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -458,4 +459,23 @@ class InstagramRepository(
         }
     }
 
+
+    fun getMediaById(result:MediatorLiveData<Resource<InstagramPost>>, header: () -> Map<String, String>, mediaId:String){
+        result.addSource(NetworkCall<InstagramPost>().makeCall(mInstagramRemote.getMediaById(header.invoke(),mediaId)),
+            Observer {
+                result.postValue(it)
+            })
+    }
+
+    fun getUserInfo(result:MutableLiveData<Resource<InstagramUserInfo>>, header: () -> Map<String, String>, userId:Long){
+        NetworkCall<InstagramUserInfo>().makeCall(mInstagramRemote.getUserInfo(header.invoke(),userId)).observeForever {
+            result.postValue(it)
+        }
+    }
+
+    fun logout(result:MutableLiveData<Resource<ResponseBody>>, header: () -> Map<String, String>, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.logout(header.invoke(),encryptor.invoke(data))).observeForever {
+            result.postValue(it)
+        }
+    }
 }

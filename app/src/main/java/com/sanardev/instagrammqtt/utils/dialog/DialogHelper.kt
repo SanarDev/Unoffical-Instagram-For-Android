@@ -14,7 +14,7 @@ import kotlinx.android.synthetic.main.layout_dialog.view.*
 class DialogHelper {
 
     companion object{
-        fun createDialog(context:Context, layoutInflater:LayoutInflater, title:String, message:String, positiveText:String, positiveFun:() ->Unit, negativeText:String?=null, negativeListener: DialogListener.Negative?=null){
+        fun createDialog(context:Context, layoutInflater:LayoutInflater, title:String, message:String, positiveText:String, positiveListener:DialogListener.Positive?=null, negativeText:String?=null, negativeListener: DialogListener.Negative?=null){
             val dialog = Dialog(context)
             val viewDataBinding: ViewDataBinding = DataBindingUtil.inflate(
                 layoutInflater,
@@ -33,7 +33,7 @@ class DialogHelper {
             )
             viewDataBinding.root.btnPositive.setOnClickListener {
                 dialog.dismiss()
-                positiveFun.invoke()
+                positiveListener?.onPositiveClick()
             }
             viewDataBinding.root.btnNegative.setOnClickListener {
                 dialog.dismiss()

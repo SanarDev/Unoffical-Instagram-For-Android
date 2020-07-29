@@ -29,6 +29,7 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
     val isLoading = ObservableField<Boolean>(false)
     private var _token = MutableLiveData<String>()
     private var _result = MediatorLiveData<Resource<InstagramLoginResult>>()
+    val intentEvent = MutableLiveData<Pair<KClass<out AppCompatActivity>, Bundle?>>()
 
     val result: LiveData<Resource<InstagramLoginResult>> = Transformations.map(_result) {
         if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
@@ -48,7 +49,6 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
         return@map it
     }
 
-    val intentEvent = MutableLiveData<Pair<KClass<out AppCompatActivity>, Bundle?>>()
 
     init {
         if (mUseCase.isLogged()) {

@@ -22,6 +22,7 @@ import com.sanardev.instagrammqtt.fbns.packethelper.MQTTotConnectionClientInfo
 import com.sanardev.instagrammqtt.realtime.PayloadProcessor
 import com.sanardev.instagrammqtt.realtime.commands.*
 import com.sanardev.instagrammqtt.realtime.network.NetworkHandler
+import com.sanardev.instagrammqtt.realtime.packethelper.ForegroundStateConfig
 import com.sanardev.instagrammqtt.realtime.subcribers.GraphQLSubscriptions
 import com.sanardev.instagrammqtt.realtime.subcribers.SkywalkerSubscriptions
 import com.sanardev.instagrammqtt.usecase.UseCase
@@ -31,10 +32,7 @@ import com.sanardev.instagrammqtt.utils.ZlibUtis
 import dagger.android.AndroidInjection
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.Unpooled
-import io.netty.channel.Channel
-import io.netty.channel.ChannelInitializer
-import io.netty.channel.ChannelOption
-import io.netty.channel.ChannelPipeline
+import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
@@ -135,6 +133,12 @@ class RealTimeService : Service() {
                 val data = intent.extras!!.getParcelable<RealTime_StartService>("data")!!
                 connect(data.seqId,data.snapShotAt)
             }
+            RealTimeIntent.ACTION_DISCONNECT_SESSION ->{
+                if (mChannel != null){
+                    mChannel!!.close()
+                    stopSelf()
+                }
+            }
             RealTimeIntent.ACTION_SEND_TEXT_MESSAGE -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendMessage>("data")!!
                 directCommands!!.sendText(data.text,data.clientContext!!,data.threadId)
@@ -186,6 +190,27 @@ class RealTimeService : Service() {
             }
         }
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    fun sendForegroundState(
+        inForegroundApp: Boolean,
+        inForegroundDevice: Boolean,
+        keepAliveTimeout: Int
+    ) {
+        val topicName = InstagramConstants.RealTimeTopics.FOREGROUND_STATE.id.toString()
+        val packetID = Random().nextInt(65535)
+        val payload = PayloadProcessor.buildForegroundStateThrift(ForegroundStateConfig().apply {
+            this.inForegroundApp = inForegroundApp
+            this.inForegroundDevice = inForegroundDevice
+            this.keepAliveTimeOut = keepAliveTimeOut
+        })
+        val mqttPublishMessage = MqttPublishMessage(
+            MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, false, 0),
+            MqttPublishVariableHeader(topicName, packetID),
+            payload
+        )
+        Log.i(InstagramConstants.DEBUG_TAG, "RealTime Update foregroundState $inForegroundApp with id $packetID")
+        mChannel?.writeAndFlush(mqttPublishMessage)
     }
 
     private fun connect(seqID: Long, snapShotAt: Long) {

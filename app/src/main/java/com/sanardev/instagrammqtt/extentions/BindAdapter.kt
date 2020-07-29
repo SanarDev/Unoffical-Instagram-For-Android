@@ -17,7 +17,9 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.databinding.BindingAdapter
 import android.graphics.Color.parseColor
 import android.os.Build
+import android.widget.ImageView
 import androidx.annotation.RequiresApi
+import com.bumptech.glide.Glide
 
 class BindAdapter {
 
@@ -48,6 +50,12 @@ class BindAdapter {
         @BindingAdapter("imageRes")
         fun imageRes(v:AppCompatImageView,resId:Int){
             v.setImageResource(resId)
+        }
+
+        @JvmStatic
+        @BindingAdapter("loadImageUrl")
+        fun loadImageUrl(v:ImageView,url:String){
+            Glide.with(v.context).load(url).into(v)
         }
 
         @JvmStatic

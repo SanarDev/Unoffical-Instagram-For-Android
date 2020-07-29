@@ -6,7 +6,7 @@ public class MQTTotConnectionClientInfo {
     public long endpointCapabilities;
     public long appId;
     public long anotherUnknown;
-    public long clientMqttSessionId = System.currentTimeMillis();
+    public long clientMqttSessionId = 0;
 
     public boolean noAutomaticForeground;
     public boolean makeUserAvailableInForeground;

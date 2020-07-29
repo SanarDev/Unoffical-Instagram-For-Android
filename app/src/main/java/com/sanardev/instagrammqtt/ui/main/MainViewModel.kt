@@ -156,6 +156,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
     }
 
     init {
+        mUseCase.dismissAllNotification()
         getDirects()
         liveDataPresence.observeForever {
             if (it.status == Resource.Status.SUCCESS) {

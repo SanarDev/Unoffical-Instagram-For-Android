@@ -1,12 +1,13 @@
 package com.sanardev.instagrammqtt.ui.main
 
-import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.PersistableBundle
+import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
 import android.widget.PopupWindow
@@ -21,29 +22,35 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.sanardev.instagrammqtt.R
-import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.constants.InstagramConstants
+import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.core.BaseAdapter
+import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
 import com.sanardev.instagrammqtt.databinding.LayoutDirectBinding
 import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.event.*
-import com.sanardev.instagrammqtt.realtime.commands.RealTime_StartService
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramDirects
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
-import com.sanardev.instagrammqtt.extensions.color
+import com.sanardev.instagrammqtt.extentions.color
 import com.sanardev.instagrammqtt.extensions.gone
 import com.sanardev.instagrammqtt.extensions.setTextViewDrawableColor
 import com.sanardev.instagrammqtt.extensions.visible
+import com.sanardev.instagrammqtt.extentions.toast
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_StartService
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_StopService
 import com.sanardev.instagrammqtt.service.fbns.FbnsIntent
+import com.sanardev.instagrammqtt.service.fbns.FbnsService
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.ui.direct.DirectActivity
 import com.sanardev.instagrammqtt.ui.direct.DirectBundle
 import com.sanardev.instagrammqtt.ui.login.LoginActivity
+import com.sanardev.instagrammqtt.ui.setting.SettingActivity
 import com.sanardev.instagrammqtt.ui.startmessage.StartMessageActivity
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.TimeUtils
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
+import com.sanardev.instagrammqtt.utils.dialog.DialogListener
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import org.greenrobot.eventbus.EventBus
@@ -144,11 +151,14 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             }
         })
 
+        binding.btnSetting.setOnClickListener {
+            SettingActivity.open(this@MainActivity)
+        }
         initFbns()
     }
 
     private fun initFbns() {
-        startService(Intent(FbnsIntent.ACTION_CONNECT_SESSION).setPackage("com.sanardev.instagrammqtt"))
+        FbnsService.run(this,FbnsIntent.ACTION_CONNECT_SESSION)
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
@@ -191,8 +201,10 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                             title = getString(R.string.error),
                             message = getString(R.string.unknownError),
                             positiveText = getString(R.string.try_again),
-                            positiveFun = {
-                                viewModel.getDirects()
+                            positiveListener = object : DialogListener.Positive{
+                                override fun onPositiveClick() {
+                                    viewModel.getDirects()
+                                }
                             }
                         )
                         return
@@ -204,10 +216,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                             title = it.data!!.errorTitle!!,
                             message = it.data!!.errorMessage!!,
                             positiveText = getString(R.string.login),
-                            positiveFun = {
-                                viewModel.resetUserData()
-                                LoginActivity.open(this@MainActivity)
-                                finish()
+                            positiveListener = object : DialogListener.Positive{
+                                override fun onPositiveClick() {
+                                    viewModel.resetUserData()
+                                    LoginActivity.open(this@MainActivity)
+                                    finish()
+                                }
                             }
                         )
                     }
@@ -540,6 +554,10 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     binding.edtSearch.setText("")
                 }
             }
+            dataBinding.root.setOnLongClickListener{
+                showPopupOptions(item.threadId,dataBinding.root)
+                return@setOnLongClickListener true
+            }
             return item
         }
 
@@ -568,16 +586,38 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
             return items.size
         }
 
-        private fun showPopupOptions(threadId: String, bottomOfView: View) {
+        private fun showPopupOptions(threadId: String, view: View) {
             val popupWindow = PopupWindow(this@MainActivity)
             popupWindow.isOutsideTouchable = true
             popupWindow.isFocusable = true
             val layoutDirectOptionBinding: ViewDataBinding =
                 DataBindingUtil.inflate(layoutInflater, R.layout.layout_direct_option, null, false)
             popupWindow.contentView = layoutDirectOptionBinding.root
-            popupWindow.showAsDropDown(bottomOfView)
+            val location = locateView(view)
+            popupWindow.showAtLocation(
+                view,
+                Gravity.CENTER,
+                location!!.right,
+                location.bottom
+            )
         }
 
+        fun locateView(v: View?): Rect? {
+            val loc_int = IntArray(2)
+            if (v == null) return null
+            try {
+                v.getLocationOnScreen(loc_int)
+            } catch (npe: NullPointerException) {
+                //Happens when the view doesn't exist on screen anymore.
+                return null
+            }
+            val location = Rect()
+            location.left = loc_int[0]
+            location.top = loc_int[1]
+            location.right = location.left + v.width
+            location.bottom = location.top + v.height
+            return location
+        }
     }
 
     inner class DirectCollectionPagerAdapter(
@@ -618,6 +658,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         }
 
 
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        RealTimeService.run(this,RealTime_StopService())
     }
 
 }

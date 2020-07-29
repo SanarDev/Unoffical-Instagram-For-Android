@@ -45,6 +45,7 @@ import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.event.*
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.*
+import com.sanardev.instagrammqtt.extentions.color
 import com.sanardev.instagrammqtt.extentions.dpToPx
 import com.sanardev.instagrammqtt.extentions.shareText
 import com.sanardev.instagrammqtt.extentions.vibration
@@ -116,19 +117,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         viewModel.init(intent.extras!!.getParcelable<DirectBundle>("data")!!)
 
         // profile
-        binding.txtProfileName.text = viewModel.thread.threadTitle
+        binding.txtProfileName.text = viewModel.mThread.threadTitle
         checkUserStatus()
-        if (!viewModel.thread.isGroup) {
+        if (!viewModel.mThread.isGroup) {
             gone(binding.layoutProfileImageGroup)
             visible(binding.imgProfileImage)
-            Glide.with(applicationContext).load(viewModel.thread.users[0].profilePicUrl)
+            Glide.with(applicationContext).load(viewModel.mThread.users[0].profilePicUrl)
                 .into(binding.imgProfileImage)
         } else {
             visible(binding.layoutProfileImageGroup)
             gone(binding.imgProfileImage)
-            Glide.with(applicationContext).load(viewModel.thread.users[1].profilePicUrl)
+            Glide.with(applicationContext).load(viewModel.mThread.users[1].profilePicUrl)
                 .into(binding.profileImageG1)
-            Glide.with(applicationContext).load(viewModel.thread.users[0].profilePicUrl)
+            Glide.with(applicationContext).load(viewModel.mThread.users[0].profilePicUrl)
                 .into(binding.profileImageG2)
         }
 
@@ -157,7 +158,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             binding.btnVoice.isListenForRecord = false
-        }else{
+        } else {
             binding.btnVoice.isListenForRecord = true
         }
         binding.btnVoice.setOnClickListener {
@@ -187,15 +188,15 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             }
 
             override fun onStart() {
-                    vibration(100)
-                    visible(binding.recordView)
-                    gone(
-                        binding.btnEmoji,
-                        binding.edtTextChat,
-                        binding.btnAddPhoto,
-                        binding.btnLike
-                    )
-                    viewModel.startAudioRecording()
+                vibration(100)
+                visible(binding.recordView)
+                gone(
+                    binding.btnEmoji,
+                    binding.edtTextChat,
+                    binding.btnAddPhoto,
+                    binding.btnLike
+                )
+                viewModel.startAudioRecording()
 
             }
         })
@@ -208,15 +209,16 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
         binding.btnLike.setOnClickListener {
             val clientContext = InstagramHashUtils.getClientContext()
-            RealTimeService.run(this,
+            RealTimeService.run(
+                this,
                 RealTime_SendLike(
-                    viewModel.thread.threadId,
+                    viewModel.mThread.threadId,
                     clientContext
                 )
             )
             val message = MessageGenerator.like(adapter.user.pk!!, clientContext)
             EventBus.getDefault()
-                .postSticky(arrayListOf(MessageEvent(viewModel.thread.threadId, message)))
+                .postSticky(arrayListOf(MessageEvent(viewModel.mThread.threadId, message)))
         }
 
         binding.btnAddPhoto.setOnClickListener {
@@ -253,7 +255,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     RealTimeService.run(
                         this@DirectActivity,
                         RealTime_SendTypingState(
-                            viewModel.thread.threadId,
+                            viewModel.mThread.threadId,
                             true,
                             InstagramHashUtils.getClientContext()
                         )
@@ -262,7 +264,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     RealTimeService.run(
                         this@DirectActivity,
                         RealTime_SendTypingState(
-                            viewModel.thread.threadId,
+                            viewModel.mThread.threadId,
                             false,
                             InstagramHashUtils.getClientContext()
                         )
@@ -320,7 +322,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         if (adapter.items[totalItemCount - 2] is Message) {
                             viewModel.loadMoreItem(
                                 (adapter.items[totalItemCount - 2] as Message).itemId,
-                                viewModel.thread.threadId,
+                                viewModel.mThread.threadId,
                                 viewModel.seqId
                             )
                             isLoading = true
@@ -345,7 +347,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 binding.btnAddPhoto.callOnClick()
             }
-        }else if(requestCode == PERMISSION_RECORD_AUDIO_CODE){
+        } else if (requestCode == PERMISSION_RECORD_AUDIO_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 binding.btnVoice.isListenForRecord = true
             }
@@ -353,16 +355,16 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     }
 
     private fun checkUserStatus() {
-        if (!viewModel.thread.isGroup && viewModel.thread.active) {
+        if (!viewModel.mThread.isGroup && viewModel.mThread.active) {
             binding.txtProfileDec.text = getString(R.string.online)
             binding.txtProfileDec.setTextColor(color(R.color.online_color))
         } else {
-            if (viewModel.thread.lastActivityAt == 0.toLong()) {
-                binding.txtProfileDec.text = viewModel.thread.threadTitle
+            if (viewModel.mThread.lastActivityAt == 0.toLong()) {
+                binding.txtProfileDec.text = viewModel.mThread.threadTitle
             } else {
                 binding.txtProfileDec.text = String.format(
                     getString(R.string.active_at),
-                    TimeUtils.convertTimestampToDate(application, viewModel.thread.lastActivityAt)
+                    TimeUtils.convertTimestampToDate(application, viewModel.mThread.lastActivityAt)
                 )
                 binding.txtProfileDec.setTextColor(color(R.color.text_light))
             }
@@ -373,7 +375,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         RealTimeService.run(
             this@DirectActivity,
             RealTime_SendTypingState(
-                viewModel.thread.threadId,
+                viewModel.mThread.threadId,
                 false,
                 InstagramHashUtils.getClientContext()
             )
@@ -398,7 +400,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onTypingEvent(event: TypingEvent) { /* Do something */
-        if (viewModel.thread.threadId == event.threadId) {
+        if (viewModel.mThread.threadId == event.threadId) {
             endTypeAtMs = System.currentTimeMillis() + 3 * 1000
             binding.txtProfileDec.text = getString(R.string.typing)
             binding.txtProfileDec.setTextColor(color(R.color.text_very_light))
@@ -413,7 +415,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onMessageEvents(events: MutableList<MessageEvent>) {
         for (event in events) {
-            if (event.threadId == viewModel.thread.threadId) {
+            if (event.threadId == viewModel.mThread.threadId) {
                 checkUserStatus()
                 viewModel.onMessageReceive(event)
             }
@@ -427,8 +429,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onUpdateSeenEvent(event: UpdateSeenEvent) {
-        if (event.threadId == viewModel.thread.threadId) {
-            for (item in viewModel.thread.lastSeenAt.entries) {
+        if (event.threadId == viewModel.mThread.threadId) {
+            for (item in viewModel.mThread.lastSeenAt.entries) {
                 item.value.timeStamp = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
             }
             adapter.notifyDataSetChanged()
@@ -437,9 +439,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onPresenceEvent(event: PresenceEvent) { /* Do something */
-        if (viewModel.thread != null && event.userId.toLong() == viewModel.thread!!.users[0].pk) {
-            viewModel.thread.active = event.isActive
-            viewModel.thread.lastActivityAt = event.lastActivityAtMs.toLong()
+        if (viewModel.mThread != null && event.userId.toLong() == viewModel.mThread!!.users[0].pk) {
+            viewModel.mThread.active = event.isActive
+            viewModel.mThread.lastActivityAt = event.lastActivityAtMs.toLong()
             checkUserStatus()
         }
     }
@@ -465,7 +467,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             }
         }
     }
-
 
     override fun onStart() {
         super.onStart()
@@ -688,7 +689,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         if (likes[i].senderId == adapter.user.pk) {
                             profileUrl = adapter.user.profilePicUrl
                         } else {
-                            for (user in viewModel.thread.users) {
+                            for (user in viewModel.mThread.users) {
                                 if (likes[i].senderId == user.pk) {
                                     profileUrl = user.profilePicUrl
                                 }
@@ -716,8 +717,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             }
 
             var lastSeenAt: Long = 0
-            if (viewModel.thread.lastSeenAt != null) {
-                for (ls in viewModel.thread.lastSeenAt.entries) {
+            if (viewModel.mThread.lastSeenAt != null) {
+                for (ls in viewModel.mThread.lastSeenAt.entries) {
                     if (ls.key.toLong() != item.userId) {
                         // for example last seen in group is laster seen
                         viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
@@ -728,12 +729,12 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     }
                 }
             }
-            if (item.timestamp > lastSeenAt) {
+            if (item.timestamp > lastSeenAt && viewModel.isSeenMessageEnable) {
 //                viewModel.markAsSeen(threadId, item.itemId) moshkel ine ke callback barash ok nakardm barate update shodan main activty
                 RealTimeService.run(
                     this@DirectActivity,
                     RealTime_MarkAsSeen(
-                        viewModel.thread.threadId,
+                        viewModel.mThread.threadId,
                         item.itemId
                     )
                 )
@@ -795,7 +796,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
                         viewModel.sendReaction(
                             item.itemId,
-                            viewModel.thread.threadId,
+                            viewModel.mThread.threadId,
                             item.clientContext
                         )
                     }
@@ -812,7 +813,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                 }
             }
             if (txtSendername != null) {
-                if (viewModel.thread.isGroup && item.userId != viewModel.thread.viewerId) {
+                if (viewModel.mThread.isGroup && item.userId != viewModel.mThread.viewerId) {
                     visible(txtSendername)
                     txtSendername.text = viewModel.getUsername(item.userId)
                 } else {
@@ -865,7 +866,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         val dataBinding = holder.binding as LayoutReelShareReplyBinding
                         layoutImgStory = dataBinding.layoutImgStory
                         dataBinding.layoutStory.layoutDirection =
-                            if (item.userId == viewModel.thread.viewerId) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
+                            if (item.userId == viewModel.mThread.viewerId) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
                         if (item.reelShare.media?.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
@@ -915,12 +916,12 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         val dataBinding = holder.binding as LayoutReelShareBinding
                         layoutImgStory = dataBinding.layoutImgStory
                         gone(dataBinding.imgProfile, dataBinding.txtUsername)
-                        if (item.userId == viewModel.thread.viewerId) {
+                        if (item.userId == viewModel.mThread.viewerId) {
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
                             dataBinding.layoutStory.layoutDirection = View.LAYOUT_DIRECTION_RTL
                             dataBinding.txtReelStatus.text = String.format(
                                 getString(R.string.mentioned_person_in_your_story),
-                                viewModel.thread.users[0].username
+                                viewModel.mThread.users[0].username
                             )
                         } else {
                             dataBinding.txtReelStatus.text =
@@ -1227,14 +1228,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                             width = sizeArray[0]
                             height = sizeArray[1]
                         }
-                        val list = ArrayList<String>().toMutableList()
-                        for (item in media.carouselMedia) {
-                            list.add(item.imageVersions2.candidates[0].url)
-                        }
                         dataBinding.layoutImageView.setOnClickListener {
-                            FullScreenActivity.openUrls(
+                            FullScreenActivity.openPost(
                                 this@DirectActivity,
-                                list as ArrayList<String>
+                                media.id
                             )
                         }
                     }
@@ -1492,6 +1489,5 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     override fun realTimeCommand(realTimeCommand: RealTimeCommand) {
         RealTimeService.run(this@DirectActivity, realTimeCommand)
     }
-
 
 }

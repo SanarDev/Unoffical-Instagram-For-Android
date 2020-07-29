@@ -3,6 +3,7 @@ package com.sanardev.instagrammqtt.fbns.packethelper;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sanardev.instagrammqtt.constants.InstagramConstants;
 import com.sanardev.instagrammqtt.datasource.model.FbnsAuth;
 
@@ -46,7 +47,7 @@ public class FbnsPacketDecoder extends ReplayingDecoder<FbnsPacketDecoder.ParseS
                 if(data.length > 6){
                     String conAckPacket = new String(data).substring(6);
                     Log.i(InstagramConstants.DEBUG_TAG,"Receive ConnAck packet "+conAckPacket);
-                    FbnsAuth fbnsAuth = new Gson().fromJson(conAckPacket, FbnsAuth.class);
+                    FbnsAuth fbnsAuth = new GsonBuilder().setLenient().create().fromJson(conAckPacket, FbnsAuth.class);
                     fbnsAuth.setToken(conAckPacket);
                     FbnsConnAckPacket connAckPacket = new FbnsConnAckPacket(null,null, fbnsAuth);
                     out.add(connAckPacket);

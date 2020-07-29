@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.R
@@ -61,10 +63,7 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                                 layoutInflater,
                                 getString(R.string.error),
                                 getString(R.string.incorrect_password),
-                                getString(R.string.try_again),
-                                positiveFun = {
-
-                                }
+                                getString(R.string.try_again)
                             )
                             return@Observer
                         }
@@ -74,10 +73,7 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                                 layoutInflater,
                                 getString(R.string.error),
                                 it.data!!.message!!,
-                                getString(R.string.Ok),
-                                positiveFun = {
-
-                                }
+                                getString(R.string.Ok)
                             )
                             return@Observer
                         }
@@ -110,6 +106,11 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                 }
             }
         })
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        ActivityCompat.finishAffinity(this)
     }
 
 }

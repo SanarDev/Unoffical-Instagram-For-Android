@@ -1,12 +1,11 @@
 package com.sanardev.instagrammqtt.core
 
-import android.app.Activity
-import android.app.Application
-import android.app.Service
+import android.app.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -15,12 +14,16 @@ import android.os.Build
 import android.os.Handler
 import android.widget.ProgressBar
 import android.widget.SeekBar
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.FirebaseApp
+import com.google.firebase.iid.FirebaseInstanceId
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.di.component.DaggerAppComponent
 import com.sanardev.instagrammqtt.receiver.NetworkChangeReceiver
@@ -36,10 +39,11 @@ import javax.inject.Inject
 class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
 
     companion object{
-        private lateinit var player:SimpleExoPlayer
+        lateinit var player:SimpleExoPlayer
         var currentPlayerId:String = ""
         var seekbarPlay:ProgressBar?=null
         var btnPlay:AppCompatImageButton?=null
+        var isAppInOnStop:Boolean = false
         private var isFinishMedia = false
 
         fun startPlay(mediaSource: MediaSource){
@@ -72,6 +76,10 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
 
     val br:BroadcastReceiver = NetworkChangeReceiver()
 
+    private fun initializeNotification() {
+        FirebaseApp.initializeApp(this)
+
+    }
     override fun onCreate() {
         super.onCreate()
         DaggerAppComponent.builder()
@@ -87,7 +95,10 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
         registerReceiver(br, filter)
 
         initializePlayer()
-
+        initializeNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel(getString(R.string.packageName),getString(R.string.packageName))
+        }
 /*
         if (LeakCanary.isInAnalyzerProcess(this)) {
             // This process is dedicated to LeakCanary for heap analysis.
@@ -96,6 +107,17 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
         }
         LeakCanary.install(this);
         */
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel(channelId: String, channelName: String): String{
+        val chan = NotificationChannel(channelId,
+            channelName, NotificationManager.IMPORTANCE_NONE)
+        chan.lightColor = Color.BLUE
+        chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        val service = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        service.createNotificationChannel(chan)
+        return channelId
     }
 
     private fun initializePlayer() {

@@ -68,8 +68,6 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                 Log.i(InstagramConstants.DEBUG_TAG, "RealTime ConnAck");
                 ctx!!.pipeline().remove("encoder")
                 realTimeService.onConnAck()
-                sendForegroundState(ctx!!,true,true,90)
-
                 Thread{
                     while (true){
                         Thread.sleep(20000)
@@ -104,9 +102,9 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                 when (topicName) {
                     InstagramConstants.RealTimeTopics.REGION_HINT.id->{
 //                        ctx!!.writeAndFlush(getMqttPubackMessage(publishMessage))
-//                        sendForegroundState(ctx!!,
-//                            inForegroundApp = true,
-//                            inForegroundDevice = true,
+//                        realTimeService.sendForegroundState(
+//                            inForegroundApp = false,
+//                            inForegroundDevice = false,
 //                            keepAliveTimeout = 900
 //                        )
                     }
@@ -134,29 +132,6 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                 }
             }
         }
-    }
-
-
-    private fun sendForegroundState(
-        ctx: ChannelHandlerContext,
-        inForegroundApp: Boolean,
-        inForegroundDevice: Boolean,
-        keepAliveTimeout: Int
-    ) {
-        val topicName = InstagramConstants.RealTimeTopics.FOREGROUND_STATE.id.toString()
-        val packetID = Random().nextInt(65535)
-        val payload = PayloadProcessor.buildForegroundStateThrift(ForegroundStateConfig().apply {
-            this.inForegroundApp = inForegroundApp
-            this.inForegroundDevice = inForegroundDevice
-            this.keepAliveTimeOut = keepAliveTimeOut
-        })
-        val mqttPublishMessage = MqttPublishMessage(
-            MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, false, 0),
-            MqttPublishVariableHeader(topicName, packetID),
-            payload
-        )
-        Log.i(InstagramConstants.DEBUG_TAG, "RealTime Update foregroundState $inForegroundApp with id $packetID")
-        ctx.writeAndFlush(mqttPublishMessage)
     }
 
     fun getMqttPubackMessage(message: MqttPublishMessage): MqttPubAckMessage? {

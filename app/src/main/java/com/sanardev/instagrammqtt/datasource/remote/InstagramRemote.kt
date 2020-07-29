@@ -193,5 +193,12 @@ interface InstagramRemote {
         @Body requestBody: RequestBody
     ): Call<MessageResponse>
 
+    @GET(InstagramConstants.API_VERSION  + "media/{media_id}/info/")
+    fun getMediaById(@HeaderMap header: Map<String, String>,@Path("media_id") mediaId:String):Call<InstagramPost>
 
+    @GET(InstagramConstants.API_VERSION + "users/{user_id}/info/")
+    fun getUserInfo(@HeaderMap header: Map<String, String>, @Path("user_id")userId:Long):Call<InstagramUserInfo>
+
+    @POST(InstagramConstants.API_VERSION  + "accounts/logout/")
+    fun logout(@HeaderMap header: Map<String, String>,@Body requestBody: RequestBody):Call<ResponseBody>
 }

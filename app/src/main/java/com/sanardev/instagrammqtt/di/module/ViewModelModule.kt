@@ -10,6 +10,7 @@ import com.sanardev.instagrammqtt.ui.fullscreen.FullScreenViewModel
 import com.sanardev.instagrammqtt.ui.login.LoginViewModel
 import com.sanardev.instagrammqtt.ui.main.MainViewModel
 import com.sanardev.instagrammqtt.ui.playvideo.PlayVideoViewModel
+import com.sanardev.instagrammqtt.ui.setting.SettingViewModel
 import com.sanardev.instagrammqtt.ui.startmessage.StartMessageViewModel
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorActivity
 import com.sanardev.instagrammqtt.ui.twofactor.TwoFactorViewModel
@@ -61,5 +62,10 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(FragmentCollectionViewModel::class)
     abstract fun fragmentCollectionViewModel(fragmentCollectionViewModel: FragmentCollectionViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(SettingViewModel::class)
+    abstract fun settingViewModel(settingViewModel: SettingViewModel):ViewModel
 
 }

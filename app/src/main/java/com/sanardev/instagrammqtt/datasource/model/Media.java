@@ -39,6 +39,12 @@ public class Media {
     @SerializedName("video_versions")
     @Expose
     private List<VideoVersion> videoVersions = null;
+    @SerializedName("carousel_media_count")
+    @Expose
+    private int carouselMediaCount;
+    @SerializedName("carousel_media")
+    @Expose
+    private List<CarouselMedia> carouselMedias;
     @SerializedName("original_width")
     @Expose
     private int originalWidth;
@@ -118,6 +124,22 @@ public class Media {
     private boolean isLocal;
     @JsonIgnore
     private String localFilePath;
+
+    public int getCarouselMediaCount() {
+        return carouselMediaCount;
+    }
+
+    public void setCarouselMediaCount(int carouselMediaCount) {
+        this.carouselMediaCount = carouselMediaCount;
+    }
+
+    public List<CarouselMedia> getCarouselMedias() {
+        return carouselMedias;
+    }
+
+    public void setCarouselMedias(List<CarouselMedia> carouselMedias) {
+        this.carouselMedias = carouselMedias;
+    }
 
     public boolean isLocal() {
         return isLocal;

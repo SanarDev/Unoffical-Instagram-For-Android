@@ -2,13 +2,13 @@ package com.sanardev.instagrammqtt.utils
 
 import android.content.Context
 import android.database.Cursor
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.graphics.*
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import java.io.FileOutputStream
+
 
 class MediaUtils {
     companion object {
@@ -93,6 +93,29 @@ class MediaUtils {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+
+        fun getCircleBitmap(bitmap: Bitmap): Bitmap? {
+            if(bitmap.isRecycled){
+                return bitmap
+            }
+            val output = Bitmap.createBitmap(
+                bitmap.width,
+                bitmap.height, Bitmap.Config.ARGB_8888
+            )
+            val canvas = Canvas(output)
+            val color: Int = Color.RED
+            val paint = Paint()
+            val rect = Rect(0, 0, bitmap.width, bitmap.height)
+            val rectF = RectF(rect)
+            paint.setAntiAlias(true)
+            canvas.drawARGB(0, 0, 0, 0)
+            paint.setColor(color)
+            canvas.drawOval(rectF, paint)
+            paint.setXfermode(PorterDuffXfermode(PorterDuff.Mode.SRC_IN))
+            canvas.drawBitmap(bitmap, rect, rect, paint)
+            bitmap.recycle();
+            return output
         }
     }
 

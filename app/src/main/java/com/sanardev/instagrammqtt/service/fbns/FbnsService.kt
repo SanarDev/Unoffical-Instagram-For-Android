@@ -1,14 +1,22 @@
 package com.sanardev.instagrammqtt.service.fbns
 
+import android.app.Notification
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import android.os.Parcelable
+import android.util.Log
+import com.google.gson.Gson
+import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.extentions.toast
 import com.sanardev.instagrammqtt.fbns.network.NetworkHandler
 import com.sanardev.instagrammqtt.fbns.network.PayloadProcessor
 import com.sanardev.instagrammqtt.fbns.packethelper.*
+import com.sanardev.instagrammqtt.realtime.commands.RealTimeCommand
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.DisplayUtils
 import dagger.android.AndroidInjection
@@ -50,16 +58,24 @@ class FbnsService : Service() {
         AndroidInjection.inject(this);
         super.onCreate()
 
-        sslContext = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).sslProvider(SslProvider.JDK).build()
+        sslContext =
+            SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .sslProvider(SslProvider.JDK).build()
+
+        startNotificationForeground(
+            "checking for new notification",
+            "checking for new notification"
+        )
     }
 
-    inner class ConnectivityThread : Thread(){
+    inner class ConnectivityThread : Thread() {
         override fun run() {
             try {
                 val fbns = mUseCase.getFbnsAuthData()
                 val mqttotConnectionClientInfo =
                     MQTTotConnectionClientInfo()
-                mqttotConnectionClientInfo.userId = 0
+//                mqttotConnectionClientInfo.userId = 0
+                mqttotConnectionClientInfo.userId = fbns.userId
 //                mqttotConnectionClientInfo.userAgent = "[FBAN/MQTT;FBAV/130.0.0.31.121;FBBV/567067343352427;FBDM/{density=4.0,width=1080,height=2038};FBLC/en_US;FBCR/;FBMF/LGE;FBBD/lge;FBPN/com.instagram.android;FBDV/RS988;FBSV/6.0.1;FBLR/0;FBBK/1;FBCA/armeabi-v7a:armeabi;]"
                 mqttotConnectionClientInfo.userAgent =
                     "[FBAN/MQTT;FBAV/${InstagramConstants.APP_VERSION};FBBV/${InstagramConstants.APP_ID};FBDM/{density=4.0,width=${DisplayUtils.getScreenWidth()},height=${DisplayUtils.getScreenHeight()}};FBLC/en_US;FBCR/${""};FBMF/LGE;FBBD/lge;FBPN/com.instagram.android;FBDV/RS988;FBSV/6.0.1;FBLR/0;FBBK/1;FBCA/armeabi-v7a:armeabi;]"
@@ -71,20 +87,26 @@ class FbnsService : Service() {
                 mqttotConnectionClientInfo.isInitiallyForeground = false
                 mqttotConnectionClientInfo.networkType = 1
                 mqttotConnectionClientInfo.networkSubtype = 0
-                mqttotConnectionClientInfo.clientMqttSessionId =
-                    System.currentTimeMillis()
-                mqttotConnectionClientInfo.subscribeTopics = intArrayOf(76, 80,231)
+//                mqttotConnectionClientInfo.clientMqttSessionId =
+//                    System.currentTimeMillis()
+                mqttotConnectionClientInfo.subscribeTopics = intArrayOf(76, 80, 231)
                 mqttotConnectionClientInfo.clientType = "device_auth"
-//                mqttotConnectionClientInfo.deviceId = fbns.deviceId
-//                mqttotConnectionClientInfo.deviceSecret = fbns.deviceSecret
+                mqttotConnectionClientInfo.deviceId = fbns.deviceId
+                mqttotConnectionClientInfo.deviceSecret = fbns.deviceSecret
                 mqttotConnectionClientInfo.appId = InstagramConstants.APP_ID.toLong()
                 mqttotConnectionClientInfo.anotherUnknown = -1
                 mqttotConnectionClientInfo.clientStack = 3
                 val mqtToTConnectionData =
                     MQTToTConnectionData()
                 mqtToTConnectionData.clientInfo = mqttotConnectionClientInfo
-                mqtToTConnectionData.clientIdentifier = (UUID.randomUUID().toString().substring(0,20))
-                val fbnsConnectPacket = FbnsConnectPacket(null,null,PayloadProcessor.buildPayload(mqtToTConnectionData))
+                mqtToTConnectionData.password = fbns.password
+//                mqtToTConnectionData.clientIdentifier = UUID.randomUUID().toString().substring(0,20)
+                mqtToTConnectionData.clientIdentifier = fbns.deviceId.substring(0, 20)
+                val fbnsConnectPacket = FbnsConnectPacket(
+                    null,
+                    null,
+                    PayloadProcessor.buildPayload(mqtToTConnectionData)
+                )
                 val bossGroup = NioEventLoopGroup()
                 val bootstrap = Bootstrap()
 
@@ -98,12 +120,12 @@ class FbnsService : Service() {
                             val pipeline: ChannelPipeline = ch!!.pipeline()
 //                            pipeline.addLast("tls",SslHandler )
                             pipeline.addLast("ssl", SslHandler(sslContext.newEngine(ch.alloc())))
-                            pipeline.addLast("encoder2",MqttEncoder.INSTANCE)
-                            pipeline.addLast("encoder",FbnsPacketEncoder())
+                            pipeline.addLast("encoder2", MqttEncoder.INSTANCE)
+                            pipeline.addLast("encoder", FbnsPacketEncoder())
 //                            pipeline.addLast("encoder",MqttEncoder.INSTANCE)
-                            pipeline.addLast("decoder",FbnsPacketDecoder())
-                            pipeline.addLast("decoder2",MqttDecoder())
-                            pipeline.addLast("handler",NetworkHandler(this@FbnsService))
+                            pipeline.addLast("decoder", FbnsPacketDecoder())
+                            pipeline.addLast("decoder2", MqttDecoder())
+                            pipeline.addLast("handler", NetworkHandler(this@FbnsService))
                         }
                     })
                 // Bind and start to accept incoming connections.
@@ -114,40 +136,74 @@ class FbnsService : Service() {
                 mChannel = future.channel()
 
                 mChannel!!.writeAndFlush(fbnsConnectPacket)
+            } catch (e: Exception) {
+                Log.i(InstagramConstants.DEBUG_TAG, "Error in FbnsService : ${e.message}")
             } finally {
             }
         }
     }
 
+    fun startNotificationForeground(title: String, message: String) {
+        try {
+            val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification.Builder(applicationContext, getString(R.string.packageName))
+                    .setContentText(message)
+                    .setOngoing(true)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setChannelId(getString(R.string.packageName))
+                    .build()
+            } else {
+                Notification.Builder(applicationContext)
+                    .setOngoing(true)
+                    .setContentText(message)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .build()
+            }
+            startForeground(10, notification)
+        } catch (e: Exception) {
+        }
+    }
+
     protected val mHandler = Handler()
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-//        if(mChannel == null || !mChannel!!.isActive){
-//            ConnectivityThread().start()
-//        }
-        Thread{
-            while (true){
-                Thread.sleep(10000)
-                mHandler.post {
-                    toast("a")
+        if (intent != null) {
+            when (intent.action) {
+                FbnsIntent.ACTION_CONNECT_SESSION -> {
+                    if ((mChannel != null && mChannel!!.isActive) || !mUseCase.isUserLogged()) {
+                        return START_STICKY
+                    }
+                    mChannel?.close()
+                    ConnectivityThread().start()
                 }
             }
-        }.start()
+        }
         return START_STICKY
     }
-    /*
-       MqttConnectMessage(
-                    MqttFixedHeader(MqttMessageType.CONNECT,false,MqttQoS.AT_MOST_ONCE,true,10),
-                    MqttConnectVariableHeader(fbnsConnectPacket.protocolName,fbnsConnectPacket.protocolLevel,false,false,false,0,false,fbnsConnectPacket.cleanSession,fbnsConnectPacket.keepAliveInSeconds),
-                    MqttConnectPayload()
-                )
-     */
 
     override fun onDestroy() {
         super.onDestroy()
+        mChannel?.close()
+        stopForeground(true)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
+    }
+
+    fun onDisconnect() {
+        if (mUseCase.isUserLogged()) {
+            run(applicationContext, FbnsIntent.ACTION_CONNECT_SESSION)
+        }
+    }
+
+    fun onRegisterResponse(json: String) {
+        val map = Gson().fromJson(json, HashMap::class.java)
+        val token = map["token"].toString()
+        val savedToken = mUseCase.getLastFbnsRegisterToken()
+        if (savedToken == null) {
+            mUseCase.saveFbnsRegisterToken(token)
+            mUseCase.pushRegister(token)
+        }
     }
 
     companion object {
@@ -163,5 +219,25 @@ class FbnsService : Service() {
 
         /** 이 값에 도달하면 서비스를 재시작 해본다. */
         const val INTERVAL_RECONNECT_MAXIMUM = 30 * 60 * 1000.toLong()
+
+        fun run(context: Context, action: String): Boolean {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(Intent(action).setPackage("com.sanardev.instagrammqtt"))
+                } else {
+                    context.startService(Intent(action).setPackage("com.sanardev.instagrammqtt"))
+                }
+            } catch (e: java.lang.Exception) {
+                return false
+            } finally {
+                return true
+            }
+        }
+
+        fun stop(context: Context) {
+            context.stopService(Intent(context, FbnsService::class.java))
+        }
     }
+
+
 }

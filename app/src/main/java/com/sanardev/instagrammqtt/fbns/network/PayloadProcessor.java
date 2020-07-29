@@ -13,6 +13,7 @@ import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TMemoryBuffer;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -67,6 +68,12 @@ public class PayloadProcessor {
         writeInt32(MQTTotConstants.MQTTotConnectionClientInfo.NETWORK_TYPE, mqtToTConnectionData.clientInfo.networkType);
         writeInt32(MQTTotConstants.MQTTotConnectionClientInfo.NETWORK_SUBTYPE, mqtToTConnectionData.clientInfo.networkSubtype);
 
+        if(mqtToTConnectionData.clientInfo.clientMqttSessionId == 0){
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DAY_OF_YEAR, -1);
+            long lastDayAgo = cal.getTimeInMillis();
+            mqtToTConnectionData.clientInfo.clientMqttSessionId =  lastDayAgo;
+        }
         writeInt64(MQTTotConstants.MQTTotConnectionClientInfo.CLIENT_MQTT_SESSION_ID, mqtToTConnectionData.clientInfo.clientMqttSessionId);
         writeListInt32(MQTTotConstants.MQTTotConnectionClientInfo.SUBSCRIBE_TOPICS, mqtToTConnectionData.clientInfo.subscribeTopics);
         writeString(MQTTotConstants.MQTTotConnectionClientInfo.CLIENT_TYPE, mqtToTConnectionData.clientInfo.clientType);

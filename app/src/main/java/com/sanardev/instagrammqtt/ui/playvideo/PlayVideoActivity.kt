@@ -8,6 +8,9 @@ import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
@@ -17,6 +20,7 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.core.BaseActivity
+import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.databinding.ActivityPlayVideoBinding
 import java.io.File
 
@@ -24,6 +28,7 @@ import java.io.File
 class PlayVideoActivity : BaseActivity<ActivityPlayVideoBinding, PlayVideoViewModel>() {
     private lateinit var player: SimpleExoPlayer
 
+    var isHideUiSystem:Boolean = true
     companion object {
         fun playUrl(context: Context, url: String) {
             context.startActivity(Intent(context, PlayVideoActivity::class.java).apply {
@@ -94,16 +99,15 @@ class PlayVideoActivity : BaseActivity<ActivityPlayVideoBinding, PlayVideoViewMo
             dataSource = DefaultDataSourceFactory(this, Util.getUserAgent(this, "Instagram"))
             uri = Uri.fromFile(File(intent.extras!!.getString("file_path")!!))
         }
-        player = SimpleExoPlayer.Builder(this).build()
         val mediaSource: MediaSource =
             ProgressiveMediaSource.Factory(dataSource)
                 .createMediaSource(uri)
-        player.prepare(mediaSource)
-        player.volume = 100f
-        player.playWhenReady = true
-        binding.videoView.player = player
+        BaseApplication.startPlay(mediaSource)
+        binding.videoView.player = BaseApplication.player
 
-
+        binding.btnBack.setOnClickListener {
+            onBackPressed()
+        }
     }
 
     override fun onPause() {
@@ -111,6 +115,32 @@ class PlayVideoActivity : BaseActivity<ActivityPlayVideoBinding, PlayVideoViewMo
     }
     override fun onStop() {
         super.onStop()
-        player.release()
+        BaseApplication.stopPlay()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+    }
+    private fun hideSystemUI() {
+        // Enables regular immersive mode.
+        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
+        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
+                // content doesn't resize when the system bars hide and show.
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
+    }
+
+    // Shows the system bars by removing all the flags
+// except for the ones that make the content appear under the system bars.
+    private fun showSystemUI() {
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
     }
 }

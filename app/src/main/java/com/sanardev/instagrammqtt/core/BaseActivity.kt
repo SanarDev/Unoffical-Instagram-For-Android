@@ -82,6 +82,16 @@ abstract class BaseActivity<B:ViewDataBinding,VM: BaseViewModel> : AppCompatActi
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        BaseApplication.isAppInOnStop = true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        BaseApplication.isAppInOnStop = false
+    }
+
     abstract fun layoutRes(): Int
     abstract fun getViewModelClass(): Class<VM>
     protected open fun onShowKeyboard(keyboardHeight: Int) {}

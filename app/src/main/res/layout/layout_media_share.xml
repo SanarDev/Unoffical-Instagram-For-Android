@@ -201,14 +201,6 @@
                     android:visibility="gone"
                     android:orientation="vertical">
 
-<!--                    <androidx.appcompat.widget.AppCompatImageButton-->
-<!--                        style="@style/MessageOptionButton"-->
-<!--                        android:id="@+id/btn_replay"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_marginTop="5dp"-->
-<!--                        android:src="@drawable/ic_replay"/>-->
-
                     <androidx.appcompat.widget.AppCompatImageButton
                         style="@style/MessageOptionButton"
                         android:layout_width="wrap_content"

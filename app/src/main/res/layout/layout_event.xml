@@ -5,6 +5,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingStart="40dp"
+        android:paddingEnd="40dp"
         tools:background="@color/theme_background"
         android:gravity="center">
 
@@ -13,8 +15,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/text_light"
+            android:gravity="center"
             android:fontFamily="sans-serif"
             android:padding="10dp"
-            tools:text="Video call ended"/>
+            tools:text="Video call endedd ndsjak dnasjkd nasjdk asnd sjaknd asjkd nasjknd sjak ndasjkd nasj"/>
     </LinearLayout>
 </layout>

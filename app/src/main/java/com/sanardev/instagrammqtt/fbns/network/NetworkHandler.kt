@@ -6,7 +6,6 @@ import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.datasource.model.FbnsAuth
 import com.sanardev.instagrammqtt.datasource.model.NotificationContentJson
 import com.sanardev.instagrammqtt.datasource.model.PushNotification
-import com.sanardev.instagrammqtt.extentions.toast
 import com.sanardev.instagrammqtt.service.fbns.FbnsService
 import com.sanardev.instagrammqtt.utils.ZlibUtis
 import io.netty.buffer.ByteBuf
@@ -39,6 +38,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
 
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext) {
+        fbnsService.onDisconnect()
         Log.i(InstagramConstants.DEBUG_TAG,"Channel closed");
     }
 
@@ -103,6 +103,10 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
             MqttMessageType.PUBLISH -> {
                 val publishMessage = packet as MqttPublishMessage
 
+                if (publishMessage.fixedHeader().qosLevel() == MqttQoS.AT_LEAST_ONCE) {
+                    ctx!!.writeAndFlush(getMqttPubackMessage(publishMessage))
+                    Log.i(InstagramConstants.DEBUG_TAG,"PubAck ${publishMessage.variableHeader().packetId()}");
+                }
                 val payload = (publishMessage.payload() as ByteBuf)
                 val compressedData =
                     payload.readBytes(payload.writerIndex() - payload.readerIndex()).array()
@@ -112,10 +116,10 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
                 Log.i(InstagramConstants.DEBUG_TAG,"FBNS: Publish $json on Topic $topicName ${publishMessage.variableHeader().packetId()}");
                 when (topicName) {
                     InstagramConstants.TopicIds.RegResp.id -> {
-                        onRegisterResponse(json)
+                        fbnsService.onRegisterResponse(json)
                         Thread{
                             while (true){
-                                Thread.sleep(60000)
+                                Thread.sleep(20000)
                                 ctx!!.writeAndFlush(MqttMessage.PINGREQ)
                             }
                         }.start()
@@ -126,14 +130,9 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
                             notification.fbpushnotif,
                             PushNotification::class.java
                         )
-                        fbnsService.mUseCase.notify(notification)
+                        fbnsService.mUseCase.notifyDirectMessage(notification)
 
                     }
-                }
-
-                if (publishMessage.fixedHeader().qosLevel() == MqttQoS.AT_LEAST_ONCE) {
-                    ctx!!.writeAndFlush(getMqttPubackMessage(publishMessage))
-                    Log.i(InstagramConstants.DEBUG_TAG,"PubAck ${publishMessage.variableHeader().packetId()}");
                 }
             }
         }
@@ -153,11 +152,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
         )
     }
 
-    private fun onRegisterResponse(json: String) {
-        val map = Gson().fromJson(json,HashMap::class.java)
-        val token = map["token"].toString()
-        fbnsService.mUseCase.pushRegister(token)
-    }
+
 
     @Throws(Exception::class)
     override fun handlerAdded(ctx: ChannelHandlerContext) {

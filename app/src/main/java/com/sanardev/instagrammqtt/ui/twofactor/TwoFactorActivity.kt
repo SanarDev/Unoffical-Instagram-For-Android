@@ -10,6 +10,7 @@ import com.sanardev.instagrammqtt.databinding.ActivityTwoFactorBinding
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramTwoFactorInfo
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
+import com.sanardev.instagrammqtt.utils.dialog.DialogListener
 
 class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding, TwoFactorViewModel>() {
     override fun layoutRes(): Int {
@@ -38,8 +39,10 @@ class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding, TwoFactorViewMo
                        getString(R.string.error),
                        getString(R.string.invalid_two_factor_code),
                        positiveText = getString(R.string.try_again),
-                       positiveFun = {
-                           this@TwoFactorActivity.finish()
+                       positiveListener = object :DialogListener.Positive{
+                           override fun onPositiveClick() {
+                               finish()
+                           }
                        }
                    )
                    return@Observer

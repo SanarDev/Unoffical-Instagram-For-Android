@@ -166,5 +166,9 @@ dependencies {
     implementation 'com.ogaclejapan.smarttablayout:library:2.0.0@aar'
     implementation 'com.androidhuman.circlerefreshlayout:circlerefreshlayout:0.1.0-SNAPSHOT'
 
+
+    // Firebase
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
+    implementation 'com.google.firebase:firebase-messaging:20.1.2'
 }
 

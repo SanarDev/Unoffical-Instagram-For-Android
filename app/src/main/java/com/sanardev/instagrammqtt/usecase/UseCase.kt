@@ -1,8 +1,8 @@
 package com.sanardev.instagrammqtt.usecase
 
 import android.app.Application
+import android.content.Context
 import android.os.Build
-import android.os.Environment
 import android.os.Handler
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -12,18 +12,22 @@ import androidx.lifecycle.Transformations
 import com.google.gson.Gson
 import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
+import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.datasource.model.*
 import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
 import com.sanardev.instagrammqtt.datasource.model.response.*
+import com.sanardev.instagrammqtt.extentions.isServiceRunning
 import com.sanardev.instagrammqtt.extentions.toStringList
 import com.sanardev.instagrammqtt.repository.InstagramRepository
+import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.utils.*
 import okhttp3.Headers
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import org.apache.commons.codec.binary.StringUtils
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -32,8 +36,8 @@ import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.random.Random
 
 
 class UseCase(
@@ -43,8 +47,33 @@ class UseCase(
     var mHandler: Handler,
     var gson: Gson
 ) {
+    private var currentCookie: Cookie? = null
+    private var currentUser: InstagramLoggedUser? = null
     val XLATE = "0123456789abcdef"
 
+    var isNotificationEnable: Boolean
+        get() {
+            return application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+                .getBoolean("is_notification_enabled", true)
+        }
+        set(value) {
+            application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("is_notification_enabled", value)
+                .apply()
+        }
+
+    var isSeenMessageEnable: Boolean
+        get() {
+            return application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+                .getBoolean("is_seen_message_enabled", true)
+        }
+        set(value) {
+            application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("is_seen_message_enabled", value)
+                .apply()
+        }
 
     private val audioList = HashMap<String, InputStream>()
 
@@ -143,8 +172,10 @@ class UseCase(
     }
 
     fun isLogged(): Boolean {
-        val user = StorageUtils.getUserData(application)
-        return user != null
+        val isLogged = application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+            .getBoolean("is_logged", false)
+//        val user = getUserData()
+        return isLogged
     }
 
     fun getDirectPresence(responseLiveData: MediatorLiveData<Resource<PresenceResponse>>) {
@@ -161,7 +192,7 @@ class UseCase(
         reactionStatus: String = "created"
     ): MutableLiveData<Resource<ResponseDirectAction>> {
         val liveData = MutableLiveData<Resource<ResponseDirectAction>>()
-        val cookie = StorageUtils.getCookie(application)
+        val cookie = getCookie()
         val data = HashMap<String, Any>().apply {
             put("item_type", "reaction")
             put("reaction_type", reactionType)
@@ -247,6 +278,13 @@ class UseCase(
         }
     }
 
+    fun getMe(): MutableLiveData<Resource<InstagramUserInfo>> {
+        val result = MutableLiveData<Resource<InstagramUserInfo>>()
+        val user = getUserData()
+        mInstagramRepository.getUserInfo(result, { getHeaders() }, user!!.pk!!)
+        return result
+    }
+
     fun saveUserData(
         loggedInUser: InstagramLoggedUser?,
         headers: Headers?
@@ -256,42 +294,62 @@ class UseCase(
         val instagramLoginPayload = StorageUtils.getLastLoginData(application)
         loggedInUser.cookie = cookieUtils.getCookieFromHeadersAndLocalData(
             headers!!,
-            StorageUtils.getCookie(application)!!
+            getCookie()
         )
         loggedInUser.password = instagramLoginPayload!!.password
         StorageUtils.saveLoggedInUserData(application, loggedInUser)
+        application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE).edit().apply {
+            putBoolean("is_logged", true)
+        }.apply()
     }
 
+    fun isUserLogged() =
+        application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+            .getBoolean("is_logged", false)
+
     fun getUserData(): InstagramLoggedUser? {
-        return StorageUtils.getUserData(application)
+        if (currentUser == null) {
+            currentUser = StorageUtils.getUserData(application)
+        }
+        return currentUser
     }
 
     fun getDirectInbox(responseLiveData: MediatorLiveData<Resource<InstagramDirects>>) {
-        mInstagramRepository.getDirectInbox(responseLiveData,{ getHeaders() },20)
+        mInstagramRepository.getDirectInbox(responseLiveData, { getHeaders() }, 20)
     }
 
-    fun getMoreDirectItems(responseLiveData: MediatorLiveData<Resource<InstagramDirects>>,seqId: Int,cursor: String){
-        mInstagramRepository.loadMoreDirects(responseLiveData,{getHeaders()},seqId,cursor)
+    fun getMoreDirectItems(
+        responseLiveData: MediatorLiveData<Resource<InstagramDirects>>,
+        seqId: Int,
+        cursor: String
+    ) {
+        mInstagramRepository.loadMoreDirects(responseLiveData, { getHeaders() }, seqId, cursor)
     }
 
-    fun sendLinkMessage(text:String,link:List<String>,threadId: String,clientContext: String): MutableLiveData<Resource<MessageResponse>> {
+    fun sendLinkMessage(
+        text: String,
+        link: List<String>,
+        threadId: String,
+        clientContext: String
+    ): MutableLiveData<Resource<MessageResponse>> {
         val result = MutableLiveData<Resource<MessageResponse>>()
-        val cookie = StorageUtils.getCookie(application)!!
-        val data = HashMap<String,String>().apply {
-            put("link_text",text)
-            put("link_urls",link.toStringList())
-            put("action","send_item")
-            put("thread_ids","[$threadId]")
-            put("client_context",clientContext)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("device_id",cookie.deviceID)
-            put("mutation_token",clientContext)
-            put("offline_threading_id",clientContext)
-            put("_uuid",cookie.adid)
+        val cookie = getCookie()
+        val data = HashMap<String, String>().apply {
+            put("link_text", text)
+            put("link_urls", link.toStringList())
+            put("action", "send_item")
+            put("thread_ids", "[$threadId]")
+            put("client_context", clientContext)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("device_id", cookie.deviceID)
+            put("mutation_token", clientContext)
+            put("offline_threading_id", clientContext)
+            put("_uuid", cookie.adid)
         }
-        mInstagramRepository.sendLinkMessage(result,{getHeaders()},data,{formUrlEncode(it)})
+        mInstagramRepository.sendLinkMessage(result, { getHeaders() }, data, { formUrlEncode(it) })
         return result
     }
+
     fun sendMediaImage(
         threadId: String,
         userId: String,
@@ -306,16 +364,16 @@ class UseCase(
         val uploadId = InstagramHashUtils.getClientContext()
         val hash = File(filePath).name.hashCode()
         val uploadName = "${uploadId}_0_$hash"
-        var type = MediaUtils.getMimeType(filePath)?:"image/jpeg"
-        val path = if(type.contains("png")){
+        var type = MediaUtils.getMimeType(filePath) ?: "image/jpeg"
+        val path = if (type.contains("png")) {
             val p = generateFilePath("$uploadId.jpeg")
-            MediaUtils.convertImageFormatToJpeg(filePath,p)
+            MediaUtils.convertImageFormatToJpeg(filePath, p)
             p
-        }else{
+        } else {
             filePath
         }
-        val cookie = StorageUtils.getCookie(application)!!
-        val user = StorageUtils.getUserData(application)!!
+        val cookie = getCookie()
+        val user = getUserData()
         val byteLength = File(path).readBytes().size
 
         mInstagramRepository.getMediaImageUploadUrl(
@@ -324,7 +382,7 @@ class UseCase(
             uploadName
         )
         liveDataGetUrl.observeForever {
-            if(it.status == Resource.Status.SUCCESS){
+            if (it.status == Resource.Status.SUCCESS) {
                 mInstagramRepository.uploadMediaImage(
                     liveDataUploadMedia,
                     uploadName,
@@ -367,7 +425,7 @@ class UseCase(
 //        }
 
         liveDataUploadMedia.observeForever {
-            if(it.status == Resource.Status.SUCCESS){
+            if (it.status == Resource.Status.SUCCESS) {
                 val sendMediaImageData = HashMap<String, String>()
                 sendMediaImageData["action"] = "send_item"
                 sendMediaImageData["thread_ids"] = "[${threadId}]"
@@ -412,8 +470,8 @@ class UseCase(
         type = type
             ?: "image/jpg" ///////////////////////////////////////////////////////////////////////////
 
-        val cookie = StorageUtils.getCookie(application)!!
-        val user = StorageUtils.getUserData(application)!!
+        val cookie = getCookie()
+        val user = getUserData()!!
         val byteLength = File(filePath).readBytes().size
         val mediaDuration = MediaUtils.getMediaDuration(application, filePath)
         mInstagramRepository.getMediaUploadUrl(
@@ -518,8 +576,8 @@ class UseCase(
         val uploadName = "${uploadId}_0_$hash"
         val byteLength = File(filePath).readBytes().size
         val mediaDuration = MediaUtils.getMediaDuration(application, filePath)
-        val cookie = StorageUtils.getCookie(application)!!
-        val user = StorageUtils.getUserData(application)!!
+        val cookie = getCookie()
+        val user = getUserData()!!
 
         mInstagramRepository.getMediaUploadUrl(
             liveDataGetUrl,
@@ -608,28 +666,38 @@ class UseCase(
         return StorageUtils.getLastLoginData(application)
     }
 
-    fun markAsSeenRavenMedia(threadId: String,messageClientContext:String,itemId: String): MutableLiveData<Resource<ResponseBody>> {
+    fun markAsSeenRavenMedia(
+        threadId: String,
+        messageClientContext: String,
+        itemId: String
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
-        val cookie = StorageUtils.getCookie(application)!!
-        val user = StorageUtils.getUserData(application)
-        val data = HashMap<String,String>().apply {
-            put("_csrftoken",cookie.csrftoken!!)
-            put("_uid",user!!.pk.toString())
-            put("_uuid",cookie.adid)
-            put("original_message_client_context",messageClientContext)
-            put("item_ids","[$itemId]")
-            put("target_item_type","raven_media")
+        val cookie = getCookie()
+        val user = getUserData()
+        val data = HashMap<String, String>().apply {
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uid", user!!.pk.toString())
+            put("_uuid", cookie.adid)
+            put("original_message_client_context", messageClientContext)
+            put("item_ids", "[$itemId]")
+            put("target_item_type", "raven_media")
         }
-        mInstagramRepository.markAsSeenRavenMedia(result,{getHeaders()},threadId,data,{t -> getSignaturePayload(t)})
+        mInstagramRepository.markAsSeenRavenMedia(
+            result,
+            { getHeaders() },
+            threadId,
+            data,
+            { t -> getSignaturePayload(t) })
         return result
     }
+
     fun markAsSeen(
         threadId: String,
         itemId: String,
         clientContext: String = InstagramHashUtils.getClientContext()
     ): MutableLiveData<Resource<ResponseDirectAction>> {
         val result = MutableLiveData<Resource<ResponseDirectAction>>()
-        val cookie = StorageUtils.getCookie(application)
+        val cookie = getCookie()
         val data = HashMap<String, Any>().apply {
             put("thread_id", threadId)
             put("action", "mark_seen")
@@ -649,26 +717,19 @@ class UseCase(
     }
 
     fun getCookie(): Cookie {
-        val cookie = StorageUtils.getCookie(application)
-        if (cookie != null) {
-            return cookie
+        if (currentCookie == null) {
+            currentCookie = StorageUtils.getCookie(application)
+        }
+        if (currentCookie != null) {
+            return currentCookie!!
         } else {
             return CookieUtils.generateCookie()
         }
-//        return Cookie(
-//            csrftoken = "wqKWi6ifSTi0qLfYetUyqNaKbAOIz8BV",
-//            rur = "PRN",
-//            mid = "XvMPKgABAAHDyYM-2UzWLZ4maha_",
-//            sessionID = "11292195227%3A9ZtQHcjsfe5HUO%3A10",
-//        phoneID = "2c03e37d-85cb-4e1e-b313-ecf5f33e98b0",
-//        adid = "6ea72bf1-7e36-4321-9dc3-f5cf567ee98e",
-//        guid = "2c03e37d-85cb-4e1e-b313-ecf5f33e98b0",
-//        deviceID = "")
     }
 
     private fun getHeaders(): HashMap<String, String> {
         val cookie = getCookie()
-        val user = StorageUtils.getUserData(application)
+        val user = getUserData()
         val map = HashMap<String, String>()
         map[InstagramConstants.X_DEVICE_ID] = cookie.deviceID
         map[InstagramConstants.X_DEVICE_ID] = "en_US"
@@ -711,7 +772,7 @@ class UseCase(
         map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
             gson.toJson(HashMap<String, Any>().apply {
                 put("xsharing_user_ids", userId)
-                put("image_compression", gson.toJson(HashMap<String,String>().apply {
+                put("image_compression", gson.toJson(HashMap<String, String>().apply {
                     this["lib_name"] = "moz"
                     this["lib_version"] = "3.1.m"
                     this["quality"] = "0"
@@ -744,7 +805,7 @@ class UseCase(
         map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
             gson.toJson(HashMap<String, Any>().apply {
                 put("xsharing_user_ids", userId)
-                put("image_compression", gson.toJson(HashMap<String,String>().apply {
+                put("image_compression", gson.toJson(HashMap<String, String>().apply {
                     this["lib_name"] = "moz"
                     this["lib_version"] = "3.1.m"
                     this["quality"] = "0"
@@ -985,11 +1046,12 @@ class UseCase(
     }
 
     fun generateFilePath(filename: String): String {
-        val wallpaperDirectory = File(StorageUtils.APPLICATION_DIR)
-        if(!wallpaperDirectory.exists()){
-            wallpaperDirectory.mkdirs()
-        }
-        return StorageUtils.APPLICATION_DIR+File.separator + filename
+//        val wallpaperDirectory = File(StorageUtils.APPLICATION_DIR)
+//        if(!wallpaperDirectory.exists()){
+//            wallpaperDirectory.mkdirs()
+//        }
+//        return StorageUtils.APPLICATION_DIR+File.separator + filename
+        return StorageUtils.generateFileInInternalStorage(application, filename).path
     }
 
     fun saveFbnsAuthData(fbnsAuth: FbnsAuth) {
@@ -1000,18 +1062,55 @@ class UseCase(
         return StorageUtils.getFbnsAuth(application)
     }
 
-    fun notify(notification: NotificationContentJson?) {
-        if (notification == null) {
+    fun notifyDirectMessage(notification: NotificationContentJson?) {
+        if (notification == null ||
+            !isNotificationEnable ||
+            notification.notificationContent.collapseKey != "direct_v2_message" ||
+            (!BaseApplication.isAppInOnStop && application.isServiceRunning(RealTimeService::class.java))
+        ) {
             return
         }
         val nc = notification.notificationContent
+        val senderName = nc.message.split(":")[0].trim()
+        var message = nc.message.split(":")[1].trim()
+        val notificationDataPref =
+            application.getSharedPreferences(InstagramConstants.SharedPref.NOTIFICATION_DATA.name, Context.MODE_PRIVATE)
+
+        val keyMessages = senderName.replace(" ", "_") + "_Messages"
+        val keyNotificationId = senderName.replace(" ", "_") + "_NotificationId"
+        var oldMessage = notificationDataPref.getString(keyMessages, "")
+        var notificationId = notificationDataPref.getInt(keyNotificationId, 0)
+        if (notificationId == 0)
+            notificationId = Random.nextInt()
+
+        var isLighLevel = true
+
+        oldMessage = oldMessage + "\n" + message
+//            isLighLevel = false
+//        }
+        notificationDataPref.edit()
+            .putString(keyMessages, oldMessage)
+            .putInt(keyNotificationId, notificationId)
+            .apply()
+
+        val channelId = senderName.hashCode().toString()
         NotificationUtils.notify(
-            application,
-            notification.connectionKey,
-            "test",
-            "Minista",
-            nc.message
+            application = application,
+            channelId = channelId,
+            notificationId = notificationId,
+            channelName = senderName,
+            title = senderName,
+            message = message,
+            oldMessage = oldMessage.split("\n"),
+            photoUrl = notification.notificationContent.optionAvatarUrl,
+            isHighLevel = isLighLevel
         )
+    }
+
+    fun dismissAllNotification() {
+        NotificationUtils.dismissAllNotification(application)
+        application.getSharedPreferences(InstagramConstants.SharedPref.NOTIFICATION_DATA.name, Context.MODE_PRIVATE).edit().clear()
+            .apply()
     }
 
     fun addMessage(event: MessageEvent) {
@@ -1037,8 +1136,61 @@ class UseCase(
         mInstagramRepository.getRecipients(result, query, { getHeaders() })
     }
 
-    fun getUserByRecipients(result:MutableLiveData<Resource<ResponseBody>>,userId: Int,seqId:Int){
-        mInstagramRepository.getByParticipants(result,{getHeaders()},"[[$userId]]",seqId)
+    fun getUserByRecipients(
+        result: MutableLiveData<Resource<ResponseBody>>,
+        userId: Int,
+        seqId: Int
+    ) {
+        mInstagramRepository.getByParticipants(result, { getHeaders() }, "[[$userId]]", seqId)
     }
+
+    fun getLastFbnsRegisterToken() =
+        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
+            .getString("register_token", null)
+
+    fun saveFbnsRegisterToken(token: String) {
+        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
+            .edit()
+            .putString("register_token", token)
+            .apply()
+    }
+
+    fun getMediaById(mediaId: String, liveDataPost: MediatorLiveData<Resource<InstagramPost>>) {
+        mInstagramRepository.getMediaById(liveDataPost, { getHeaders() }, mediaId)
+    }
+
+    fun logout(): LiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val data = HashMap<String, String>().apply {
+            put("phone_id", cookie.phoneID)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("guid", cookie.guid)
+            put("device_id", cookie.deviceID)
+            put("_uuid", cookie.adid)
+        }
+        mInstagramRepository.logout(result, { getHeaders() }, data, { t -> formUrlEncode(t) })
+        return Transformations.map(result) {
+            if (it.status == Resource.Status.SUCCESS) {
+                clearAllData()
+            }
+            return@map it
+        }
+    }
+
+    private fun clearAllData() {
+        StorageUtils.removeFiles(
+            application,
+            StorageUtils.LAST_LOGIN_DATA_FILE_NAME,
+            StorageUtils.USER_DATA_FILE_NAME,
+            StorageUtils.COOKIE_BEFORE_LOGIN,
+            StorageUtils.FBNS_AUTH
+        )
+
+        application.getSharedPreferences(InstagramConstants.SharedPref.USER.name,Context.MODE_PRIVATE).edit().clear().apply()
+        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name,Context.MODE_PRIVATE).edit().clear().apply()
+        application.getSharedPreferences(InstagramConstants.SharedPref.NOTIFICATION_DATA.name,Context.MODE_PRIVATE).edit().clear().apply()
+    }
+
 
 }
