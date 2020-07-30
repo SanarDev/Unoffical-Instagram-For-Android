@@ -2,12 +2,13 @@ package com.sanardev.instagrammqtt.datasource.model.event;
 
 import com.sanardev.instagrammqtt.datasource.model.Message;
 
-public class MessageEvent {
+public class MessageItemEvent {
 
-    public MessageEvent(String threadId,Message message){
+    public MessageItemEvent(String threadId, Message message) {
         this.threadId = threadId;
         this.message = message;
     }
+
     private String threadId;
     private Message message;
 

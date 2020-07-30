@@ -64,7 +64,8 @@ class RealTimeService : Service() {
     private var seqID: Long = 0
     private var snapShotAt: Long = 0
     private var directCommands: DirectCommands? = null
-    private var newMessageList = ArrayList<MessageEvent>().toMutableList()
+    private var newMessageList = ArrayList<MessageItemEvent>().toMutableList()
+    private var removedMessageList = ArrayList<MessageRemoveEvent>().toMutableList()
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -115,8 +116,8 @@ class RealTimeService : Service() {
         if (intent == null || intent.extras == null) {
             return super.onStartCommand(intent, flags, startId)
         }
-        if(intent.action != RealTimeIntent.ACTION_CONNECT_SESSION){
-            if(mChannel == null || directCommands == null){
+        if (intent.action != RealTimeIntent.ACTION_CONNECT_SESSION) {
+            if (mChannel == null || directCommands == null) {
                 return super.onStartCommand(intent, flags, startId)
             }
         }
@@ -126,67 +127,103 @@ class RealTimeService : Service() {
                 if (mChannel != null && mChannel!!.isActive) {
                     return super.onStartCommand(intent, flags, startId)
                 }
-                if(NetworkUtils.getConnectionType(applicationContext) == NetworkUtils.NetworkType.NONE){
+                if (NetworkUtils.getConnectionType(applicationContext) == NetworkUtils.NetworkType.NONE) {
                     return super.onStartCommand(intent, flags, startId)
                 }
-                EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTING))
+                EventBus.getDefault()
+                    .postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTING))
                 val data = intent.extras!!.getParcelable<RealTime_StartService>("data")!!
-                connect(data.seqId,data.snapShotAt)
+                connect(data.seqId, data.snapShotAt)
             }
-            RealTimeIntent.ACTION_DISCONNECT_SESSION ->{
-                if (mChannel != null){
+            RealTimeIntent.ACTION_DISCONNECT_SESSION -> {
+                if (mChannel != null) {
                     mChannel!!.close()
                     stopSelf()
                 }
             }
+            RealTimeIntent.ACTION_CLEAR_CACHE -> {
+                newMessageList.clear()
+                removedMessageList.clear()
+            }
             RealTimeIntent.ACTION_SEND_TEXT_MESSAGE -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendMessage>("data")!!
-                directCommands!!.sendText(data.text,data.clientContext!!,data.threadId)
+                directCommands!!.sendText(data.text, data.clientContext!!, data.threadId)
             }
 
-            RealTimeIntent.ACTION_MARK_AS_SEEN ->{
+            RealTimeIntent.ACTION_MARK_AS_SEEN -> {
                 val data = intent.extras!!.getParcelable<RealTime_MarkAsSeen>("data")!!
-                directCommands!!.markAsSeen(data.threadId,data.itemId)
+                directCommands!!.markAsSeen(data.threadId, data.itemId)
             }
 
             RealTimeIntent.ACTION_SEND_MEDIA -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendMedia>("data")!!
-                directCommands!!.sendMedia(data.text,data.mediaId,data.threadId,data.clientContext)
+                directCommands!!.sendMedia(
+                    data.text,
+                    data.mediaId,
+                    data.threadId,
+                    data.clientContext
+                )
             }
 
             RealTimeIntent.ACTION_SEND_LOCATION -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendLocation>("data")!!
-                directCommands!!.sendLocation(data.text,data.locationId,data.threadId,data.clientContext)
+                directCommands!!.sendLocation(
+                    data.text,
+                    data.locationId,
+                    data.threadId,
+                    data.clientContext
+                )
             }
 
             RealTimeIntent.ACTION_SEND_REACTION -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendReaction>("data")!!
-                directCommands!!.sendReaction(data.itemId,data.reactionType,data.clientContext,data.threadId,data.reactionStatus)
+                directCommands!!.sendReaction(
+                    data.itemId,
+                    data.reactionType,
+                    data.clientContext,
+                    data.threadId,
+                    data.reactionStatus
+                )
             }
 
             RealTimeIntent.ACTION_SEND_TYPING_STATE -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendTypingState>("data")!!
-                directCommands!!.indicateActivity(data.threadId,data.isActive,data.clientContext)
+                directCommands!!.indicateActivity(data.threadId, data.isActive, data.clientContext)
             }
 
-            RealTimeIntent.ACTION_SEND_USER_STORY ->{
+            RealTimeIntent.ACTION_SEND_USER_STORY -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendUserStory>("data")!!
-                directCommands!!.sendUserStory(data.text,data.storyId,data.threadId,data.clientContext)
+                directCommands!!.sendUserStory(
+                    data.text,
+                    data.storyId,
+                    data.threadId,
+                    data.clientContext
+                )
             }
 
-            RealTimeIntent.ACTION_SEND_LIKE ->{
+            RealTimeIntent.ACTION_SEND_LIKE -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendLike>("data")!!
-                directCommands!!.sendLike(data.threadId,data.clientContext)
+                directCommands!!.sendLike(data.threadId, data.clientContext)
             }
 
             RealTimeIntent.ACTION_SEND_PROFILE -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendProfile>("data")!!
-                directCommands!!.sendProfile(data.text,data.userId,data.threadId,data.clientContext)
+                directCommands!!.sendProfile(
+                    data.text,
+                    data.userId,
+                    data.threadId,
+                    data.clientContext
+                )
             }
 
             RealTimeIntent.ACTION_SEND_HASH_TAG -> {
-                val data =intent.extras!!.getParcelable<RealTime_SendHashTag>("data")!!
-                directCommands!!.sendHashtag(data.text,data.threadId,data.hashTag,data.clientContext)
+                val data = intent.extras!!.getParcelable<RealTime_SendHashTag>("data")!!
+                directCommands!!.sendHashtag(
+                    data.text,
+                    data.threadId,
+                    data.hashTag,
+                    data.clientContext
+                )
             }
         }
         return super.onStartCommand(intent, flags, startId)
@@ -209,7 +246,10 @@ class RealTimeService : Service() {
             MqttPublishVariableHeader(topicName, packetID),
             payload
         )
-        Log.i(InstagramConstants.DEBUG_TAG, "RealTime Update foregroundState $inForegroundApp with id $packetID")
+        Log.i(
+            InstagramConstants.DEBUG_TAG,
+            "RealTime Update foregroundState $inForegroundApp with id $packetID"
+        )
         mChannel?.writeAndFlush(mqttPublishMessage)
     }
 
@@ -224,7 +264,8 @@ class RealTimeService : Service() {
             val mqttotConnectionClientInfo =
                 MQTTotConnectionClientInfo()
             mqttotConnectionClientInfo.userId = user!!.pk!!
-            mqttotConnectionClientInfo.userAgent = "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
+            mqttotConnectionClientInfo.userAgent =
+                "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
             mqttotConnectionClientInfo.clientCapabilities = 183
             mqttotConnectionClientInfo.endpointCapabilities = 128
             mqttotConnectionClientInfo.publishFormat = 1
@@ -431,12 +472,29 @@ class RealTimeService : Service() {
             val threadId = param[3]
             val event = param[4]
             when (event) {
-                InstagramConstants.RealTimeEvent.NEW_MESSAGE.id -> {
-                    val msg = MessageEvent(
-                        threadId,mGson.fromJson(
-                        realtimeSubDirectDataWrapper.value,
-                        Message::class.java
-                    ))
+                InstagramConstants.RealTimeEvent.MESSAGE.id -> {
+                    if(realtimeSubDirectDataWrapper.op == "remove"){
+                        for(index in newMessageList.indices){
+                            if(newMessageList[index].message.itemId == realtimeSubDirectDataWrapper.value){
+                                newMessageList.removeAt(index)
+                                break
+                            }
+                        }
+                        removedMessageList.add(MessageRemoveEvent(threadId,
+                            realtimeSubDirectDataWrapper.value
+                        ))
+                        EventBus.getDefault().postSticky(
+                            removedMessageList
+                        )
+                        return
+                    }
+                    val msg =
+                        MessageItemEvent(
+                            threadId, mGson.fromJson(
+                                realtimeSubDirectDataWrapper.value,
+                                Message::class.java
+                            )
+                        )
                     newMessageList.add(msg)
                     EventBus.getDefault().postSticky(newMessageList)
                 }

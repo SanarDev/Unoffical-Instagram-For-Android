@@ -478,4 +478,10 @@ class InstagramRepository(
             result.postValue(it)
         }
     }
+
+    fun unsendMessage(result:MutableLiveData<Resource<ResponseBody>>, header: () -> Map<String, String>, threadId: String,itemId: String,data: Map<*, *>,encryptor: (Map<*, *>) -> RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.unsendMessage(header.invoke(),threadId,itemId,encryptor.invoke(data))).observeForever {
+            result.postValue(it)
+        }
+    }
 }

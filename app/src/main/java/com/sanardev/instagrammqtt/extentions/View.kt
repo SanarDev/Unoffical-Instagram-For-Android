@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.graphics.Rect
 import android.os.Build
 import android.text.Html
 import android.text.Spannable
@@ -121,4 +122,20 @@ private fun makeLinkClickable(
         strBuilder.setSpan(URLSpanNoUnderline(span.url), start, end, flags)
     }
     strBuilder.removeSpan(span)
+}
+
+fun View.locateViewInScreen(): Rect? {
+    val loc_int = IntArray(2)
+    try {
+        this.getLocationOnScreen(loc_int)
+    } catch (npe: NullPointerException) {
+        //Happens when the view doesn't exist on screen anymore.
+        return null
+    }
+    val location = Rect()
+    location.left = loc_int[0]
+    location.top = loc_int[1]
+    location.right = location.left + this.width
+    location.bottom = location.top + this.height
+    return location
 }

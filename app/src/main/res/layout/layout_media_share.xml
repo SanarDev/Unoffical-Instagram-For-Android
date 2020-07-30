@@ -94,8 +94,7 @@
                             android:layout_width="240dp"
                             android:layout_height="240dp"
                             android:visibility="gone"
-                            android:clickable="true"
-                            android:focusable="true">
+                            android:layout_margin="1dp">
 
 
                             <androidx.appcompat.widget.AppCompatImageView

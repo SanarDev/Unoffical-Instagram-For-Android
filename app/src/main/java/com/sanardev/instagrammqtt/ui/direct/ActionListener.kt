@@ -9,4 +9,5 @@ interface ActionListener {
     fun onChangeMessage(message: Message)
     fun onChangeMessageWithClientContext(message: Message)
     fun realTimeCommand(realTimeCommand: RealTimeCommand)
+    fun removeMessage(itemId: String)
 }

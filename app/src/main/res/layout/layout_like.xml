@@ -27,11 +27,17 @@
                     style="@style/ProfileImage"
                     android:src="@mipmap/example" />
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/txt_message"
+                <LinearLayout
+                    android:id="@+id/layout_message"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="30sp" />
+                    android:layout_height="wrap_content">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/txt_message"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="30sp" />
+                </LinearLayout>
 
 
             </LinearLayout>
@@ -45,12 +51,12 @@
                 android:layout_margin="10dp" />
 
             <include
+                android:id="@+id/include_reaction"
                 style="@style/LayoutIncludeReaction"
-            android:id="@+id/include_reaction"
                 layout="@layout/layout_reactions_like"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone"/>
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 </layout>

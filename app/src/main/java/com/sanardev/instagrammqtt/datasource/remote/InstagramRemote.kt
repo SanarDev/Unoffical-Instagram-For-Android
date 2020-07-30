@@ -201,4 +201,7 @@ interface InstagramRemote {
 
     @POST(InstagramConstants.API_VERSION  + "accounts/logout/")
     fun logout(@HeaderMap header: Map<String, String>,@Body requestBody: RequestBody):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/{thread_id}/items/{item_id}/delete/")
+    fun unsendMessage(@HeaderMap header: Map<String, String>, @Path("thread_id") threadId: String,@Path("item_id") itemId: String,@Body requestBody: RequestBody):Call<ResponseBody>
 }

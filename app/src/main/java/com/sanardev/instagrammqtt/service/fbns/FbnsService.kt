@@ -200,8 +200,8 @@ class FbnsService : Service() {
         val map = Gson().fromJson(json, HashMap::class.java)
         val token = map["token"].toString()
         val savedToken = mUseCase.getLastFbnsRegisterToken()
-        if (savedToken == null) {
-            mUseCase.saveFbnsRegisterToken(token)
+        val timeStamp = mUseCase.getLastFbnsTokenTimeStamp()
+        if (savedToken == null || (System.currentTimeMillis() - timeStamp > 86400000)) {
             mUseCase.pushRegister(token)
         }
     }

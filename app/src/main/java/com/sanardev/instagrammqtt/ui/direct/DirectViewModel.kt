@@ -8,26 +8,22 @@ import androidx.databinding.ObservableField
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
-import com.sanardev.instagrammqtt.core.BaseViewModel
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.core.BaseApplication
-import com.sanardev.instagrammqtt.datasource.model.DirectDate
-import com.sanardev.instagrammqtt.datasource.model.Message
-import com.sanardev.instagrammqtt.datasource.model.Payload
-import com.sanardev.instagrammqtt.datasource.model.Thread
-import com.sanardev.instagrammqtt.datasource.model.User
+import com.sanardev.instagrammqtt.core.BaseViewModel
+import com.sanardev.instagrammqtt.datasource.model.*
 import com.sanardev.instagrammqtt.datasource.model.event.ConnectionStateEvent
-import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
+import com.sanardev.instagrammqtt.datasource.model.event.MessageItemEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
-import com.sanardev.instagrammqtt.realtime.commands.RealTime_SendMessage
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramChats
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.REGEX_FIND_URL
+import com.sanardev.instagrammqtt.extentions.dpToPx
+import com.sanardev.instagrammqtt.extentions.toStringList
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_SendMessage
 import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.*
 import org.greenrobot.eventbus.EventBus
-import com.sanardev.instagrammqtt.extentions.dpToPx
-import com.sanardev.instagrammqtt.extentions.toStringList
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -297,7 +293,12 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         }
         sendMessageToCloud(arrayListOf(message))
         EventBus.getDefault()
-            .postSticky(arrayListOf(MessageEvent(mThread.threadId, message)))
+            .postSticky(arrayListOf(
+                MessageItemEvent(
+                    mThread.threadId,
+                    message
+                )
+            ))
         messageText.set("")
     }
 
@@ -330,7 +331,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
         mUseCase.loadMoreChats(result, cursor, threadId, seqId)
     }
 
-    fun onMessageReceive(event: MessageEvent) {
+    fun onMessageReceive(event: MessageItemEvent) {
         addMessage(event.message)
     }
 
@@ -532,6 +533,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
                 if (item is Message && item.clientContext == event.payload.clientContext) {
                     item.timestamp = event.payload.timestamp.toLong()
                     item.isDelivered = true
+                    item.itemId = event.payload.itemId
                     if (mThread.threadId != event.payload.threadId) {
                         EventBus.getDefault()
                             .postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT))
@@ -545,6 +547,25 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
 
     fun markAsSeenRavenMedia(itemId: String, messageClientContext: String) {
         mUseCase.markAsSeenRavenMedia(mThread.threadId, messageClientContext, itemId)
+    }
+
+    fun unsendMessage(itemId: String, clientContext: String) {
+        mUseCase.unsendMessage(mThread.threadId, itemId, clientContext).observeForever {
+            if (it.status == Resource.Status.SUCCESS) {
+                deleteMessage(itemId)
+            }
+        }
+    }
+
+    fun deleteMessage(itemId: String) {
+        val iterator = messages.iterator()
+        while (iterator.hasNext()) {
+            val value = iterator.next()
+            if (value.itemId == itemId) {
+                iterator.remove()
+            }
+        }
+        mActionListener?.removeMessage(itemId)
     }
 
 }

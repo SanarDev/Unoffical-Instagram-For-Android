@@ -44,6 +44,7 @@
 
 
                     <LinearLayout
+                        android:id="@+id/layout_message"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:minWidth="160dp"
@@ -51,7 +52,6 @@
                         android:orientation="vertical">
 
                         <RelativeLayout
-                            android:id="@+id/layout_img_story"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content">
 
@@ -66,7 +66,7 @@
 
                             <com.makeramen.roundedimageview.RoundedImageView
                                 android:id="@+id/img_story"
-                                android:layout_width="180dp"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:adjustViewBounds="true"
                                 android:scaleType="fitCenter"
@@ -104,7 +104,6 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom|right"
                             android:background="@drawable/bg_circluar"
-                            android:layout_marginTop="10dp"
                             android:paddingStart="10dp"
                             android:paddingTop="2dp"
                             android:paddingEnd="10dp"
@@ -121,13 +120,12 @@
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
+            <include
+                android:id="@+id/include_reaction"
+                style="@style/LayoutIncludeReaction"
+                layout="@layout/layout_reactions_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
         </LinearLayout>
-
-        <include
-            android:id="@+id/include_reaction"
-            style="@style/LayoutIncludeReaction"
-            layout="@layout/layout_reactions_like"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
     </LinearLayout>
 </layout>

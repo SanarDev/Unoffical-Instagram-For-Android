@@ -23,6 +23,9 @@ class NetworkChangeReceiver : BroadcastReceiver() {
                     FbnsService.run(context, FbnsIntent.ACTION_CONNECT_SESSION)
                 }
             }
+        }else{
+            EventBus.getDefault()
+                .postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NETWORK_DISCONNECTED))
         }
     }
 

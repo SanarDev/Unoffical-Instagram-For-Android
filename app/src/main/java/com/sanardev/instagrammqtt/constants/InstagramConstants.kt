@@ -229,9 +229,10 @@ class InstagramConstants {
     }
 
     enum class RealTimeEvent(var id:String) {
-        NEW_MESSAGE("items"), // for new message
+        MESSAGE("items"), // for new message
         ACTIVITY_INDICATOR_ID("activity_indicator_id"), // for type event
-        PARTICIPANTS("participants") // for update last seen
+        PARTICIPANTS("participants"), // for update last seen
+        ITEMS("items") // for update last seen
     }
 
     enum class MediaType(){

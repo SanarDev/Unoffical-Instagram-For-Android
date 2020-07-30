@@ -25,7 +25,6 @@ import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.core.BaseActivity
 import com.sanardev.instagrammqtt.core.BaseAdapter
-import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.databinding.ActivityMainBinding
 import com.sanardev.instagrammqtt.databinding.LayoutDirectBinding
 import com.sanardev.instagrammqtt.datasource.model.Thread
@@ -36,7 +35,7 @@ import com.sanardev.instagrammqtt.extentions.color
 import com.sanardev.instagrammqtt.extensions.gone
 import com.sanardev.instagrammqtt.extensions.setTextViewDrawableColor
 import com.sanardev.instagrammqtt.extensions.visible
-import com.sanardev.instagrammqtt.extentions.toast
+import com.sanardev.instagrammqtt.realtime.commands.RealTime_ClearCache
 import com.sanardev.instagrammqtt.realtime.commands.RealTime_StartService
 import com.sanardev.instagrammqtt.realtime.commands.RealTime_StopService
 import com.sanardev.instagrammqtt.service.fbns.FbnsIntent
@@ -47,6 +46,7 @@ import com.sanardev.instagrammqtt.ui.direct.DirectBundle
 import com.sanardev.instagrammqtt.ui.login.LoginActivity
 import com.sanardev.instagrammqtt.ui.setting.SettingActivity
 import com.sanardev.instagrammqtt.ui.startmessage.StartMessageActivity
+import com.sanardev.instagrammqtt.utils.NetworkUtils
 import com.sanardev.instagrammqtt.utils.Resource
 import com.sanardev.instagrammqtt.utils.TimeUtils
 import com.sanardev.instagrammqtt.utils.dialog.DialogHelper
@@ -158,7 +158,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
     }
 
     private fun initFbns() {
-        FbnsService.run(this,FbnsIntent.ACTION_CONNECT_SESSION)
+        FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
@@ -183,7 +183,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 
             when (it.status) {
                 Resource.Status.LOADING -> {
-                    if (!isLoadingMoreDirects) {
+                    if (!isLoadingMoreDirects && adapter.items.isEmpty()) {
                         visible(binding.progressbar)
                         gone(binding.recyclerviewDirects, binding.includeLayoutNetwork.root)
                     }
@@ -191,7 +191,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 Resource.Status.ERROR -> {
                     gone(binding.progressbar, binding.includeLayoutNetwork.root)
                     if (it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code) {
-                        visible(binding.includeLayoutNetwork.root)
+                        if(adapter.items.isEmpty()){
+                            visible(binding.includeLayoutNetwork.root)
+                        }
                         return
                     }
                     if (it.data == null) {
@@ -201,7 +203,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                             title = getString(R.string.error),
                             message = getString(R.string.unknownError),
                             positiveText = getString(R.string.try_again),
-                            positiveListener = object : DialogListener.Positive{
+                            positiveListener = object : DialogListener.Positive {
                                 override fun onPositiveClick() {
                                     viewModel.getDirects()
                                 }
@@ -216,7 +218,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                             title = it.data!!.errorTitle!!,
                             message = it.data!!.errorMessage!!,
                             positiveText = getString(R.string.login),
-                            positiveListener = object : DialogListener.Positive{
+                            positiveListener = object : DialogListener.Positive {
                                 override fun onPositiveClick() {
                                     viewModel.resetUserData()
                                     LoginActivity.open(this@MainActivity)
@@ -231,7 +233,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     visible(binding.recyclerviewDirects)
 
                     isLoadingMoreDirects = false
-                    if(it.data!!.inbox.oldestCursor == null){
+                    if (it.data!!.inbox.oldestCursor == null) {
                         isMoreDirectExist = false
                     }
                     adapter.setLoading(isLoadingMoreDirects)
@@ -282,25 +284,38 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageEvent(events: MutableList<MessageEvent>) {
+    fun onMessageEvent(events: MutableList<MessageItemEvent>) {
         for (event in events) {
             viewModel.onMessageReceive(event)
         }
+        RealTimeService.run(this, RealTime_ClearCache())
+        EventBus.getDefault().removeStickyEvent(events)
+    }
+
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onMessageRemoveEvent(event: MutableList<MessageRemoveEvent>) {
+        for (item in event) {
+            viewModel.deleteMessage(item.threadId, item.itemId)
+        }
+        EventBus.getDefault().removeStickyEvent(event)
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onUpdateSeenEvent(event: UpdateSeenEvent) {
         viewModel.onUpdateSeenEvent(event)
+        EventBus.getDefault().removeStickyEvent(event)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onTypingEvent(event: TypingEvent) { /* Do something */
         viewModel.onTyping(event)
+        EventBus.getDefault().removeStickyEvent(event)
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onPresenceEvent(event: PresenceEvent) { /* Do something */
         viewModel.onPresenceEvent(event)
+        EventBus.getDefault().removeStickyEvent(event)
     }
 
     override fun onStart() {
@@ -317,8 +332,8 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
         override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]
 
-            if(item is LoadingEvent){
-               return item
+            if (item is LoadingEvent) {
+                return item
             }
             item as Thread
             val dataBinding = holder.binding as LayoutDirectBinding
@@ -448,6 +463,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                                 lastItem.felixShare.video.user.username
                             )
                         }
+                        InstagramConstants.MessageType.STORY_SHARE.type -> {
+                            dataBinding.profileDec.text = prefix + getString(R.string.share_story)
+                        }
                         InstagramConstants.MessageType.PROFILE.type -> {
                             dataBinding.profileDec.text =
                                 prefix + getString(R.string.send_a_profile)
@@ -554,10 +572,10 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     binding.edtSearch.setText("")
                 }
             }
-            dataBinding.root.setOnLongClickListener{
-                showPopupOptions(item.threadId,dataBinding.root)
-                return@setOnLongClickListener true
-            }
+//            dataBinding.root.setOnLongClickListener{
+//                showPopupOptions(item.threadId,dataBinding.root)
+//                return@setOnLongClickListener true
+//            }
             return item
         }
 
@@ -575,8 +593,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 }
             }
         }
+
         override fun getLayoutIdForPosition(position: Int): Int {
-            if(items[position] is LoadingEvent){
+            if (items[position] is LoadingEvent) {
                 return R.layout.layout_loading
             }
             return R.layout.layout_direct
@@ -662,7 +681,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
 
     override fun onDestroy() {
         super.onDestroy()
-        RealTimeService.run(this,RealTime_StopService())
+        RealTimeService.run(this, RealTime_StopService())
     }
 
 }

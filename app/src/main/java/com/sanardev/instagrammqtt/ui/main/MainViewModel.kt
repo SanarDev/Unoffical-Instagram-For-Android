@@ -1,7 +1,6 @@
 package com.sanardev.instagrammqtt.ui.main
 
 import android.app.Application
-import android.util.Base64
 import android.util.Log
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
@@ -13,7 +12,7 @@ import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.PresenceResponse
 import com.sanardev.instagrammqtt.datasource.model.Thread
 import com.sanardev.instagrammqtt.datasource.model.User
-import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
+import com.sanardev.instagrammqtt.datasource.model.event.MessageItemEvent
 import com.sanardev.instagrammqtt.datasource.model.event.PresenceEvent
 import com.sanardev.instagrammqtt.datasource.model.event.TypingEvent
 import com.sanardev.instagrammqtt.datasource.model.event.UpdateSeenEvent
@@ -38,7 +37,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
 
     private val directs = ArrayList<Thread>().toMutableList()
     private val searchedValue = ArrayList<Thread>().toMutableList()
-    private var instagramDirect:InstagramDirects?=null
+    private var instagramDirect: InstagramDirects? = null
     private val result = MediatorLiveData<Resource<InstagramDirects>>()
     private val resultPresence = MediatorLiveData<Resource<PresenceResponse>>()
     val mutableLiveData = MutableLiveData<Resource<InstagramDirects>>()
@@ -110,7 +109,7 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
         return mUseCase.getUserData()!!
     }
 
-    fun onMessageReceive(event: MessageEvent) {
+    fun onMessageReceive(event: MessageItemEvent) {
         val threads = instagramDirect!!.inbox.threads
         for (index in threads.indices) {
             val thread = threads[index]
@@ -246,7 +245,28 @@ class MainViewModel @Inject constructor(application: Application, var mUseCase: 
 
     fun loadMoreItem() {
         if (instagramDirect!!.inbox.oldestCursor != null) {
-            mUseCase.getMoreDirectItems(result, instagramDirect!!.seqId, instagramDirect!!.inbox.oldestCursor)
+            mUseCase.getMoreDirectItems(
+                result,
+                instagramDirect!!.seqId,
+                instagramDirect!!.inbox.oldestCursor
+            )
         }
+    }
+
+    fun deleteMessage(threadId: String, itemId: String) {
+        instagramDirect?.let {
+            val threads = it.inbox.threads
+            for(thread in threads){
+                if(thread.threadId == threadId){
+                    for(index in thread.messages.indices){
+                        if(thread.messages[index].itemId == itemId){
+                            thread.messages.removeAt(index)
+                            mutableLiveData.postValue(Resource.success(instagramDirect))
+                            return
+                        }
+                    }
+                }
+            }
+        }!!
     }
 }

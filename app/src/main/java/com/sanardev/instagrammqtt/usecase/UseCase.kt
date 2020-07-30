@@ -14,7 +14,7 @@ import com.sanardev.instagrammqtt.R
 import com.sanardev.instagrammqtt.constants.InstagramConstants
 import com.sanardev.instagrammqtt.core.BaseApplication
 import com.sanardev.instagrammqtt.datasource.model.*
-import com.sanardev.instagrammqtt.datasource.model.event.MessageEvent
+import com.sanardev.instagrammqtt.datasource.model.event.MessageItemEvent
 import com.sanardev.instagrammqtt.datasource.model.event.MessageResponse
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginPayload
 import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFactorPayload
@@ -27,7 +27,6 @@ import com.sanardev.instagrammqtt.utils.*
 import okhttp3.Headers
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import org.apache.commons.codec.binary.StringUtils
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -1002,10 +1001,9 @@ class UseCase(
                 { t -> formUrlEncode(t) },
                 { getHeaders() })
             res.observeForever {
-                Log.i(
-                    InstagramConstants.DEBUG_TAG,
-                    "PushRegister State ${it.status.name} with data ${it.data}"
-                );
+                if(it.status == Resource.Status.SUCCESS){
+                    saveFbnsRegisterToken(token)
+                }
             }
         }
     }
@@ -1113,7 +1111,7 @@ class UseCase(
             .apply()
     }
 
-    fun addMessage(event: MessageEvent) {
+    fun addMessage(event: MessageItemEvent) {
     }
 
     fun loadMoreChats(
@@ -1148,10 +1146,16 @@ class UseCase(
         application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
             .getString("register_token", null)
 
+    fun getLastFbnsTokenTimeStamp() =
+        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
+            .getLong("time_stamp", 0)
+
+
     fun saveFbnsRegisterToken(token: String) {
         application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
             .edit()
             .putString("register_token", token)
+            .putLong("time_stamp", System.currentTimeMillis())
             .apply()
     }
 
@@ -1190,6 +1194,18 @@ class UseCase(
         application.getSharedPreferences(InstagramConstants.SharedPref.USER.name,Context.MODE_PRIVATE).edit().clear().apply()
         application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name,Context.MODE_PRIVATE).edit().clear().apply()
         application.getSharedPreferences(InstagramConstants.SharedPref.NOTIFICATION_DATA.name,Context.MODE_PRIVATE).edit().clear().apply()
+    }
+
+    fun unsendMessage(threadId: String,itemId: String,clientContext: String): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val data = HashMap<String,String>().apply {
+            put("_uuid",cookie.adid)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("original_message_client_context",clientContext)
+        }
+        mInstagramRepository.unsendMessage(result,{getHeaders()},threadId,itemId,data,{t -> formUrlEncode(t)})
+        return result
     }
 
 

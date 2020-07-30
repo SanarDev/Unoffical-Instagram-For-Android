@@ -19,6 +19,7 @@ public class RealTimeIntent {
     public static final String ACTION_SEND_LIKE = "com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_LIKE";
     public static final String ACTION_SEND_PROFILE = "com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_PROFILE";
     public static final String ACTION_SEND_HASH_TAG = "com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_HASHTAG";
+    public static final String ACTION_CLEAR_CACHE = "com.sanardev.instagrammqtt.REALTIME.ACTION_CLEAR_CACHE";
 
 
 }
