@@ -27,32 +27,13 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
     val username = ObservableField<String>()
     val password = ObservableField<String>()
     val isLoading = ObservableField<Boolean>(false)
-    private var _token = MutableLiveData<String>()
-    private var _result = MediatorLiveData<Resource<InstagramLoginResult>>()
     val intentEvent = MutableLiveData<Pair<KClass<out AppCompatActivity>, Bundle?>>()
 
-    val result: LiveData<Resource<InstagramLoginResult>> = Transformations.map(_result) {
-        if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
-            mUseCase.saveUserData(it.data?.loggedInUser,it.headers)
-        }
-
-        if (it.apiError?.data == null)
-            return@map it
-
-        if (it.status == Resource.Status.ERROR) {
-            val gson = Gson()
-            val instagramLoginResult =
-                gson.fromJson(it.apiError.data!!.string(), InstagramLoginResult::class.java)
-            it.data = instagramLoginResult
-        }
-
-        return@map it
-    }
-
+    val result =  MutableLiveData<Resource<InstagramLoginResult>>()
 
     init {
         if (mUseCase.isLogged()) {
-            intentEvent.postValue(Pair(MainActivity::class, null))
+            intentEvent.value = (Pair(MainActivity::class, null))
         }
     }
 
@@ -71,7 +52,9 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
         }
 
         isLoading.set(true)
-        mUseCase.instagramLogin(_username, _password, _result)
+        mUseCase.instagramLogin(_username, _password).observeForever {
+            result.value = it
+        }
     }
 
 }

@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -47,10 +48,7 @@ import com.sanardev.instagrammqtt.datasource.model.event.*
 import com.sanardev.instagrammqtt.datasource.model.response.InstagramLoggedUser
 import com.sanardev.instagrammqtt.extensions.*
 import com.sanardev.instagrammqtt.extentions.*
-import com.sanardev.instagrammqtt.realtime.commands.RealTimeCommand
-import com.sanardev.instagrammqtt.realtime.commands.RealTime_MarkAsSeen
-import com.sanardev.instagrammqtt.realtime.commands.RealTime_SendLike
-import com.sanardev.instagrammqtt.realtime.commands.RealTime_SendTypingState
+import com.sanardev.instagrammqtt.realtime.commands.*
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.ui.fullscreen.FullScreenActivity
 import com.sanardev.instagrammqtt.ui.playvideo.PlayVideoActivity
@@ -465,15 +463,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         when (connectionStateEvent.connection) {
             ConnectionStateEvent.State.CONNECTING -> {
                 binding.txtProfileDec.text = getString(R.string.connecting)
+                this@DirectActivity.finish()
             }
             ConnectionStateEvent.State.NETWORK_DISCONNECTED -> {
                 binding.txtProfileDec.text = getString(R.string.waiting_for_network)
+                this@DirectActivity.finish()
             }
             ConnectionStateEvent.State.CHANNEL_DISCONNECTED -> {
                 binding.txtProfileDec.text = getString(R.string.connecting)
+                this@DirectActivity.finish()
             }
             ConnectionStateEvent.State.NETWORK_CONNECTION_RESET -> {
                 binding.txtProfileDec.text = getString(R.string.connecting)
+                this@DirectActivity.finish()
             }
             else -> {
 
@@ -1226,6 +1228,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                 }
                 InstagramConstants.MessageType.LIKE.type -> {
                     val dataBinding = holder.binding as LayoutLikeBinding
+                    layoutMessage?.background = null
                     dataBinding.txtMessage.text = item.like
                 }
                 InstagramConstants.MessageType.MEDIA_SHARE.type -> {
@@ -1395,6 +1398,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     false
                 )
                 viewDataBinding.remove.setOnClickListener {
+                    RealTimeService.run(this@DirectActivity,RealTime_ClearItemCache(viewModel.mThread.threadId,item.itemId))
                     viewModel.unsendMessage(item.itemId, item.clientContext)
                     dialog.dismiss()
                 }

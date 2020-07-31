@@ -169,6 +169,7 @@ class InstagramConstants {
     enum class Error(var msg:String){
         BAD_PASSWORD("bad_password"),
         INVALID_TWO_FACTOR_CODE("invalid_nonce"),
+        INVALID_CODE_VALIDATION("sms_code_validation_code_invalid"),
         RATE_LIMIT("rate_limit_error"),
         LOGIN_REQUIRED("login_required")
     }

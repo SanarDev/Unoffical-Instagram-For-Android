@@ -21,24 +21,7 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
     BaseViewModel(application) {
 
     val isLoading = MutableLiveData<Boolean>(false)
-
-    private val _result = MediatorLiveData<Resource<InstagramLoginResult>>()
-    val result = Transformations.map(_result) {
-        if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
-            mUseCase.saveUserData(it.data?.loggedInUser,it.headers)
-        }
-
-        if (it.apiError?.data == null)
-            return@map it
-        if(it.status == Resource.Status.ERROR) {
-            val gson = Gson()
-            val instagramLoginResult =
-                gson.fromJson(it.apiError.data!!.string(), InstagramLoginResult::class.java)
-            it.data = instagramLoginResult
-        }
-
-        return@map it
-    }
+    val result = MutableLiveData<Resource<InstagramLoginResult>>()
 
     val isEnableResendButton = ObservableField<Boolean>(false)
     val endOfPhoneNumber = ObservableField<String>("")
@@ -117,14 +100,25 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
 
     fun onVerifyButtonClick(v: View? = null) {
         val code = StringBuilder()
-            .append(textCodeOne)
-            .append(textCodeTwo)
-            .append(textCodeThree)
-            .append(textCodeFour)
-            .append(textCodeFive)
-            .append(textCodeSix)
+            .append(textCodeOne.get())
+            .append(textCodeTwo.get())
+            .append(textCodeThree.get())
+            .append(textCodeFour.get())
+            .append(textCodeFive.get())
+            .append(textCodeSix.get())
             .toString()
-        mUseCase.checkTwoFactorCode(_result, instagramTwoFactorInfo, code)
+
+        mUseCase.checkTwoFactorCode(instagramTwoFactorInfo, code).observeForever {
+            if(it.status == Resource.Status.ERROR){
+                textCodeOne.set("")
+                textCodeTwo.set("")
+                textCodeThree.set("")
+                textCodeFour.set("")
+                textCodeFive.set("")
+                textCodeSix.set("")
+            }
+            result.value = it
+        }
     }
 
     fun edtOneTextChange(s: CharSequence, start: Int, before: Int, count: Int) {
@@ -165,7 +159,6 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
     fun edtSixTextChange(s: CharSequence, start: Int, before: Int, count: Int) {
         if (s.isBlank())
             return
-        onVerifyButtonClick()
     }
 
 

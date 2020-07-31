@@ -104,6 +104,7 @@
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_PROFILE" />
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_HASHTAG" />
                 <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CLEAR_CACHE"/>
+                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CLEAR_ITEM_CACHE"/>
             </intent-filter>
         </service>
 

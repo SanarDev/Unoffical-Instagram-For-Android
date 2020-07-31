@@ -14,7 +14,6 @@ import com.sanardev.instagrammqtt.datasource.model.Message
 import com.sanardev.instagrammqtt.datasource.model.ParsedMessage
 import com.sanardev.instagrammqtt.datasource.model.Seen
 import com.sanardev.instagrammqtt.datasource.model.event.*
-import com.sanardev.instagrammqtt.datasource.model.realtime.*
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsConnectPacket
 import com.sanardev.instagrammqtt.fbns.packethelper.FbnsPacketEncoder
 import com.sanardev.instagrammqtt.fbns.packethelper.MQTToTConnectionData
@@ -29,6 +28,7 @@ import com.sanardev.instagrammqtt.usecase.UseCase
 import com.sanardev.instagrammqtt.utils.DisplayUtils
 import com.sanardev.instagrammqtt.utils.NetworkUtils
 import com.sanardev.instagrammqtt.utils.ZlibUtis
+import com.sanardev.instagrammqtt.datasource.model.realtime.RealtimeSubDirectDataWrapper
 import dagger.android.AndroidInjection
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.Unpooled
@@ -144,6 +144,15 @@ class RealTimeService : Service() {
             RealTimeIntent.ACTION_CLEAR_CACHE -> {
                 newMessageList.clear()
                 removedMessageList.clear()
+            }
+            RealTimeIntent.ACTION_CLEAR_ITEM_CACHE -> {
+                val data = intent.extras!!.getParcelable<RealTime_ClearItemCache>("data")!!
+                for(index in newMessageList.indices){
+                    if(newMessageList[index].threadId == data.threadId && newMessageList[index].message.itemId == data.itemId){
+                        newMessageList.removeAt(index)
+                        break
+                    }
+                }
             }
             RealTimeIntent.ACTION_SEND_TEXT_MESSAGE -> {
                 val data = intent.extras!!.getParcelable<RealTime_SendMessage>("data")!!

@@ -229,6 +229,7 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
                 clCotext,
                 currentVoiceFileName!!
             )
+            messages.add(0, message)
             mActionListener?.onNewMessage(message)
             val users = mutableLiveData.value!!.data!!.thread!!.users
             mUseCase.sendMediaVoice(
@@ -247,7 +248,6 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
                         itemId = it.data!!.messageMetaDatas[0].itemId
                         timestamp = it.data!!.messageMetaDatas[0].timestamp.toLong()
                     })
-                    messages.add(0, message)
                 }
             }
         }

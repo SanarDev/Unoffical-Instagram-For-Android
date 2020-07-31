@@ -21,6 +21,7 @@ import com.sanardev.instagrammqtt.datasource.model.payload.InstagramLoginTwoFact
 import com.sanardev.instagrammqtt.datasource.model.response.*
 import com.sanardev.instagrammqtt.extentions.isServiceRunning
 import com.sanardev.instagrammqtt.extentions.toStringList
+import com.sanardev.instagrammqtt.extentions.toast
 import com.sanardev.instagrammqtt.repository.InstagramRepository
 import com.sanardev.instagrammqtt.service.realtime.RealTimeService
 import com.sanardev.instagrammqtt.utils.*
@@ -52,11 +53,17 @@ class UseCase(
 
     var isNotificationEnable: Boolean
         get() {
-            return application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+            return application.getSharedPreferences(
+                InstagramConstants.SharedPref.USER.name,
+                Context.MODE_PRIVATE
+            )
                 .getBoolean("is_notification_enabled", true)
         }
         set(value) {
-            application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+            application.getSharedPreferences(
+                InstagramConstants.SharedPref.USER.name,
+                Context.MODE_PRIVATE
+            )
                 .edit()
                 .putBoolean("is_notification_enabled", value)
                 .apply()
@@ -64,11 +71,17 @@ class UseCase(
 
     var isSeenMessageEnable: Boolean
         get() {
-            return application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+            return application.getSharedPreferences(
+                InstagramConstants.SharedPref.USER.name,
+                Context.MODE_PRIVATE
+            )
                 .getBoolean("is_seen_message_enabled", true)
         }
         set(value) {
-            application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+            application.getSharedPreferences(
+                InstagramConstants.SharedPref.USER.name,
+                Context.MODE_PRIVATE
+            )
                 .edit()
                 .putBoolean("is_seen_message_enabled", value)
                 .apply()
@@ -124,7 +137,7 @@ class UseCase(
     }
 
 
-    fun getInstagramToken(result: MediatorLiveData<Resource<InstagramLoginResult>>): LiveData<String> {
+    fun getInstagramToken(result: MutableLiveData<Resource<InstagramLoginResult>>): LiveData<String> {
         val liveDataToken = MutableLiveData<Headers?>()
         result.value = Resource.loading(null)
         mInstagramRepository.requestCsrfToken(liveDataToken)
@@ -139,16 +152,15 @@ class UseCase(
 
     fun instagramLogin(
         username: String,
-        password: String,
-        result: MediatorLiveData<Resource<InstagramLoginResult>>
-    ) {
-
-        getInstagramToken(result).observeForever {
+        password: String
+    ): LiveData<Resource<InstagramLoginResult>> {
+        val liveData = MutableLiveData<Resource<InstagramLoginResult>>()
+        getInstagramToken(liveData).observeForever {
 
             val cookie = getCookie()
             cookie.csrftoken = it!!
             val deviceId = generateDeviceId(username, password)
-
+            cookie.deviceID = deviceId
             val instagramLoginPayload =
                 InstagramLoginPayload(
                     username,
@@ -156,22 +168,44 @@ class UseCase(
                     cookie.csrftoken!!,
                     cookie.guid,
                     cookie.adid,
-                    deviceId,
+                    cookie.deviceID,
                     password
                 )
             StorageUtils.saveLastLoginData(application, instagramLoginPayload)
             StorageUtils.saveLoginCookie(application, cookie)
             mInstagramRepository.login(
-                result,
+                liveData,
                 instagramLoginPayload,
                 { getHeaders() },
                 { t -> getSignaturePayload(t) }
             )
         }
+
+        return Transformations.map(liveData) {
+            if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
+                saveUserData(it.data?.loggedInUser, it.headers)
+                return@map it
+            }
+
+            if (it.apiError?.data == null) {
+                return@map it
+            }
+
+            if (it.status == Resource.Status.ERROR) {
+                val gson = Gson()
+                val instagramLoginResult =
+                    gson.fromJson(it.apiError.data!!.string(), InstagramLoginResult::class.java)
+                it.data = instagramLoginResult
+            }
+            return@map it
+        }
     }
 
     fun isLogged(): Boolean {
-        val isLogged = application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+        val isLogged = application.getSharedPreferences(
+            InstagramConstants.SharedPref.USER.name,
+            Context.MODE_PRIVATE
+        )
             .getBoolean("is_logged", false)
 //        val user = getUserData()
         return isLogged
@@ -215,10 +249,10 @@ class UseCase(
     }
 
     fun checkTwoFactorCode(
-        responseLiveData: MediatorLiveData<Resource<InstagramLoginResult>>,
         instagramTwoFactorInfo: InstagramTwoFactorInfo,
         code: String
-    ) {
+    ): LiveData<Resource<InstagramLoginResult>> {
+        val responseLiveData = MutableLiveData<Resource<InstagramLoginResult>>()
         val instagramLoginTwoFactorPayload =
             InstagramLoginTwoFactorPayload.fromCookie(getCookie()).apply {
                 username = instagramTwoFactorInfo.username
@@ -232,6 +266,22 @@ class UseCase(
             { getHeaders() },
             { t -> getSignaturePayload(t) }
         )
+        return Transformations.map(responseLiveData) {
+            if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
+                saveUserData(it.data?.loggedInUser, it.headers)
+            }
+
+            if (it.apiError?.data == null)
+                return@map it
+            if (it.status == Resource.Status.ERROR) {
+                val gson = Gson()
+                val instagramLoginResult =
+                    gson.fromJson(it.apiError.data!!.string(), InstagramLoginResult::class.java)
+                it.data = instagramLoginResult
+            }
+            return@map it
+        }
+
     }
 
     private fun getSignaturePayload(obj: Any): RequestBody {
@@ -297,13 +347,19 @@ class UseCase(
         )
         loggedInUser.password = instagramLoginPayload!!.password
         StorageUtils.saveLoggedInUserData(application, loggedInUser)
-        application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE).edit().apply {
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.USER.name,
+            Context.MODE_PRIVATE
+        ).edit().apply {
             putBoolean("is_logged", true)
         }.apply()
     }
 
     fun isUserLogged() =
-        application.getSharedPreferences(InstagramConstants.SharedPref.USER.name, Context.MODE_PRIVATE)
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.USER.name,
+            Context.MODE_PRIVATE
+        )
             .getBoolean("is_logged", false)
 
     fun getUserData(): InstagramLoggedUser? {
@@ -1001,7 +1057,7 @@ class UseCase(
                 { t -> formUrlEncode(t) },
                 { getHeaders() })
             res.observeForever {
-                if(it.status == Resource.Status.SUCCESS){
+                if (it.status == Resource.Status.SUCCESS) {
                     saveFbnsRegisterToken(token)
                 }
             }
@@ -1061,9 +1117,14 @@ class UseCase(
     }
 
     fun notifyDirectMessage(notification: NotificationContentJson?) {
+//        notification?.let {
+//            mHandler.post {
+//                application.toast(it.notificationContent.collapseKey)
+//            }
+//        }
         if (notification == null ||
             !isNotificationEnable ||
-            notification.notificationContent.collapseKey != "direct_v2_message" ||
+            !notification.notificationContent.collapseKey.contains("direct")||
             (!BaseApplication.isAppInOnStop && application.isServiceRunning(RealTimeService::class.java))
         ) {
             return
@@ -1072,7 +1133,10 @@ class UseCase(
         val senderName = nc.message.split(":")[0].trim()
         var message = nc.message.split(":")[1].trim()
         val notificationDataPref =
-            application.getSharedPreferences(InstagramConstants.SharedPref.NOTIFICATION_DATA.name, Context.MODE_PRIVATE)
+            application.getSharedPreferences(
+                InstagramConstants.SharedPref.NOTIFICATION_DATA.name,
+                Context.MODE_PRIVATE
+            )
 
         val keyMessages = senderName.replace(" ", "_") + "_Messages"
         val keyNotificationId = senderName.replace(" ", "_") + "_NotificationId"
@@ -1107,7 +1171,10 @@ class UseCase(
 
     fun dismissAllNotification() {
         NotificationUtils.dismissAllNotification(application)
-        application.getSharedPreferences(InstagramConstants.SharedPref.NOTIFICATION_DATA.name, Context.MODE_PRIVATE).edit().clear()
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.NOTIFICATION_DATA.name,
+            Context.MODE_PRIVATE
+        ).edit().clear()
             .apply()
     }
 
@@ -1143,16 +1210,25 @@ class UseCase(
     }
 
     fun getLastFbnsRegisterToken() =
-        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.FBNS_DATA.name,
+            Context.MODE_PRIVATE
+        )
             .getString("register_token", null)
 
     fun getLastFbnsTokenTimeStamp() =
-        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.FBNS_DATA.name,
+            Context.MODE_PRIVATE
+        )
             .getLong("time_stamp", 0)
 
 
     fun saveFbnsRegisterToken(token: String) {
-        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name, Context.MODE_PRIVATE)
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.FBNS_DATA.name,
+            Context.MODE_PRIVATE
+        )
             .edit()
             .putString("register_token", token)
             .putLong("time_stamp", System.currentTimeMillis())
@@ -1191,20 +1267,39 @@ class UseCase(
             StorageUtils.FBNS_AUTH
         )
 
-        application.getSharedPreferences(InstagramConstants.SharedPref.USER.name,Context.MODE_PRIVATE).edit().clear().apply()
-        application.getSharedPreferences(InstagramConstants.SharedPref.FBNS_DATA.name,Context.MODE_PRIVATE).edit().clear().apply()
-        application.getSharedPreferences(InstagramConstants.SharedPref.NOTIFICATION_DATA.name,Context.MODE_PRIVATE).edit().clear().apply()
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.USER.name,
+            Context.MODE_PRIVATE
+        ).edit().clear().apply()
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.FBNS_DATA.name,
+            Context.MODE_PRIVATE
+        ).edit().clear().apply()
+        application.getSharedPreferences(
+            InstagramConstants.SharedPref.NOTIFICATION_DATA.name,
+            Context.MODE_PRIVATE
+        ).edit().clear().apply()
     }
 
-    fun unsendMessage(threadId: String,itemId: String,clientContext: String): MutableLiveData<Resource<ResponseBody>> {
+    fun unsendMessage(
+        threadId: String,
+        itemId: String,
+        clientContext: String
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
-        val data = HashMap<String,String>().apply {
-            put("_uuid",cookie.adid)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("original_message_client_context",clientContext)
+        val data = HashMap<String, String>().apply {
+            put("_uuid", cookie.adid)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("original_message_client_context", clientContext)
         }
-        mInstagramRepository.unsendMessage(result,{getHeaders()},threadId,itemId,data,{t -> formUrlEncode(t)})
+        mInstagramRepository.unsendMessage(
+            result,
+            { getHeaders() },
+            threadId,
+            itemId,
+            data,
+            { t -> formUrlEncode(t) })
         return result
     }
 
