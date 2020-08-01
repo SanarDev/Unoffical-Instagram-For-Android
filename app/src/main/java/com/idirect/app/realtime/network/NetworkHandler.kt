@@ -57,10 +57,10 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
     }
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
-        EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTED))
         val packet = msg as MqttMessage
         when (packet!!.fixedHeader().messageType()) {
             MqttMessageType.CONNACK -> {
+                EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTED))
                 Log.i(InstagramConstants.DEBUG_TAG, "RealTime ConnAck");
                 ctx!!.pipeline().remove("encoder")
                 realTimeService.onConnAck()

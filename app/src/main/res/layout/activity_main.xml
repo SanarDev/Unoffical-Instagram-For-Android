@@ -156,11 +156,22 @@
                 app:rippleColor="@color/text_very_light"
                 app:useCompatPadding="true" />
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/txt_no_direct"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_light"
+                android:textSize="16sp"
+                android:visibility="gone"
+                android:text="@string/no_direct_found"
+                android:layout_centerInParent="true" />
+
             <include
                 android:id="@+id/include_layout_network"
                 layout="@layout/layout_internet_connection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:layout_centerInParent="true" />
 
         </RelativeLayout>

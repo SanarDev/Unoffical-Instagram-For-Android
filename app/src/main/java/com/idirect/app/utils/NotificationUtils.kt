@@ -9,11 +9,14 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat.getSystemService
 import com.bumptech.glide.Glide
 import com.idirect.app.R
+import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.receiver.DismissNotificationReceiver
 import com.idirect.app.ui.login.LoginActivity
 import com.idirect.app.ui.main.MainActivity
+import kotlin.random.Random
 
 
 class NotificationUtils {
@@ -27,6 +30,41 @@ class NotificationUtils {
             val notificationManager =
                 application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancelAll()
+        }
+
+        fun notifyAlert(context: Context,title:String?,message: String){
+            val intent = Intent(context, LoginActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            val pendingIntent = PendingIntent.getActivity(
+                context, 0 /* Request code */, intent,
+                PendingIntent.FLAG_ONE_SHOT
+            )
+
+            val channelId = InstagramConstants.ALERT_NOTIFICATION_CHANNEL_ID
+            val channelName = InstagramConstants.ALERT_NOTIFICATION_CHANNEL_ID
+            val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val notificationBuilder = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.ic_send)
+                .setContentTitle(title ?: context.getString(R.string.app_name))
+                .setContentText(message)
+                .setAutoCancel(true)
+                .setSound(null)
+                .setContentIntent(pendingIntent)
+
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Since android Oreo notification channel is needed.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    channelId,
+                    channelName,
+                    NotificationManager.IMPORTANCE_HIGH
+                )
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            notificationManager.notify(Random.nextInt() /* ID of notification */, notificationBuilder.build())
         }
 
         fun notify(
@@ -88,7 +126,7 @@ class NotificationUtils {
 
             val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             val notificationBuilder = NotificationCompat.Builder(application, channelId)
-                .setSmallIcon(R.drawable.ic_note)
+                .setSmallIcon(R.drawable.ic_send)
                 .setLargeIcon(bitmap)
                 .setContentTitle(title)
                 .setContentText(message)

@@ -10,7 +10,7 @@ class InstagramConstants {
          * Base API URL
          *
          */
-        const val ALERT_NOTIFICATION_CHANNEL_ID = "alert"
+        const val ALERT_NOTIFICATION_CHANNEL_ID = "iDirect"
         const val DEBUG_TAG = "debug_application"
 
         const val X_DEVICE_ID = "X-DEVICE-ID"

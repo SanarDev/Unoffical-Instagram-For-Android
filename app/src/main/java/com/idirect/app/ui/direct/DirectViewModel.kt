@@ -270,6 +270,9 @@ class DirectViewModel @Inject constructor(application: Application, var mUseCase
                 messageText.get()
             )
         )
+        if(mThread.messages == null){
+            EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT))
+        }
         val matcher = mPatternRegexUrl.matcher(messageText.get()!!.toLowerCase(Locale.ROOT))
         val message = if (matcher.find()) {
             val linkList = ArrayList<String>().toMutableList()

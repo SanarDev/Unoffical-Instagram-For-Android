@@ -100,4 +100,5 @@
     <string name="share_story">Share a story</string>
     <string name="invalid_code_validation">Sms code invalid. please enter valid code</string>
     <string name="item_not_supported">Sorry %s is not supported</string>
+    <string name="no_direct_found">Start new message with touch pen icon</string>
 </resources>

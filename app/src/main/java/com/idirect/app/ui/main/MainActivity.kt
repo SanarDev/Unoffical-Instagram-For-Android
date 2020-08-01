@@ -186,7 +186,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 Resource.Status.LOADING -> {
                     if (!isLoadingMoreDirects && adapter.items.isEmpty()) {
                         visible(binding.progressbar)
-                        gone(binding.recyclerviewDirects, binding.includeLayoutNetwork.root)
+                        gone(binding.recyclerviewDirects,binding.txtNoDirect, binding.includeLayoutNetwork.root)
                     }
                 }
                 Resource.Status.ERROR -> {
@@ -232,7 +232,6 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                 Resource.Status.SUCCESS -> {
                     gone(binding.progressbar, binding.includeLayoutNetwork.root)
                     visible(binding.recyclerviewDirects)
-
                     isLoadingMoreDirects = false
                     if (it.data!!.inbox.oldestCursor == null) {
                         isMoreDirectExist = false
@@ -240,6 +239,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>() {
                     adapter.setLoading(isLoadingMoreDirects)
                     seqID = it.data!!.seqId
                     val threads = it.data!!.inbox.threads
+                    if(threads.isEmpty()){
+                        binding.txtNoDirect.visibility = View.VISIBLE
+                    }else{
+                        binding.txtNoDirect.visibility = View.GONE
+                    }
                     RealTimeService.run(
                         this@MainActivity,
                         RealTime_StartService(
