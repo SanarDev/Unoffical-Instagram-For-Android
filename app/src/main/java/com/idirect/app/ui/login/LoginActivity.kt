@@ -16,6 +16,7 @@ import com.idirect.app.utils.Resource
 import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.ui.twofactor.TwoFactorActivity
 import com.idirect.app.extentions.hideKeyboard
+import com.idirect.app.extentions.toast
 
 class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
 
@@ -78,6 +79,10 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                         }
                     }
 
+                    if(it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code){
+                        toast(getString(R.string.error_internet_connection))
+                        return@Observer
+                    }
                     if (it.data?.twoFactorRequired != null && it.data?.twoFactorRequired!!) {
                         startActivity(
                             Intent(

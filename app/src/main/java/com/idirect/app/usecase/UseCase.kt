@@ -136,7 +136,7 @@ class UseCase(
     }
 
 
-    fun getInstagramToken(result: MutableLiveData<Resource<InstagramLoginResult>>): LiveData<String> {
+    fun getInstagramToken(result: MutableLiveData<Resource<InstagramLoginResult>>): LiveData<String?> {
         val liveDataToken = MutableLiveData<Headers?>()
         result.value = Resource.loading(null)
         mInstagramRepository.requestCsrfToken(liveDataToken)
@@ -144,7 +144,11 @@ class UseCase(
         liveDataToken.observeForever {
         }
         return Transformations.switchMap(liveDataToken) {
-            return@switchMap MutableLiveData<String>(cookieUtils.findCookie(it!!, "csrftoken"))
+            if (it == null) {
+                return@switchMap MutableLiveData<String>(null)
+            } else {
+                return@switchMap MutableLiveData<String>(cookieUtils.findCookie(it!!, "csrftoken"))
+            }
         }
     }
 
@@ -156,6 +160,10 @@ class UseCase(
         val liveData = MutableLiveData<Resource<InstagramLoginResult>>()
         getInstagramToken(liveData).observeForever {
 
+            if(it == null){
+                liveData.value = Resource.error(APIErrors(InstagramConstants.ErrorCode.INTERNET_CONNECTION.code,""))
+                return@observeForever
+            }
             val cookie = getCookie()
             cookie.csrftoken = it!!
             val deviceId = generateDeviceId(username, password)
@@ -1123,7 +1131,7 @@ class UseCase(
 //        }
         if (notification == null ||
             !isNotificationEnable ||
-            !notification.notificationContent.collapseKey.contains("direct")||
+            !notification.notificationContent.collapseKey.contains("direct") ||
             (!BaseApplication.isAppInOnStop && application.isServiceRunning(RealTimeService::class.java))
         ) {
             return

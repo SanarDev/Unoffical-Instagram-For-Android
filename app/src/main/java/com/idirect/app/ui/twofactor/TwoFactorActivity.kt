@@ -9,6 +9,7 @@ import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.databinding.ActivityTwoFactorBinding
 import com.idirect.app.datasource.model.response.InstagramTwoFactorInfo
+import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.dialog.DialogHelper
@@ -63,6 +64,8 @@ class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding, TwoFactorViewMo
                            getString(R.string.invalid_code_validation),
                            positiveText = getString(R.string.try_again)
                        )
+                   }else if(it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code){
+                       toast(getString(R.string.error_internet_connection))
                    }
                }
                Resource.Status.SUCCESS ->{
