@@ -7,7 +7,7 @@
 
         <variable
             name="obj"
-            type="com.sanardev.instagrammqtt.datasource.model.Thread" />
+            type="com.idirect.app.datasource.model.Thread" />
     </data>
 
     <LinearLayout

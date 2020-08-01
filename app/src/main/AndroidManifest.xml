@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.sanardev.instagrammqtt">
+    package="com.idirect.app">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -20,7 +20,7 @@
         android:required="false" />
 
     <application
-        android:name=".core.BaseApplication"
+        android:name="com.idirect.app.core.BaseApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -30,11 +30,11 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning,HardcodedDebugMode"
         tools:replace="android:label">
-        <activity android:name=".ui.main.MainActivity"
+        <activity android:name="com.idirect.app.ui.main.MainActivity"
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name=".ui.login.LoginActivity"
+        <activity android:name="com.idirect.app.ui.login.LoginActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -42,74 +42,74 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.setting.SettingActivity"
+        <activity android:name="com.idirect.app.ui.setting.SettingActivity"
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name=".ui.twofactor.TwoFactorActivity"
+        <activity android:name="com.idirect.app.ui.twofactor.TwoFactorActivity"
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name=".ui.direct.DirectActivity"
+        <activity android:name="com.idirect.app.ui.direct.DirectActivity"
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name=".ui.startmessage.StartMessageActivity"
+        <activity android:name="com.idirect.app.ui.startmessage.StartMessageActivity"
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name=".ui.fullscreen.FullScreenActivity"
+        <activity android:name="com.idirect.app.ui.fullscreen.FullScreenActivity"
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name=".ui.playvideo.PlayVideoActivity"
+        <activity android:name="com.idirect.app.ui.playvideo.PlayVideoActivity"
             android:screenOrientation="portrait">
 
         </activity>
 
-        <receiver android:name=".receiver.NetworkChangeReceiver">
+        <receiver android:name="com.idirect.app.receiver.NetworkChangeReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".receiver.DismissNotificationReceiver"
+        <receiver android:name="com.idirect.app.receiver.DismissNotificationReceiver"
             android:exported="false">
 
         </receiver>
-        <service android:name="com.sanardev.instagrammqtt.service.fbns.FbnsService">
+        <service android:name="com.idirect.app.service.fbns.FbnsService">
             <intent-filter>
-                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_CHECK_SESSION" />
-                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_HEARTBEAT" />
-                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_CONNECT_SESSION" />
-                <action android:name="com.sanardev.instagrammqtt.FBNS.ACTION_DISCONNECT_SESSION" />
+                <action android:name="com.idirect.app.FBNS.ACTION_CHECK_SESSION" />
+                <action android:name="com.idirect.app.FBNS.ACTION_HEARTBEAT" />
+                <action android:name="com.idirect.app.FBNS.ACTION_CONNECT_SESSION" />
+                <action android:name="com.idirect.app.FBNS.ACTION_DISCONNECT_SESSION" />
             </intent-filter>
         </service>
 
-        <service android:name="com.sanardev.instagrammqtt.service.realtime.RealTimeService">
+        <service android:name="com.idirect.app.service.realtime.RealTimeService">
             <intent-filter>
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CHECK_SESSION" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_HEARTBEAT" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CONNECT_SESSION" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_DISCONNECT_SESSION" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_TEXT_MESSAGE" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_MARK_AS_SEEN" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_MEDIA" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_LOCATION" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_REACTION" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_TYPING_STATE" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_USER_STORY" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_LIKE" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_PROFILE" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_SEND_HASHTAG" />
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CLEAR_CACHE"/>
-                <action android:name="com.sanardev.instagrammqtt.REALTIME.ACTION_CLEAR_ITEM_CACHE"/>
+                <action android:name="com.idirect.app.REALTIME.ACTION_CHECK_SESSION" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_HEARTBEAT" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_CONNECT_SESSION" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_DISCONNECT_SESSION" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_TEXT_MESSAGE" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_MARK_AS_SEEN" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_MEDIA" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_LOCATION" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_REACTION" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_TYPING_STATE" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_USER_STORY" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_LIKE" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_PROFILE" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_SEND_HASHTAG" />
+                <action android:name="com.idirect.app.REALTIME.ACTION_CLEAR_CACHE"/>
+                <action android:name="com.idirect.app.REALTIME.ACTION_CLEAR_ITEM_CACHE"/>
             </intent-filter>
         </service>
 
         <service
-            android:name=".service.firebasemessaging.AppFirebaseMessagingService"
+            android:name="com.idirect.app.service.firebasemessaging.AppFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

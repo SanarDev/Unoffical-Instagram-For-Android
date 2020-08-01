@@ -95,8 +95,9 @@
     <string name="seen_message">Seen Message</string>
     <string name="posts">Posts</string>
     <string name="following">Following</string>
-    <string name="logout_message">Are you sure?</string>
+    <string name="logout_message">Are you sure you want to exit?</string>
     <string name="cancel">Cancel</string>
     <string name="share_story">Share a story</string>
     <string name="invalid_code_validation">Sms code invalid. please enter valid code</string>
+    <string name="item_not_supported">Sorry %s is not supported</string>
 </resources>

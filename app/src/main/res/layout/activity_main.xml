@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="com.sanardev.instagrammqtt.ui.main.MainViewModel" />
+            type="com.idirect.app.ui.main.MainViewModel" />
     </data>
 
     <androidx.drawerlayout.widget.DrawerLayout

@@ -7,7 +7,7 @@
 
         <variable
             name="viewModel"
-            type="com.sanardev.instagrammqtt.ui.startmessage.StartMessageViewModel" />
+            type="com.idirect.app.ui.startmessage.StartMessageViewModel" />
     </data>
 
     <LinearLayout

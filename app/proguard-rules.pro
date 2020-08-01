@@ -46,7 +46,7 @@
 -keep public class * extends android.arch.persistence.room.RoomDatabase
 -dontwarn android.arch.persistence.room.paging.**
 
--keep class com.sanardev.instagrammqtt.datasource.model.**{*;}
+-keep class com.idirect.app.datasource.model.**{*;}
 #################
 -dontwarn android.test.**
 -dontwarn com.google.common.**
@@ -133,3 +133,10 @@
 -keep class com.google.android.exoplayer.** {*;}
 
 -keep class io.netty.** {*;}
+
+
+# Crashlytics
+-keep class com.crashlytics.** { *; }
+-dontwarn com.crashlytics.**
+-keepattributes SourceFile,LineNumberTable,*Annotation*
+-keep class com.crashlytics.android.**

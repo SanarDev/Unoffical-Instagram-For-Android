@@ -7,8 +7,8 @@
 
         <variable
             name="viewModel"
-            type="com.sanardev.instagrammqtt.ui.direct.DirectViewModel" />
-        <import type="com.sanardev.instagrammqtt.utils.Resource"/>
+            type="com.idirect.app.ui.direct.DirectViewModel" />
+        <import type="com.idirect.app.utils.Resource"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

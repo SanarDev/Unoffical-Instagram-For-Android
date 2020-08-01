@@ -2,13 +2,15 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
     useLibrary 'org.apache.http.legacy'
     defaultConfig {
-        applicationId "com.sanardev.instagrammqtt"
+        applicationId "com.idirect.app"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
@@ -168,7 +170,11 @@ dependencies {
 
 
     // Firebase
-    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
-    implementation 'com.google.firebase:firebase-messaging:20.1.2'
+    implementation 'com.google.firebase:firebase-messaging:20.2.3'
+
+    implementation 'com.google.firebase:firebase-analytics:17.4.4'
+
+    // Add the Firebase Crashlytics SDK.
+    implementation 'com.google.firebase:firebase-crashlytics:17.1.1'
 }
 

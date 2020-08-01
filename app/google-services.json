@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "67585906244",
+    "firebase_url": "https://idirect-4909b.firebaseio.com",
+    "project_id": "idirect-4909b",
+    "storage_bucket": "idirect-4909b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67585906244:android:078f3dc6f226a368510e11",
+        "android_client_info": {
+          "package_name": "com.idirect.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "67585906244-jeou6rn0ig9g6k8qr3vkjam0klkquhat.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.idirect.app",
+            "certificate_hash": "23b601824b0355bddac444515a55444c88d01d3d"
+          }
+        },
+        {
+          "client_id": "67585906244-f2u92sc79bfv6djmheemdhlls39luvhb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh63L9oJQ5IjKxb75uz80MpC4yMQB7YTc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "67585906244-f2u92sc79bfv6djmheemdhlls39luvhb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
