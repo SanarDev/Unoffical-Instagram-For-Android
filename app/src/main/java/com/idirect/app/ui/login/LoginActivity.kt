@@ -11,7 +11,7 @@ import com.idirect.app.core.BaseActivity
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.databinding.ActivityLoginBinding
-import com.idirect.app.ui.main.MainActivity
+import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.ui.twofactor.TwoFactorActivity
@@ -103,7 +103,7 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                         startActivity(
                             Intent(
                                 this@LoginActivity,
-                                MainActivity::class.java
+                                FragmentInbox::class.java
                             )
                         )
                     }

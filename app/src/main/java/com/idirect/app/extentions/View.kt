@@ -15,6 +15,9 @@ import android.text.style.ClickableSpan
 import android.text.style.URLSpan
 import android.view.View
 import android.widget.TextView
+import androidx.core.app.ActivityCompat.postponeEnterTransition
+import androidx.core.app.ActivityCompat.startPostponedEnterTransition
+import androidx.fragment.app.Fragment
 import com.idirect.app.utils.URLSpanNoUnderline
 import com.idirect.app.extentions.openUrl
 
@@ -138,4 +141,12 @@ fun View.locateViewInScreen(): Rect? {
     location.right = location.left + this.width
     location.bottom = location.top + this.height
     return location
+}
+
+fun Fragment.waitForTransition(v:View){
+    postponeEnterTransition()
+    v.viewTreeObserver.addOnPreDrawListener {
+        startPostponedEnterTransition()
+        true
+    }
 }

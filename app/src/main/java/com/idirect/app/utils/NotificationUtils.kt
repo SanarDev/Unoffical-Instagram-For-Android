@@ -9,13 +9,11 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat.getSystemService
 import com.bumptech.glide.Glide
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.receiver.DismissNotificationReceiver
 import com.idirect.app.ui.login.LoginActivity
-import com.idirect.app.ui.main.MainActivity
 import kotlin.random.Random
 
 

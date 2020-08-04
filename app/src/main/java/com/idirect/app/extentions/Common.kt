@@ -21,7 +21,11 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
+import com.idirect.app.R
 import java.io.File
 
 
@@ -41,21 +45,33 @@ fun <T> Context.openActivityForResult(it: Class<T>, resultCode: Int, extras: Bun
 }
 
 fun AppCompatActivity.replaceFragment(fragment: Fragment, @IdRes container: Int, addToBackStack: Boolean = false) {
-    val fragmentManager = supportFragmentManager
-    val fragmentTransaction = fragmentManager.beginTransaction()
-    fragmentTransaction.replace(container, fragment, fragment.javaClass.name)
-    if (addToBackStack)
-        fragmentTransaction.addToBackStack(null)
-    fragmentTransaction.commit()
+    val backStateName: String = fragment.javaClass.getName()
+
+    val manager: FragmentManager = supportFragmentManager
+    val fragmentPopped: Boolean = manager.popBackStackImmediate(backStateName, 0)
+
+    if (!fragmentPopped && manager.findFragmentByTag(backStateName) == null) { //fragment not in back stack, create it.
+        val ft: FragmentTransaction = manager.beginTransaction()
+        ft.replace(container, fragment, backStateName)
+        ft.setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right);
+        ft.addToBackStack(backStateName)
+        ft.commit()
+    }
 }
 
 fun Fragment.replaceFragment(fragment: Fragment, @IdRes container: Int, addToBackStack: Boolean = false) {
-    val fragmentManager = activity!!.supportFragmentManager
-    val fragmentTransaction = fragmentManager.beginTransaction()
-    fragmentTransaction.replace(container, fragment, fragment.javaClass.name)
-    if (addToBackStack)
-        fragmentTransaction.addToBackStack(null)
-    fragmentTransaction.commit()
+    val backStateName: String = fragment.javaClass.getName()
+
+    val manager: FragmentManager = activity!!.supportFragmentManager
+    val fragmentPopped: Boolean = manager.popBackStackImmediate(backStateName, 0)
+
+    if (!fragmentPopped && manager.findFragmentByTag(backStateName) == null) { //fragment not in back stack, create it.
+        val ft: FragmentTransaction = manager.beginTransaction()
+        ft.setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right);
+        ft.replace(container, fragment, backStateName)
+        ft.addToBackStack(backStateName)
+        ft.commit()
+    }
 }
 
 val View.realHeight: Int

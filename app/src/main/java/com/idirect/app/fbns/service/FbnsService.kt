@@ -1,4 +1,4 @@
-package com.idirect.app.service.fbns
+package com.idirect.app.fbns.service
 
 import android.app.Notification
 import android.app.Service
@@ -189,7 +189,10 @@ class FbnsService : Service() {
 
     fun onDisconnect() {
         if (mUseCase.isUserLogged()) {
-            run(applicationContext, FbnsIntent.ACTION_CONNECT_SESSION)
+            run(
+                applicationContext,
+                FbnsIntent.ACTION_CONNECT_SESSION
+            )
         }
     }
 

@@ -110,7 +110,7 @@
                                 android:layout_alignParentTop="true"
                                 android:tint="@color/white"
                                 android:layout_margin="10dp"
-                                android:src="@drawable/ic_mutliple_page"/>
+                                android:src="@drawable/ic_collection"/>
 
 
                         </RelativeLayout>

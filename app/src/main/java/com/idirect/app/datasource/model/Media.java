@@ -38,7 +38,7 @@ public class Media {
     private ImageVersions2 imageVersions2;
     @SerializedName("video_versions")
     @Expose
-    private List<VideoVersion> videoVersions = null;
+    private List<VideoVersion> videoVersions;
     @SerializedName("carousel_media_count")
     @Expose
     private int carouselMediaCount;
@@ -95,7 +95,7 @@ public class Media {
     private boolean hasLiked;
     @SerializedName("likers")
     @Expose
-    private List<Object> likers = null;
+    private List<Object> likers;
     @SerializedName("photo_of_you")
     @Expose
     private boolean photoOfYou;

@@ -12,7 +12,7 @@ public class In {
     private User user;
     @SerializedName("position")
     @Expose
-    private List<Double> position = null;
+    private List<Double> position;
     @SerializedName("start_time_in_video_in_sec")
     @Expose
     private Object startTimeInVideoInSec;

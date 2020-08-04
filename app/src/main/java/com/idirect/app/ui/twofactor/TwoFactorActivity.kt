@@ -10,6 +10,7 @@ import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.databinding.ActivityTwoFactorBinding
 import com.idirect.app.datasource.model.response.InstagramTwoFactorInfo
 import com.idirect.app.extentions.toast
+import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.dialog.DialogHelper

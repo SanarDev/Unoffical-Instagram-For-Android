@@ -33,7 +33,7 @@ open abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFr
         savedInstanceState: Bundle?
     ): View? {
         binding = DataBindingUtil.inflate(
-            inflater, getLayoutRes(), container, false
+            inflater, layoutRes(), container, false
         )
         viewModel = ViewModelProvider(this, viewModelFactory).get(getViewModelClass())
         binding.setVariable(BR.viewModel,viewModel)
@@ -41,5 +41,5 @@ open abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFr
         return view
     }
     abstract fun getViewModelClass(): Class<VM>
-    abstract fun getLayoutRes():Int
+    abstract fun layoutRes():Int
 }

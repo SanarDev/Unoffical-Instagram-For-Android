@@ -16,7 +16,7 @@ import com.idirect.app.databinding.ItemSelectingImageBinding
 import com.idirect.app.databinding.LayoutSelectImageBinding
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
-import com.idirect.app.ui.fullscreen.FullScreenActivity
+import com.idirect.app.ui.fullscreen.FullScreenFragment
 import com.idirect.app.ui.playvideo.PlayVideoActivity
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.MediaUtils
@@ -26,7 +26,7 @@ import com.idirect.app.extentions.vibration
 import java.io.File
 
 
-class SelectImageDialog(var resultFunction:(List<String>) -> Unit) : DialogFragment() {
+class SelectImageDialog(var selectImageListener: SelectImageListener) : DialogFragment() {
 
     override fun onStart() {
         super.onStart()
@@ -54,15 +54,15 @@ class SelectImageDialog(var resultFunction:(List<String>) -> Unit) : DialogFragm
         val binding: LayoutSelectImageBinding =
             DataBindingUtil.inflate(layoutInflater, R.layout.layout_select_image, container, false)
         dataSourceFactory =
-            DefaultDataSourceFactory(context!!, Util.getUserAgent(context!!, "Instagram"))
-        adapter.items = MediaUtils.loadImagesfromSDCard2(context!!).reversed()
+            DefaultDataSourceFactory(requireContext(), Util.getUserAgent(requireContext(), "Instagram"))
+        adapter.items = MediaUtils.loadImagesfromSDCard2(requireContext()).reversed()
         binding.recyclerviewImages.adapter = adapter
         binding.btnDone.setOnClickListener {
             if(selectedItem.isEmpty()){
-                context!!.toast(getString(R.string.you_must_select_media))
+                requireContext().toast(getString(R.string.you_must_select_media))
                 return@setOnClickListener
             }
-            resultFunction.invoke(selectedItem)
+            selectImageListener.onImageSelected(selectedItem)
             dismiss()
         }
         binding.btnCancel.setOnClickListener {
@@ -122,7 +122,7 @@ class SelectImageDialog(var resultFunction:(List<String>) -> Unit) : DialogFragm
                 if (mimeType != null && mimeType.contains("video")) {
                     PlayVideoActivity.playFile(activity!!,item)
                 }else{
-                    FullScreenActivity.openFile(activity!!,item)
+//                    FullScreenFragment.openFile(activity!!,item)
                 }
             }
             return item

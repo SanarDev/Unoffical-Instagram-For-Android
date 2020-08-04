@@ -2,56 +2,35 @@ package com.idirect.app.ui.fullscreen
 
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.AudioFocusRequest
-import android.media.AudioManager
-import android.os.Build
 import android.os.Bundle
-import android.view.Window
-import android.view.WindowManager
+import android.view.View
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
+import androidx.transition.TransitionInflater
 import androidx.viewpager.widget.ViewPager
 import com.bumptech.glide.Glide
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseActivity
 import com.idirect.app.core.BaseApplication
+import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.ActivityFullScreenBinding
 import com.idirect.app.extensions.visible
+import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.utils.Resource
 import java.io.File
 
-class FullScreenActivity : BaseActivity<ActivityFullScreenBinding, FullScreenViewModel>() {
+class FullScreenFragment : BaseFragment<ActivityFullScreenBinding, FullScreenViewModel>() {
 
+    //        viewModel = ViewModelProvider(requireActivity()).get(getViewModelClass())
     companion object {
-        private const val TYPE_URL = 1
-        private const val TYPE_FILE = 2
-        private const val TYPE_POST = 3
-
-        fun openUrl(context: Context, url: String) {
-            context.startActivity(Intent(context, FullScreenActivity::class.java).apply {
-                putExtra("type", TYPE_URL)
-                putExtra("url", url)
-            })
-        }
-
-        fun openFile(context: Context, filePath: String) {
-            context.startActivity(Intent(context, FullScreenActivity::class.java).apply {
-                putExtra("type", TYPE_FILE)
-                putExtra("filePath", filePath)
-            })
-        }
-
-        fun openPost(context: Context, mediaId: String) {
-            context.startActivity(Intent(context, FullScreenActivity::class.java).apply {
-                putExtra("type", TYPE_POST)
-                putExtra("media_id", mediaId)
-            })
-        }
+        const val TYPE_URL = 1
+        const val TYPE_FILE = 2
+        const val TYPE_POST = 3
     }
+    val fragments = ArrayList<FragmentCollection>().toMutableList()
 
     override fun layoutRes(): Int {
         return R.layout.activity_full_screen
@@ -61,33 +40,42 @@ class FullScreenActivity : BaseActivity<ActivityFullScreenBinding, FullScreenVie
         return FullScreenViewModel::class.java
     }
 
-    val fragments = ArrayList<FragmentCollection>().toMutableList()
-    override fun onCreate(savedInstanceState: Bundle?) {
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+    /*
+    requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        super.onCreate(savedInstanceState)
+     */
 
-        val type = intent.extras!!.getInt("type")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        sharedElementEnterTransition =
+            TransitionInflater.from(context).inflateTransition(android.R.transition.move)
+    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val bundle = requireArguments()
+        val type = bundle.getInt("type")
+        val data = bundle.getString("data")!!
+        val id = bundle.getString("id")
+
+        ViewCompat.setTransitionName(binding.imageView,"media_${id}")
         when (type) {
             TYPE_URL -> {
-                val url = intent.extras!!.getString("url")
-                Glide.with(applicationContext).load(url).into(binding.imageView)
+                Glide.with(requireContext()).load(data).into(binding.imageView)
                 visible(binding.imageView)
             }
             TYPE_FILE -> {
-                val filePath = intent.extras!!.getString("filePath")
-                Glide.with(applicationContext).load(File(filePath!!)).into(binding.imageView)
+                Glide.with(requireContext()).load(File(data)).into(binding.imageView)
                 visible(binding.imageView)
             }
             TYPE_POST -> {
-                val mediaId = intent.extras!!.getString("media_id")!!
-                viewModel.getMediaById(mediaId)
+                viewModel.getMediaById(data)
             }
         }
 
-        viewModel.liveDataPost.observe(this, Observer {
+        viewModel.liveDataPost.observe(viewLifecycleOwner, Observer {
             when (it.status) {
                 Resource.Status.LOADING -> {
 
@@ -107,7 +95,7 @@ class FullScreenActivity : BaseActivity<ActivityFullScreenBinding, FullScreenVie
                         fragments.add(fragment)
                     }
                     binding.viewPager.adapter =
-                        CollectionPagerAdapter(fragments, supportFragmentManager)
+                        CollectionPagerAdapter(fragments, requireActivity().supportFragmentManager)
 
                     binding.viewPager.addOnPageChangeListener(object:ViewPager.OnPageChangeListener{
                         override fun onPageScrollStateChanged(state: Int) {
@@ -119,7 +107,7 @@ class FullScreenActivity : BaseActivity<ActivityFullScreenBinding, FullScreenVie
                             positionOffsetPixels: Int
                         ) {
                             if(fragments[position].itemType == InstagramConstants.MediaType.VIDEO){
-                                stopAllSounds()
+//                                stopAllSounds()
                                 fragments[position].play()
                             }
                         }
@@ -133,33 +121,33 @@ class FullScreenActivity : BaseActivity<ActivityFullScreenBinding, FullScreenVie
     }
 
 
-    private fun stopAllSounds(){
-        val mAudioManager =
-            getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mAudioManager.requestAudioFocus(
-                AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_GAME)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                            .build()
-                    )
-                    .setAcceptsDelayedFocusGain(true)
-                    .setOnAudioFocusChangeListener {
-                        //Handle Focus Change
-                    }.build()
-            )
-        } else {
-            mAudioManager.requestAudioFocus(
-                { focusChange: Int -> },
-                AudioManager.STREAM_MUSIC,
-                AudioManager.AUDIOFOCUS_GAIN
-            )
-        }
-    }
+//    private fun stopAllSounds(){
+//        val mAudioManager =
+//            getSystemService(Context.AUDIO_SERVICE) as AudioManager
+//
+//
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            mAudioManager.requestAudioFocus(
+//                AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+//                    .setAudioAttributes(
+//                        AudioAttributes.Builder()
+//                            .setUsage(AudioAttributes.USAGE_GAME)
+//                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+//                            .build()
+//                    )
+//                    .setAcceptsDelayedFocusGain(true)
+//                    .setOnAudioFocusChangeListener {
+//                        //Handle Focus Change
+//                    }.build()
+//            )
+//        } else {
+//            mAudioManager.requestAudioFocus(
+//                { focusChange: Int -> },
+//                AudioManager.STREAM_MUSIC,
+//                AudioManager.AUDIOFOCUS_GAIN
+//            )
+//        }
+//    }
     inner class CollectionPagerAdapter(
         var items: List<Fragment>,
         fragmentManager: FragmentManager

@@ -4,7 +4,7 @@ import android.util.Log
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.datasource.model.event.ConnectionStateEvent
 import com.idirect.app.realtime.commands.Commands
-import com.idirect.app.service.realtime.RealTimeService
+import com.idirect.app.realtime.service.RealTimeService
 import com.idirect.app.utils.NetworkUtils
 import com.idirect.app.utils.ZlibUtis
 import io.netty.buffer.ByteBuf

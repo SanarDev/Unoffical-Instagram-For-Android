@@ -1,4 +1,4 @@
-package com.idirect.app.ui.main
+package com.idirect.app.ui.inbox
 
 interface ActionListener {
 

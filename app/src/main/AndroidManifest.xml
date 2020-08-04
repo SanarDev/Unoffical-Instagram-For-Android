@@ -50,15 +50,11 @@
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name="com.idirect.app.ui.direct.DirectActivity"
+        <activity android:name="com.idirect.app.ui.startmessage.StartMessageFragment"
             android:screenOrientation="portrait">
 
         </activity>
-        <activity android:name="com.idirect.app.ui.startmessage.StartMessageActivity"
-            android:screenOrientation="portrait">
-
-        </activity>
-        <activity android:name="com.idirect.app.ui.fullscreen.FullScreenActivity"
+        <activity android:name="com.idirect.app.ui.fullscreen.FullScreenFragment"
             android:screenOrientation="portrait">
 
         </activity>
@@ -78,7 +74,7 @@
             android:exported="false">
 
         </receiver>
-        <service android:name="com.idirect.app.service.fbns.FbnsService">
+        <service android:name="com.idirect.app.fbns.service.FbnsService">
             <intent-filter>
                 <action android:name="com.idirect.app.FBNS.ACTION_CHECK_SESSION" />
                 <action android:name="com.idirect.app.FBNS.ACTION_HEARTBEAT" />
@@ -87,7 +83,7 @@
             </intent-filter>
         </service>
 
-        <service android:name="com.idirect.app.service.realtime.RealTimeService">
+        <service android:name="com.idirect.app.realtime.service.RealTimeService">
             <intent-filter>
                 <action android:name="com.idirect.app.REALTIME.ACTION_CHECK_SESSION" />
                 <action android:name="com.idirect.app.REALTIME.ACTION_HEARTBEAT" />

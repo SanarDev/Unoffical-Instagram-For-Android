@@ -31,7 +31,7 @@ interface InstagramRemote {
     fun getDirectIndex(
         @HeaderMap header: Map<String, String>,
         @Query("visual_message_return_type") visualMessageReturnType: String = "unseen",
-        @Query("thread_message_limit") threadMessageLimit: Int = 10,
+        @Query("thread_message_limit") threadMessageLimit: Int = 20,
         @Query("persistentBadging") persistentBadging: Boolean = true,
         @Query("limit") limit: Int = 20
     ): Call<InstagramDirects>
@@ -204,4 +204,18 @@ interface InstagramRemote {
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/{thread_id}/items/{item_id}/delete/")
     fun unsendMessage(@HeaderMap header: Map<String, String>, @Path("thread_id") threadId: String,@Path("item_id") itemId: String,@Body requestBody: RequestBody):Call<ResponseBody>
+
+    @GET(InstagramConstants.API_VERSION + "feed/user/{user_id}/")
+    fun getUserPosts(@HeaderMap header: Map<String, String>,
+                     @Path("user_id") userId:Long,
+                     @Query("exclude_comment") excludeComment:Boolean = true,
+                     @Query("only_fetch_first_carousel_media") onlyFetchFirstCarouselMedia:Boolean = false):Call<InstagramPostsResponse>
+
+    @GET(InstagramConstants.API_VERSION + "feed/user/{user_id}")
+    fun getMorePosts(@HeaderMap header: Map<String, String>,
+                     @Path("user_id")userId: Long,
+                     @Query("exclude_comment") excludeComment:Boolean = false,
+                     @Query("only_fetch_first_carousel_media") onlyFetchFirstCarouselMedia:Boolean = false,
+                     @Query("max_id") previousPostId:String
+                     ):Call<InstagramPostsResponse>
 }

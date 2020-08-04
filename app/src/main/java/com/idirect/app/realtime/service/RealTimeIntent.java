@@ -1,4 +1,4 @@
-package com.idirect.app.service.realtime;
+package com.idirect.app.realtime.service;
 
 public class RealTimeIntent {
 

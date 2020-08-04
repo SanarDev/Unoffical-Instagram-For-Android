@@ -234,9 +234,10 @@ class InstagramConstants {
         ITEMS("items") // for update last seen
     }
 
-    enum class MediaType(){
-        VIDEO,
-        IMAGE
+    enum class MediaType(var type:Int){
+        VIDEO(2),
+        IMAGE(1),
+        CAROUSEL_MEDIA(8)
     }
 
     enum class SharedPref(name:String){

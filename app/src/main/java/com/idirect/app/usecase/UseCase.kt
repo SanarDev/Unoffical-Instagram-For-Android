@@ -22,7 +22,7 @@ import com.idirect.app.datasource.model.response.*
 import com.idirect.app.extentions.isServiceRunning
 import com.idirect.app.extentions.toStringList
 import com.idirect.app.repository.InstagramRepository
-import com.idirect.app.service.realtime.RealTimeService
+import com.idirect.app.realtime.service.RealTimeService
 import com.idirect.app.utils.*
 import okhttp3.Headers
 import okhttp3.RequestBody
@@ -338,6 +338,13 @@ class UseCase(
         val result = MutableLiveData<Resource<InstagramUserInfo>>()
         val user = getUserData()
         mInstagramRepository.getUserInfo(result, { getHeaders() }, user!!.pk!!)
+        return result
+    }
+
+    fun getUserProfile(userId:Long,liveData:MutableLiveData<Resource<InstagramUserInfo>>?=null): MutableLiveData<Resource<InstagramUserInfo>> {
+        val result = liveData ?: MutableLiveData<Resource<InstagramUserInfo>>()
+        val user = getUserData()
+        mInstagramRepository.getUserInfo(result, { getHeaders() },userId)
         return result
     }
 
@@ -1189,12 +1196,13 @@ class UseCase(
     }
 
     fun loadMoreChats(
-        result: MediatorLiveData<Resource<InstagramChats>>,
         cursor: String,
         threadId: String,
         seqId: Int
-    ) {
+    ): MutableLiveData<Resource<InstagramChats>> {
+        val result=  MutableLiveData<Resource<InstagramChats>>()
         mInstagramRepository.loadMoreChats(result, cursor, threadId, seqId, { getHeaders() })
+        return result
     }
 
     fun searchUser(result: MediatorLiveData<Resource<ResponseBody>>, query: String) {
@@ -1308,6 +1316,14 @@ class UseCase(
             data,
             { t -> formUrlEncode(t) })
         return result
+    }
+
+    fun getUserPosts(userId: Long, userPosts: MutableLiveData<Resource<InstagramPostsResponse>>) {
+        mInstagramRepository.getUserPosts(userPosts,userId,{getHeaders()})
+    }
+
+    fun loadMoreUserPosts(userId: Long,previousPostId:String,userPosts: MutableLiveData<Resource<InstagramPostsResponse>>){
+        mInstagramRepository.loadMoreUserPosts(userPosts,userId,{getHeaders()},previousPostId)
     }
 
 

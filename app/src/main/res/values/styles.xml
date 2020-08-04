@@ -8,6 +8,7 @@
         <item name="colorAccent">@color/text_highlight</item>
         <item name="android:layoutDirection">ltr</item>
         <item name="android:screenOrientation">portrait</item>
+        <item name="android:windowActivityTransitions">true</item>
     </style>
 
     <style name="edtCodeStyle" parent="Widget.AppCompat.EditText">
@@ -20,6 +21,7 @@
         <item name="android:digits">0123456789</item>
         <item name="android:singleLine">true</item>
     </style>
+
     <style name="ItemDirectOptions">
         <item name="android:gravity">center_vertical</item>
         <item name="android:clickable">true</item>
@@ -32,14 +34,17 @@
         <item name="android:paddingEnd">20dp</item>
         <item name="android:minWidth">200dp</item>
     </style>
+
     <style name="TextDrawerStyle" parent="Widget.AppCompat.TextView">
         <item name="android:textColor">@color/text_very_light</item>
     </style>
+
     <style name="ProfileImage">
         <item name="android:layout_width">38dp</item>
         <item name="android:layout_height">38dp</item>
         <item name="android:layout_marginEnd">10dp</item>
     </style>
+
     <style name="LayoutMessage">
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
@@ -50,31 +55,45 @@
         <item name="android:paddingBottom">5dp</item>
 
     </style>
+
     <style name="LayoutIncludeReaction">
         <item name="android:layout_marginLeft">50dp</item>
     </style>
+
     <style name="DialogAnimation">
         <item name="android:windowEnterAnimation">@anim/slide_up</item>
         <item name="android:windowExitAnimation">@anim/slide_bottom</item>
     </style>
 
-    <style name="CustomDialog" parent="AppTheme" >
+    <style name="CustomDialog" parent="AppTheme">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:windowCloseOnTouchOutside">true</item>
         <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
     </style>
+
     <style name="MessageOptionButton">
         <item name="android:background">@drawable/bg_circluar</item>
         <item name="android:padding">7dp</item>
         <item name="android:tint">@color/white</item>
     </style>
+
     <style name="TextSenderName">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">#1976d2</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="Fab">
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:elevation">10dp</item>
+        <item name="android:tint">@color/text_very_light</item>
+        <item name="android:backgroundTint">@color/theme_item</item>
+        <item name="rippleColor">@color/theme_item</item>
+        <item name="useCompatPadding">true</item>
     </style>
 </resources>

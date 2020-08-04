@@ -1,10 +1,6 @@
-package com.idirect.app.service.fbns;
+package com.idirect.app.fbns.service;
 
-/**
- * NettyIntent.java
- *
- * @author 유병우(CA10119)
- */
+
 public class FbnsIntent {
 	public static final String ACTION_CHECK_SESSION =	 	"com.idirect.app.FBNS.ACTION_CHECK_SESSION";
 	public static final String ACTION_HEARTBEAT = 			"com.idirect.app.FBNS.ACTION_HEARTBEAT";

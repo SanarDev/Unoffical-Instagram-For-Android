@@ -19,6 +19,15 @@ class StartMessageViewModel @Inject constructor(application: Application, var mU
     private val mHandler = Handler()
     private val result = MediatorLiveData<Resource<InstagramRecipients>>()
     val liveData = Transformations.map(result) {
+        if(it.status == Resource.Status.SUCCESS){
+            for(index in it.data!!.recipients.indices){
+                val item = it.data!!.recipients[index]
+                if(item.thread != null && item.thread.users.isEmpty()){
+                    it.data!!.recipients.removeAt(index)
+                    break
+                }
+            }
+        }
         return@map it
     }
 

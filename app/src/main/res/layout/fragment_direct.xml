@@ -4,10 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
-        <variable
-            name="viewModel"
-            type="com.idirect.app.ui.direct.DirectViewModel" />
         <import type="com.idirect.app.utils.Resource"/>
     </data>
 
@@ -149,7 +145,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:background="@null"
-                android:onClick="onEmojiClick"
                 android:padding="@dimen/small_padding"
                 android:src="@drawable/ic_emoji"
                 android:tint="@color/light_button"
@@ -164,10 +159,8 @@
                 android:background="@null"
                 android:fontFamily="sans-serif"
                 android:hint="@string/message"
-                android:onTextChanged="@{viewModel.edtMessageChange}"
                 android:paddingStart="10dp"
                 android:paddingTop="5dp"
-                android:text="@={viewModel.messageText}"
                 android:paddingEnd="40dp"
                 android:paddingBottom="5dp"
                 android:textColor="@color/white"
@@ -185,12 +178,10 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                android:onClick="@{viewModel::onSendMessageClick}"
                 android:padding="@dimen/small_padding"
                 android:src="@drawable/ic_send"
                 android:tint="@color/light_button"
-                app:visible="@{viewModel.isEnableSendButton == true}"
-                tools:visibility="gone"/>
+                android:visibility="gone"/>
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/btn_like"
@@ -203,7 +194,6 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintRight_toLeftOf="@id/btn_addPhoto"
-                app:visible="@{viewModel.isEnableSendButton == false}"
                 tools:visibility="visible" />
 
             <androidx.appcompat.widget.AppCompatImageButton
@@ -217,7 +207,6 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintRight_toLeftOf="@id/btn_voice"
-                app:visible="@{viewModel.isEnableSendButton == false}"
                 tools:visibility="visible" />
 
             <com.devlomi.record_view.RecordButton
@@ -230,7 +219,6 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 android:tint="@color/light_button"
-                app:visible="@{viewModel.isEnableSendButton == false}"
                 android:background="@null"
                 android:scaleType="centerInside"
                 app:mic_icon="@drawable/recv_ic_mic_white" />

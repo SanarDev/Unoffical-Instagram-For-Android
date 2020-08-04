@@ -3,7 +3,7 @@ package com.idirect.app.realtime.commands;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.idirect.app.service.realtime.RealTimeIntent;
+import com.idirect.app.realtime.service.RealTimeIntent;
 
 public class RealTime_SendLike extends RealTimeCommand implements Parcelable {
 

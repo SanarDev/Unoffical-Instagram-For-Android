@@ -1,7 +1,7 @@
 package com.idirect.app.di.module
 
-import com.idirect.app.service.fbns.FbnsService
-import com.idirect.app.service.realtime.RealTimeService
+import com.idirect.app.fbns.service.FbnsService
+import com.idirect.app.realtime.service.RealTimeService
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 

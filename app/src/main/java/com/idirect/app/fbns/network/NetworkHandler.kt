@@ -6,7 +6,7 @@ import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.datasource.model.FbnsAuth
 import com.idirect.app.datasource.model.NotificationContentJson
 import com.idirect.app.datasource.model.PushNotification
-import com.idirect.app.service.fbns.FbnsService
+import com.idirect.app.fbns.service.FbnsService
 import com.idirect.app.utils.ZlibUtis
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled

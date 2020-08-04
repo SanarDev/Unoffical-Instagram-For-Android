@@ -15,15 +15,23 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.TransitionInflater
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.devlomi.record_view.OnRecordListener
@@ -35,45 +43,46 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseActivity
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseApplication
+import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.doubleclick.DoubleClick
 import com.idirect.app.customview.doubleclick.DoubleClickListener
 import com.idirect.app.databinding.*
 import com.idirect.app.datasource.model.DirectDate
 import com.idirect.app.datasource.model.Message
+import com.idirect.app.datasource.model.Thread
 import com.idirect.app.datasource.model.event.*
 import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.extensions.*
 import com.idirect.app.extentions.*
 import com.idirect.app.realtime.commands.*
-import com.idirect.app.service.realtime.RealTimeService
-import com.idirect.app.ui.fullscreen.FullScreenActivity
+import com.idirect.app.realtime.service.RealTimeService
+import com.idirect.app.ui.fullscreen.FullScreenFragment
+import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.playvideo.PlayVideoActivity
 import com.idirect.app.ui.selectimage.SelectImageDialog
+import com.idirect.app.ui.selectimage.SelectImageListener
 import com.idirect.app.utils.*
 import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.EmojiPopup
 import com.vanniktech.emoji.EmojiTextView
 import com.vanniktech.emoji.ios.IosEmojiProvider
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
-import org.greenrobot.eventbus.ThreadMode
 import java.io.File
 import java.util.regex.Pattern
 
 
-class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), ActionListener {
+class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), ActionListener,
+    View.OnClickListener {
 
+    private lateinit var shareViewModel: ShareViewModel
+    private lateinit var thread: Thread
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var httpDataSourceFactory: DataSource.Factory
     private lateinit var dataSourceFactory: DefaultDataSourceFactory
-    private lateinit var mPlayarManager: PlayerManager
-    private lateinit var adapter: ChatsAdapter
+    private lateinit var mAdapter: ChatsAdapter
     private lateinit var emojiPopup: EmojiPopup
-    private var currentPlayerId: String? = null
     private var isLoading = false
     private var olderMessageExist = true
     private lateinit var mAudioManager: AudioManager
@@ -81,9 +90,17 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
     companion object {
         fun open(context: Context, directBundle: DirectBundle) {
-            context.startActivity(Intent(context, DirectActivity::class.java).apply {
+            context.startActivity(Intent(context, FragmentDirect::class.java).apply {
                 putExtra("data", directBundle)
             })
+        }
+
+        fun getInstance(threadId: String): FragmentDirect {
+            val fragmentDirect = FragmentDirect()
+            fragmentDirect.arguments = Bundle().apply {
+                putString("thread_id", threadId)
+            }
+            return fragmentDirect
         }
 
         const val TAG = "TEST"
@@ -92,45 +109,54 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     }
 
     override fun layoutRes(): Int {
-        return R.layout.activity_direct
+        return R.layout.fragment_direct
     }
 
     override fun getViewModelClass(): Class<DirectViewModel> {
         return DirectViewModel::class.java
     }
 
+
+
     private val mHandler = Handler()
     private var endTypeAtMs: Long = 0
-
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         EmojiManager.install(IosEmojiProvider())
-        super.onCreate(savedInstanceState)
-        mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
 
-        attachKeyboardListeners()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        mAudioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        viewModel.init(intent.extras!!.getParcelable<DirectBundle>("data")!!)
+        shareViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
+        thread = shareViewModel.getThreadById(shareViewModel.currentThreadId!!)
 
         // profile
-        binding.txtProfileName.text = viewModel.mThread.threadTitle
+        binding.txtProfileName.text = thread.threadTitle
         checkUserStatus()
-        if (!viewModel.mThread.isGroup) {
+        if (!thread.isGroup) {
             gone(binding.layoutProfileImageGroup)
             visible(binding.imgProfileImage)
-            Glide.with(applicationContext).load(viewModel.mThread.users[0].profilePicUrl)
+            Glide.with(requireContext()).load(thread.users[0].profilePicUrl)
                 .into(binding.imgProfileImage)
         } else {
             visible(binding.layoutProfileImageGroup)
             gone(binding.imgProfileImage)
-            Glide.with(applicationContext).load(viewModel.mThread.users[1].profilePicUrl)
+            Glide.with(requireContext()).load(thread.users[1].profilePicUrl)
                 .into(binding.profileImageG1)
-            Glide.with(applicationContext).load(viewModel.mThread.users[0].profilePicUrl)
+            Glide.with(requireContext()).load(thread.users[0].profilePicUrl)
                 .into(binding.profileImageG2)
         }
 
-
-        adapter = ChatsAdapter(ArrayList<Any>(), viewModel.getUserProfile())
-        binding.recyclerviewChats.adapter = adapter
+        mAdapter = ChatsAdapter(ArrayList<Any>(), shareViewModel.getUser())
+        binding.recyclerviewChats.adapter = mAdapter
+        waitForTransition(binding.recyclerviewChats)
+        waitForTransition(binding.toolbar)
         layoutManager = (binding.recyclerviewChats.layoutManager as LinearLayoutManager)
 
         emojiPopup =
@@ -148,7 +174,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         binding.recordView.setSmallMicColor(color(R.color.voice_mic_color));
         binding.recordView.setCustomSounds(0, 0, 0);
         if (ContextCompat.checkSelfPermission(
-                this@DirectActivity,
+                requireContext(),
                 android.Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -156,34 +182,95 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         } else {
             binding.btnVoice.isListenForRecord = true
         }
-        binding.btnVoice.setOnClickListener {
-            ActivityCompat.requestPermissions(
-                this@DirectActivity, arrayOf(android.Manifest.permission.RECORD_AUDIO),
-                PERMISSION_RECORD_AUDIO_CODE
-            )
-        }
+
+        val messages = shareViewModel.getThreadById()!!.messages
+        mAdapter.items = viewModel.releaseMessages(messages).toMutableList()
+
+        shareViewModel.mutableLiveData.observe(viewLifecycleOwner, Observer {
+            when (it.status) {
+                Resource.Status.SUCCESS -> {
+                    val thread = shareViewModel.getThreadById(shareViewModel.currentThreadId!!)
+                    gone(binding.includeLayoutNetwork.root, binding.progressbar)
+                    olderMessageExist = thread.oldestCursor != null
+                    if (thread.messages.size > mAdapter.items.size) {
+                        mAdapter.items = viewModel.releaseMessages(thread.messages).toMutableList()
+                        mAdapter.notifyDataSetChanged()
+                    }
+                    isLoading = false
+                    mAdapter.setLoading(isLoading)
+                }
+            }
+        })
+
+        shareViewModel.threadNewMessageLiveData.observe(viewLifecycleOwner, Observer {
+            if (it == null) {
+                return@Observer
+            }
+            if (it.first == shareViewModel.currentThreadId!!) {
+                mAdapter.items.add(0, it.second)
+                mAdapter.notifyItemInserted(0)
+                binding.recyclerviewChats.scrollToPosition(0)
+                shareViewModel.threadNewMessageLiveData.value = null
+            }
+        })
+
+        shareViewModel.messageChange.observe(viewLifecycleOwner, Observer {
+            if (it == null) {
+                return@Observer
+            }
+            if (it.first == shareViewModel.currentThreadId!!) {
+                for (i in mAdapter.items.indices) {
+                    val message = mAdapter.items[i]
+                    if (message is Message) {
+                        if (message.clientContext == it.second.clientContext) {
+                            mAdapter.items[i] = it.second
+                            mAdapter.notifyItemChanged(i)
+                        }
+                    }
+                }
+            }
+            shareViewModel.messageChange.value = null
+        })
+
+        shareViewModel.connectionState.observe(viewLifecycleOwner, Observer {
+            when(it.connection){
+                ConnectionStateEvent.State.CONNECTED ->{
+                    checkUserStatus()
+                }
+                ConnectionStateEvent.State.CONNECTING ->{
+                    binding.txtProfileDec.text = getString(R.string.connecting)
+                }
+                ConnectionStateEvent.State.NETWORK_DISCONNECTED ->{
+                    binding.txtProfileDec.text = getString(R.string.waiting_for_network)
+                }
+                else ->{
+                    binding.txtProfileDec.text = getString(R.string.connecting)
+                }
+            }
+        })
+
         binding.recordView.setOnRecordListener(object : OnRecordListener {
             override fun onFinish(recordTime: Long) {
                 visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
                 gone(binding.recordView)
-                viewModel.stopRecording()
+                shareViewModel.stopRecording()
             }
 
             override fun onLessThanSecond() {
                 visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
                 gone(binding.recordView)
-                viewModel.cancelAudioRecording()
+                shareViewModel.cancelAudioRecording()
             }
 
             override fun onCancel() {
-                vibration(50)
+                requireContext().vibration(50)
                 visible(binding.btnEmoji, binding.edtTextChat, binding.btnAddPhoto, binding.btnLike)
                 gone(binding.recordView)
-                viewModel.cancelAudioRecording()
+                shareViewModel.cancelAudioRecording()
             }
 
             override fun onStart() {
-                vibration(100)
+                requireContext().vibration(100)
                 visible(binding.recordView)
                 gone(
                     binding.btnEmoji,
@@ -191,58 +278,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     binding.btnAddPhoto,
                     binding.btnLike
                 )
-                viewModel.startAudioRecording()
+                shareViewModel.startAudioRecording()
 
             }
         })
-        binding.edtTextChat.setOnClickListener {
-            emojiPopup.dismiss()
-        }
-        binding.btnBack.setOnClickListener {
-            onBackPressed()
-        }
+        binding.edtTextChat.setOnClickListener(this@FragmentDirect)
+        binding.btnBack.setOnClickListener(this@FragmentDirect)
+        binding.btnSend.setOnClickListener(this@FragmentDirect)
+        binding.btnAddPhoto.setOnClickListener(this@FragmentDirect)
+        binding.btnLike.setOnClickListener(this@FragmentDirect)
+        binding.btnVoice.setOnClickListener(this@FragmentDirect)
+        binding.toolbar.setOnClickListener(this@FragmentDirect)
+        binding.btnEmoji.setOnClickListener(this@FragmentDirect)
 
-        binding.btnLike.setOnClickListener {
-            val clientContext = InstagramHashUtils.getClientContext()
-            RealTimeService.run(
-                this,
-                RealTime_SendLike(
-                    viewModel.mThread.threadId,
-                    clientContext
-                )
-            )
-            val message = MessageGenerator.like(adapter.user.pk!!, clientContext)
-            EventBus.getDefault()
-                .postSticky(
-                    arrayListOf(
-                        MessageItemEvent(
-                            viewModel.mThread.threadId,
-                            message
-                        )
-                    )
-                )
-        }
-
-        binding.btnAddPhoto.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(
-                    this@DirectActivity,
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this@DirectActivity,
-                    arrayOf(
-                        android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ),
-                    PERMISSION_READ_EXTERNAL_STORAGE_CODE
-                )
-                return@setOnClickListener
-            }
-            SelectImageDialog {
-                viewModel.uploadMedias(it)
-            }.show(supportFragmentManager, "Dialog")
-        }
         binding.edtTextChat.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
 
@@ -254,19 +302,23 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 if (s != null && s.isNotBlank()) {
+                    visible(binding.btnSend)
+                    gone(binding.btnLike, binding.btnVoice, binding.btnAddPhoto)
                     RealTimeService.run(
-                        this@DirectActivity,
+                        requireContext(),
                         RealTime_SendTypingState(
-                            viewModel.mThread.threadId,
+                            thread.threadId,
                             true,
                             InstagramHashUtils.getClientContext()
                         )
                     )
                 } else {
+                    gone(binding.btnSend)
+                    visible(binding.btnLike, binding.btnVoice, binding.btnAddPhoto)
                     RealTimeService.run(
-                        this@DirectActivity,
+                        requireContext(),
                         RealTime_SendTypingState(
-                            viewModel.mThread.threadId,
+                            thread.threadId,
                             false,
                             InstagramHashUtils.getClientContext()
                         )
@@ -275,41 +327,6 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             }
         })
 
-        viewModel.mutableLiveData.observe(this, Observer {
-            when (it.status) {
-                Resource.Status.LOADING -> {
-                    if (adapter.items.isNotEmpty()) {
-                        return@Observer
-                    }
-                    visible(binding.progressbar)
-                }
-                Resource.Status.ERROR -> {
-                    if (adapter.items.isEmpty()) {
-                        gone(binding.progressbar)
-                        visible(binding.includeLayoutNetwork.root)
-                    }
-                }
-                Resource.Status.SUCCESS -> {
-                    gone(binding.includeLayoutNetwork.root, binding.progressbar)
-                    olderMessageExist = it.data!!.thread!!.oldestCursor != null
-                    if (it.data!!.thread!!.releasesMessage.size > adapter.items.size) {
-                        adapter.items = it.data!!.thread!!.releasesMessage
-                        adapter.notifyDataSetChanged()
-                    }
-                    isLoading = false
-                    adapter.setLoading(isLoading)
-                }
-            }
-        })
-
-        viewModel.mActionListener = this
-        viewModel.fileLiveData.observe(this, Observer {
-
-
-        })
-
-        viewModel.sendMediaLiveData.observe(this, Observer {
-        })
 
         binding.recyclerviewChats.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -320,14 +337,13 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         if (totalItemCount - 2 < 0) {
                             return
                         }
-                        if (adapter.items[totalItemCount - 2] is Message) {
-                            viewModel.loadMoreItem(
-                                (adapter.items[totalItemCount - 2] as Message).itemId,
-                                viewModel.mThread.threadId,
-                                viewModel.seqId
+                        if (mAdapter.items[totalItemCount - 2] is Message) {
+                            shareViewModel.loadMoreItem(
+                                (mAdapter.items[totalItemCount - 2] as Message).itemId,
+                                thread.threadId
                             )
                             isLoading = true
-                            adapter.setLoading(isLoading)
+                            mAdapter.setLoading(isLoading)
                         }
                     }
                 }
@@ -335,6 +351,85 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         })
         initPlayer()
 
+    }
+
+
+    override fun onClick(v: View?) {
+        when (v!!.id) {
+            binding.toolbar.id ->{
+                if(!thread.isGroup){
+                    val user = thread.users[0]
+                    val userId = user.pk.toString()
+                    ViewCompat.setTransitionName(binding.imgProfileImage,"profile_$userId")
+                    ViewCompat.setTransitionName(binding.txtProfileName,"username_$userId")
+                    ViewCompat.setTransitionName(binding.txtProfileDec,"fullname_$userId")
+                    val action = FragmentDirectDirections.actionFragmentDirectToUserProfileFragment(
+                        userId,
+                        user.profilePicUrl,
+                        user.username,
+                        user.fullName
+                    )
+                    val extras = FragmentNavigatorExtras(
+                        binding.imgProfileImage to binding.imgProfileImage.transitionName,
+                        binding.txtProfileName to binding.txtProfileName.transitionName,
+                        binding.txtProfileDec to binding.txtProfileDec.transitionName
+                    )
+                    v.findNavController().navigate(action,extras)
+                }
+            }
+            binding.edtTextChat.id -> {
+                emojiPopup.dismiss()
+            }
+            binding.btnBack.id -> {
+                requireActivity().onBackPressed()
+            }
+            binding.btnAddPhoto.id -> {
+                if (ContextCompat.checkSelfPermission(
+                        requireContext(),
+                        android.Manifest.permission.READ_EXTERNAL_STORAGE
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        requireActivity(),
+                        arrayOf(
+                            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ),
+                        PERMISSION_READ_EXTERNAL_STORAGE_CODE
+                    )
+                    return
+                }
+                SelectImageDialog(object : SelectImageListener {
+                    override fun onImageSelected(imagesPath: List<String>) {
+                        shareViewModel.uploadMedias(items = imagesPath)
+                    }
+                }).show(requireActivity().supportFragmentManager, "Dialog")
+            }
+            binding.btnSend.id -> {
+                val text = binding.edtTextChat.text.toString()
+                if (text.isBlank()) {
+                    return
+                }
+                binding.edtTextChat.setText("")
+                shareViewModel.sendTextMessage(shareViewModel.currentThreadId!!, text)
+            }
+            binding.btnLike.id -> {
+                shareViewModel.sendLike(shareViewModel.currentThread!!.threadId)
+            }
+            binding.btnVoice.id -> {
+                ActivityCompat.requestPermissions(
+                    requireActivity(), arrayOf(android.Manifest.permission.RECORD_AUDIO),
+                    PERMISSION_RECORD_AUDIO_CODE
+                )
+            }
+            binding.btnEmoji.id ->{
+                if (emojiPopup.isShowing) {
+                    emojiPopup.dismiss()
+                } else {
+                    emojiPopup.toggle()
+                }
+            }
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -356,142 +451,42 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
     }
 
     private fun checkUserStatus() {
-        if (!viewModel.mThread.isGroup && viewModel.mThread.active) {
+        if (!thread.isGroup && thread.active) {
             binding.txtProfileDec.text = getString(R.string.online)
             binding.txtProfileDec.setTextColor(color(R.color.online_color))
         } else {
-            if (viewModel.mThread.lastActivityAt == 0.toLong()) {
-                binding.txtProfileDec.text = viewModel.mThread.threadTitle
+            if (thread.lastActivityAt == 0.toLong()) {
+                binding.txtProfileDec.text = thread.threadTitle
             } else {
                 binding.txtProfileDec.text = String.format(
                     getString(R.string.active_at),
-                    TimeUtils.convertTimestampToDate(application, viewModel.mThread.lastActivityAt)
+                    TimeUtils.convertTimestampToDate(requireContext(), thread.lastActivityAt)
                 )
                 binding.txtProfileDec.setTextColor(color(R.color.text_light))
             }
         }
     }
-
-    override fun onHideKeyboard() {
-        RealTimeService.run(
-            this@DirectActivity,
-            RealTime_SendTypingState(
-                viewModel.mThread.threadId,
-                false,
-                InstagramHashUtils.getClientContext()
-            )
-        )
-    }
+//
+//    override fun onHideKeyboard() {
+//        RealTimeService.run(
+//            requireContext(),
+//            RealTime_SendTypingState(
+//                thread.threadId,
+//                false,
+//                InstagramHashUtils.getClientContext()
+//            )
+//        )
+//    }
 
     private fun initPlayer() {
         httpDataSourceFactory =
-            DefaultHttpDataSourceFactory(Util.getUserAgent(this, "Instagram"))
+            DefaultHttpDataSourceFactory(Util.getUserAgent(requireContext(), "Instagram"))
         dataSourceFactory =
-            DefaultDataSourceFactory(this@DirectActivity, Util.getUserAgent(this, "Instagram"))
+            DefaultDataSourceFactory(
+                requireContext(),
+                Util.getUserAgent(requireContext(), "Instagram")
+            )
     }
-
-    fun onEmojiClick(v: View) {
-        if (emojiPopup.isShowing) {
-            emojiPopup.dismiss()
-        } else {
-            emojiPopup.toggle()
-        }
-    }
-
-
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onTypingEvent(event: TypingEvent) { /* Do something */
-        if (viewModel.mThread.threadId == event.threadId) {
-            endTypeAtMs = System.currentTimeMillis() + 3 * 1000
-            binding.txtProfileDec.text = getString(R.string.typing)
-            binding.txtProfileDec.setTextColor(color(R.color.text_very_light))
-            mHandler.postDelayed({
-                if (endTypeAtMs < System.currentTimeMillis()) {
-                    checkUserStatus()
-                }
-            }, 3000)
-        }
-    }
-
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageEvents(events: MutableList<MessageItemEvent>) {
-        for (event in events) {
-            if (event.threadId == viewModel.mThread.threadId) {
-                checkUserStatus()
-                viewModel.onMessageReceive(event)
-            }
-        }
-    }
-
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageResponseEvent(event: MessageResponse) {
-        viewModel.onMessageResponseEvent(event)
-    }
-
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onUpdateSeenEvent(event: UpdateSeenEvent) {
-        if (event.threadId == viewModel.mThread.threadId) {
-            for (item in viewModel.mThread.lastSeenAt.entries) {
-                item.value.timeStamp = viewModel.convertToStandardTimeStamp(event.seen.timeStamp)
-            }
-            adapter.notifyDataSetChanged()
-        }
-    }
-
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onPresenceEvent(event: PresenceEvent) { /* Do something */
-        if (viewModel.mThread != null && event.userId.toLong() == viewModel.mThread!!.users[0].pk) {
-            viewModel.mThread.active = event.isActive
-            viewModel.mThread.lastActivityAt = event.lastActivityAtMs.toLong()
-            checkUserStatus()
-        }
-    }
-
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageRemoveEvent(event: MutableList<MessageRemoveEvent>) {
-        for(item in event){
-            if(viewModel.mThread.threadId == item.threadId){
-                viewModel.deleteMessage(item.itemId)
-            }
-        }
-    }
-
-
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onConnectionStateEvent(connectionStateEvent: ConnectionStateEvent) {
-        when (connectionStateEvent.connection) {
-            ConnectionStateEvent.State.CONNECTING -> {
-                binding.txtProfileDec.text = getString(R.string.connecting)
-                this@DirectActivity.finish()
-            }
-            ConnectionStateEvent.State.NETWORK_DISCONNECTED -> {
-                binding.txtProfileDec.text = getString(R.string.waiting_for_network)
-                this@DirectActivity.finish()
-            }
-            ConnectionStateEvent.State.CHANNEL_DISCONNECTED -> {
-                binding.txtProfileDec.text = getString(R.string.connecting)
-                this@DirectActivity.finish()
-            }
-            ConnectionStateEvent.State.NETWORK_CONNECTION_RESET -> {
-                binding.txtProfileDec.text = getString(R.string.connecting)
-                this@DirectActivity.finish()
-            }
-            else -> {
-
-            }
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        EventBus.getDefault().register(this);
-    }
-
-    override fun onStop() {
-        super.onStop()
-        EventBus.getDefault().unregister(this);
-    }
-
 
     inner class ChatsAdapter(var items: MutableList<Any>, var user: InstagramLoggedUser) :
         BaseAdapter() {
@@ -706,23 +701,23 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                             break
                         }
                         var profileUrl: String? = null
-                        if (likes[i].senderId == adapter.user.pk) {
-                            profileUrl = adapter.user.profilePicUrl
+                        if (likes[i].senderId == mAdapter.user.pk) {
+                            profileUrl = mAdapter.user.profilePicUrl
                         } else {
-                            for (user in viewModel.mThread.users) {
+                            for (user in thread.users) {
                                 if (likes[i].senderId == user.pk) {
                                     profileUrl = user.profilePicUrl
                                 }
                             }
                         }
                         if (profileUrl != null) {
-                            val image = CircleImageView(this@DirectActivity)
+                            val image = CircleImageView(requireContext())
                             image.layoutParams = android.widget.LinearLayout.LayoutParams(
                                 resources.dpToPx(25f),
                                 resources.dpToPx(25f)
                             )
                             image.setBackgroundResource(R.drawable.bg_stroke_circluar)
-                            Glide.with(applicationContext).load(profileUrl).into(image)
+                            Glide.with(requireContext()).load(profileUrl).into(image)
                             image.setPadding(
                                 includeReaction.imgHeart.paddingLeft,
                                 includeReaction.imgHeart.paddingTop,
@@ -737,8 +732,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
             }
 
             var lastSeenAt: Long = 0
-            if (viewModel.mThread.lastSeenAt != null) {
-                for (ls in viewModel.mThread.lastSeenAt.entries) {
+            if (thread.lastSeenAt != null) {
+                for (ls in thread.lastSeenAt.entries) {
                     if (ls.key.toLong() != item.userId) {
                         // for example last seen in group is laster seen
                         viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
@@ -749,12 +744,12 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     }
                 }
             }
-            if (item.timestamp > lastSeenAt && viewModel.isSeenMessageEnable) {
-//                viewModel.markAsSeen(threadId, item.itemId) moshkel ine ke callback barash ok nakardm barate update shodan main activty
+            if (item.timestamp > lastSeenAt && shareViewModel.isSeenMessageEnable) {
+//                shareViewModel.markAsSeen(threadId, item.itemId) moshkel ine ke callback barash ok nakardm barate update shodan main activty
                 RealTimeService.run(
-                    this@DirectActivity,
+                    requireContext(),
                     RealTime_MarkAsSeen(
-                        viewModel.mThread.threadId,
+                        thread.threadId,
                         item.itemId
                     )
                 )
@@ -762,7 +757,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
             if (includeTime != null) {
                 includeTime.txtTime.text =
-                    viewModel.getTimeFromTimeStamps(item.timestamp)
+                    shareViewModel.getTimeFromTimeStamps(item.timestamp)
 
                 if (!item.isDelivered) {
                     includeTime.imgMessageStatus.setImageResource(R.drawable.ic_time)
@@ -804,7 +799,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     imgThreadProfileImage.visibility = View.GONE
                 } else {
                     imgThreadProfileImage.visibility = View.VISIBLE
-                    Glide.with(applicationContext).load(viewModel.getProfilePic(item.userId))
+                    Glide.with(requireContext()).load(shareViewModel.getUserProfilePic(item.userId))
                         .into(imgThreadProfileImage)
                 }
             }
@@ -812,9 +807,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                 layoutMessage.setOnClickListener(DoubleClick(object : DoubleClickListener {
                     override fun onDoubleClick(view: View?) {
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
-                        viewModel.sendReaction(
+                        shareViewModel.sendReaction(
                             item.itemId,
-                            viewModel.mThread.threadId,
+                            thread.threadId,
                             item.clientContext
                         )
                     }
@@ -828,16 +823,16 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                 }
                 if (item.userId == user.pk) {
                     layoutMessage.background =
-                        this@DirectActivity.getDrawable(R.drawable.bg_message)
+                        requireContext().getDrawable(R.drawable.bg_message)
                 } else {
                     layoutMessage.background =
-                        this@DirectActivity.getDrawable(R.drawable.bg_message_2)
+                        requireContext().getDrawable(R.drawable.bg_message_2)
                 }
             }
             if (txtSendername != null) {
-                if (viewModel.mThread.isGroup && item.userId != viewModel.mThread.viewerId) {
+                if (thread.isGroup && item.userId != thread.viewerId) {
                     visible(txtSendername)
-                    txtSendername.text = viewModel.getUsername(item.userId)
+                    txtSendername.text = shareViewModel.getUsername(item.userId)
                 } else {
                     gone(txtSendername)
                 }
@@ -865,7 +860,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     val dataBinding = holder.binding as LayoutLinkBinding
                     dataBinding.txtMessage.width = (DisplayUtils.getScreenWidth() * 0.6).toInt()
                     val link = item.link
-                    dataBinding.txtMessage.setTextLinkHTML(this@DirectActivity, link.text)
+                    dataBinding.txtMessage.setTextLinkHTML(requireContext(), link.text)
                     if (link.linkContext == null || link.linkContext.linkTitle.isNullOrBlank()) {
                         gone(dataBinding.layoutLinkDes)
                     } else {
@@ -876,7 +871,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     if (link.linkContext == null || link.linkContext.linkImageUrl.isNullOrBlank()) {
                         dataBinding.imgLinkImage.visibility = View.GONE
                     } else {
-                        Glide.with(applicationContext).load(link.linkContext.linkImageUrl)
+                        Glide.with(requireContext()).load(link.linkContext.linkImageUrl)
                             .placeholder(R.drawable.placeholder_loading)
                             .into(dataBinding.imgLinkImage)
                     }
@@ -886,12 +881,12 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     if (item.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
                         val dataBinding = holder.binding as LayoutReelShareReplyBinding
                         dataBinding.layoutStory.layoutDirection =
-                            if (item.userId == viewModel.mThread.viewerId) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
+                            if (item.userId == thread.viewerId) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
                         if (item.reelShare.media?.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
-                                viewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
-                            Glide.with(applicationContext)
+                                shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
+                            Glide.with(requireContext())
                                 .load(image.url)
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
@@ -936,12 +931,12 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         val dataBinding = holder.binding as LayoutReelShareBinding
                         gone(dataBinding.imgProfile, dataBinding.txtUsername)
                         layoutMessage?.background = null
-                        if (item.userId == viewModel.mThread.viewerId) {
+                        if (item.userId == thread.viewerId) {
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
                             dataBinding.layoutStory.layoutDirection = View.LAYOUT_DIRECTION_RTL
                             dataBinding.txtReelStatus.text = String.format(
                                 getString(R.string.mentioned_person_in_your_story),
-                                viewModel.mThread.users[0].username
+                                thread.users[0].username
                             )
                         } else {
                             dataBinding.txtReelStatus.text =
@@ -950,19 +945,19 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                             dataBinding.layoutStory.layoutDirection = View.LAYOUT_DIRECTION_LTR
                         }
                         dataBinding.includeTime.txtTime.text =
-                            viewModel.getTimeFromTimeStamps(
+                            shareViewModel.getTimeFromTimeStamps(
                                 item.timestamp
                             )
                         if (item.reelShare.media.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
-                                viewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
+                                shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
                             val user = item.reelShare.media.user
-                            Glide.with(applicationContext).load(image.url)
+                            Glide.with(requireContext()).load(image.url)
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgStory)
-                            Glide.with(applicationContext).load(user.profilePicUrl)
+                            Glide.with(requireContext()).load(user.profilePicUrl)
                                 .into(dataBinding.imgProfile)
                             dataBinding.txtUsername.text = user.username
                         } else {
@@ -976,8 +971,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         if (item.reelShare.media?.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
-                                viewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
-                            Glide.with(applicationContext)
+                                shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
+                            Glide.with(requireContext())
                                 .load(image.url)
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
@@ -1008,27 +1003,26 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                             dataBinding.layoutStory.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
                             dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
-                            Glide.with(applicationContext)
-                                .load(viewModel.getProfilePic(item.userId))
+                            Glide.with(requireContext())
+                                .load(shareViewModel.getUserProfilePic(item.userId))
                                 .into(dataBinding.imgThreadProfileImage)
                         }
 
                     }
 
-                    layoutMessage?.setOnClickListener {
-                        item.reelShare.media?.videoVersions?.also {
-                            PlayVideoActivity.playUrl(this@DirectActivity, it[0].url)
-                            return@setOnClickListener
+                    layoutMessage?.setOnClickListener(object:View.OnClickListener{
+                        override fun onClick(v: View?) {
+                            item.reelShare.media?.videoVersions?.also {
+                                PlayVideoActivity.playUrl(requireContext(), it[0].url)
+                                return
+                            }
+                            item.reelShare.media?.imageVersions2?.also {
+                                val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,it.candidates[0].url)
+                                view!!.findNavController().navigate(action)
+                                return
+                            }
                         }
-                        item.reelShare.media?.imageVersions2?.also {
-                            FullScreenActivity.openUrl(
-                                this@DirectActivity,
-                                it.candidates[0].url
-                            )
-                            return@setOnClickListener
-                        }
-
-                    }
+                    })
                 }
                 InstagramConstants.MessageType.STORY_SHARE.type -> {
                     if (item.storyShare.media != null) {
@@ -1037,14 +1031,14 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         val images = item.storyShare.media.imageVersions2.candidates
                         val user = item.storyShare.media.user
                         val size =
-                            viewModel.getStandardWidthAndHeight(
+                            shareViewModel.getStandardWidthAndHeight(
                                 images[0].width,
                                 images[0].height,
                                 0.4f
                             )
-                        Glide.with(applicationContext).load(images[0].url)
+                        Glide.with(requireContext()).load(images[0].url)
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imgStory)
-                        Glide.with(applicationContext).load(user.profilePicUrl)
+                        Glide.with(requireContext()).load(user.profilePicUrl)
                             .into(dataBinding.imgProfile)
                         dataBinding.txtUsername.text = user.username
                         dataBinding.txtReelStatus.text = String.format(
@@ -1057,9 +1051,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         layoutMessage?.setOnClickListener(DoubleClick(object : DoubleClickListener {
                             override fun onDoubleClick(view: View?) {
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
-                                viewModel.sendReaction(
+                                shareViewModel.sendReaction(
                                     item.itemId,
-                                    viewModel.mThread.threadId,
+                                    thread.threadId,
                                     item.clientContext
                                 )
                             }
@@ -1067,11 +1061,12 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                             override fun onSingleClick(view: View?) {
                                 if (item.storyShare.media.videoVersions != null) {
                                     PlayVideoActivity.playUrl(
-                                        this@DirectActivity,
+                                        activity!!,
                                         item.storyShare.media.videoVersions[0].url
                                     )
                                 } else {
-                                    FullScreenActivity.openUrl(this@DirectActivity, images[0].url)
+                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,images[0].url)
+                                    view!!.findNavController().navigate(action)
                                 }
                             }
                         }))
@@ -1103,7 +1098,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     }
 
                     (dataBinding.layoutMessage.layoutParams as LinearLayout.LayoutParams).apply {
-                        width = viewModel.getStandardVoiceWitdh(resources, duration)
+                        width = shareViewModel.getStandardVoiceWitdh(resources, duration)
                     }
 
                     dataBinding.seekbarPlay.tag = id
@@ -1122,7 +1117,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                             BaseApplication.seekbarPlay = dataBinding.seekbarPlay
                             BaseApplication.btnPlay = dataBinding.btnPlayPause
                             BaseApplication.currentPlayerId = id
-                            this@DirectActivity.stopAllAudio()
+                            this@FragmentDirect.stopAllAudio()
                         } else {
                             BaseApplication.currentPlayerId = ""
                             dataBinding.btnPlayPause.setImageResource(R.drawable.ic_play_circle)
@@ -1139,23 +1134,24 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                 }
                 InstagramConstants.MessageType.MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutMediaBinding
+                    ViewCompat.setTransitionName(dataBinding.imgMedia,"media_${item.clientContext}")
                     if (item.media.isLocal) {
                         val originalSize =
                             MediaUtils.getMediaWidthAndHeight(item.media.localFilePath)
-                        val size = viewModel.getStandardWidthAndHeight(
+                        val size = shareViewModel.getStandardWidthAndHeight(
                             originalSize[0],
                             originalSize[1],
                             0.5f
                         )
                         if (item.media.mediaType == 1) {
-                            Glide.with(applicationContext).load(File(item.media.localFilePath))
+                            Glide.with(requireContext()).load(File(item.media.localFilePath))
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgMedia)
                             gone(dataBinding.btnPlay)
                         } else {
                             val options = RequestOptions().frame(0)
-                            Glide.with(this@DirectActivity).asBitmap()
+                            Glide.with(this@FragmentDirect).asBitmap()
                                 .load(File(item.media.localFilePath))
                                 .override(size[0], size[1])
                                 .centerCrop()
@@ -1166,8 +1162,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     } else {
                         val images = item.media.imageVersions2.candidates[0]
                         val size =
-                            viewModel.getStandardWidthAndHeight(images.width, images.height, 0.5f)
-                        Glide.with(applicationContext).load(images.url)
+                            shareViewModel.getStandardWidthAndHeight(images.width, images.height, 0.5f)
+                        Glide.with(requireContext()).load(images.url)
                             .override(size[0], size[1])
                             .placeholder(R.drawable.placeholder_loading)
                             .into(dataBinding.imgMedia)
@@ -1180,9 +1176,9 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         layoutMessage?.setOnClickListener(DoubleClick(object : DoubleClickListener {
                             override fun onDoubleClick(view: View?) {
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
-                                viewModel.sendReaction(
+                                shareViewModel.sendReaction(
                                     item.itemId,
-                                    viewModel.mThread.threadId,
+                                    thread.threadId,
                                     item.clientContext
                                 )
                             }
@@ -1190,11 +1186,17 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                             override fun onSingleClick(view: View?) {
                                 if (item.media.videoVersions != null) {
                                     PlayVideoActivity.playUrl(
-                                        this@DirectActivity,
+                                        activity!!,
                                         item.media.videoVersions[0].url
                                     )
                                 } else {
-                                    FullScreenActivity.openUrl(this@DirectActivity, images.url)
+                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
+                                        FullScreenFragment.TYPE_URL,
+                                        images.url,
+                                        item.clientContext)
+                                    val extras = FragmentNavigatorExtras(
+                                        dataBinding.imgMedia to dataBinding.imgMedia.transitionName)
+                                    view!!.findNavController().navigate(action,extras)
                                 }
                             }
                         }))
@@ -1206,18 +1208,24 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     if (media.imageVersions2 != null) {
                         dataBinding.txtMessage.text = getString(R.string.view_photo)
                         dataBinding.layoutMedia.setOnClickListener {
-                            viewModel.markAsSeenRavenMedia(item.itemId, item.clientContext)
-                            FullScreenActivity.openUrl(
-                                this@DirectActivity,
-                                media.imageVersions2.candidates[0].url
+                            shareViewModel.markAsSeenRavenMedia(
+                                shareViewModel.currentThreadId!!,
+                                item.itemId,
+                                item.clientContext
                             )
+                            val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,media.imageVersions2.candidates[0].url)
+                            it!!.findNavController().navigate(action)
                         }
                     } else if (media.videoVersions != null) {
                         dataBinding.txtMessage.text = getString(R.string.view_video)
                         dataBinding.layoutMedia.setOnClickListener {
-                            viewModel.markAsSeenRavenMedia(item.itemId, item.clientContext)
+                            shareViewModel.markAsSeenRavenMedia(
+                                shareViewModel.currentThreadId!!,
+                                item.itemId,
+                                item.clientContext
+                            )
                             PlayVideoActivity.playUrl(
-                                this@DirectActivity,
+                                activity!!,
                                 media.videoVersions[0].url
                             )
                         }
@@ -1234,83 +1242,79 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     val dataBinding = holder.binding as LayoutMediaShareBinding
                     val media = item.mediaShare
                     val user = media.user
-                    var type = ""
                     val id = item.mediaShare.id
-                    if (media.videoVersions != null) {
-                        gone(dataBinding.layoutImageView, dataBinding.imgMultipleItem)
-                        dataBinding.layoutVideoView.visibility = View.VISIBLE
-                        val videoSrc = item.mediaShare.videoVersions[0].url
-                        val image = item.mediaShare.imageVersions2.candidates[1].url
-                        Glide.with(applicationContext).load(image).into(dataBinding.imgPreviewVideo)
-                        type = "video"
-                    } else if (media.imageVersions2 != null) {
-                        val image = media.imageVersions2
-                        gone(dataBinding.layoutVideoView, dataBinding.imgMultipleItem)
-                        dataBinding.layoutImageView.visibility = View.VISIBLE
-                        Glide.with(applicationContext).load(image.candidates[0].url)
-                            .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
-                        dataBinding.layoutImageView.layoutParams.apply {
-                            val sizeArray = viewModel.getStandardWidthAndHeight(
-                                resources.dpToPx(image.candidates[0].width.toFloat()),
-                                resources.dpToPx(image.candidates[0].height.toFloat())
-                            )
-                            width = sizeArray[0]
-                            height = sizeArray[1]
+                    when(media.mediaType){
+                        InstagramConstants.MediaType.IMAGE.type ->{
+                            val image = media.imageVersions2
+                            gone(dataBinding.layoutVideoView, dataBinding.imgMultipleItem)
+                            dataBinding.layoutImageView.visibility = View.VISIBLE
+                            Glide.with(requireContext()).load(image.candidates[0].url)
+                                .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
+                            dataBinding.layoutImageView.layoutParams.apply {
+                                val sizeArray = shareViewModel.getStandardWidthAndHeight(
+                                    resources.dpToPx(image.candidates[0].width.toFloat()),
+                                    resources.dpToPx(image.candidates[0].height.toFloat())
+                                )
+                                width = sizeArray[0]
+                                height = sizeArray[1]
+                            }
                         }
-                        type = "image"
-                    } else if (media.carouselMedia != null) {
-                        val image = media.carouselMedia[0].imageVersions2
-                        gone(dataBinding.layoutVideoView)
-                        visible(dataBinding.imgMultipleItem)
-                        dataBinding.layoutImageView.visibility = View.VISIBLE
-                        Glide.with(applicationContext).load(image.candidates[0].url)
-                            .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
-                        dataBinding.layoutImageView.layoutParams.apply {
-                            val sizeArray = viewModel.getStandardWidthAndHeight(
-                                resources.dpToPx(image.candidates[0].width.toFloat()),
-                                resources.dpToPx(image.candidates[0].height.toFloat())
-                            )
-                            width = sizeArray[0]
-                            height = sizeArray[1]
+                        InstagramConstants.MediaType.VIDEO.type -> {
+                            gone(dataBinding.layoutImageView, dataBinding.imgMultipleItem)
+                            dataBinding.layoutVideoView.visibility = View.VISIBLE
+                            val videoSrc = item.mediaShare.videoVersions[0].url
+                            val image = item.mediaShare.imageVersions2.candidates[1].url
+                            Glide.with(requireContext()).load(image).into(dataBinding.imgPreviewVideo)
                         }
-                        type = "carouasel"
+                        InstagramConstants.MediaType.CAROUSEL_MEDIA.type ->{
+                            val image = media.carouselMedia[0].imageVersions2
+                            gone(dataBinding.layoutVideoView)
+                            visible(dataBinding.imgMultipleItem)
+                            dataBinding.layoutImageView.visibility = View.VISIBLE
+                            Glide.with(requireContext()).load(image.candidates[0].url)
+                                .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
+                            dataBinding.layoutImageView.layoutParams.apply {
+                                val sizeArray = shareViewModel.getStandardWidthAndHeight(
+                                    resources.dpToPx(image.candidates[0].width.toFloat()),
+                                    resources.dpToPx(image.candidates[0].height.toFloat())
+                                )
+                                width = sizeArray[0]
+                                height = sizeArray[1]
+                            }
+                        }
                     }
 
                     layoutMessage?.setOnClickListener(DoubleClick(object : DoubleClickListener {
                         override fun onDoubleClick(view: View?) {
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
-                            viewModel.sendReaction(
+                            shareViewModel.sendReaction(
                                 item.itemId,
-                                viewModel.mThread.threadId,
+                                thread.threadId,
                                 item.clientContext
                             )
                         }
 
                         override fun onSingleClick(view: View?) {
-                            when (type) {
-                                "image" -> {
-                                    FullScreenActivity.openUrl(
-                                        this@DirectActivity,
-                                        media.imageVersions2.candidates[0].url
-                                    )
+                            when (media.mediaType) {
+                                InstagramConstants.MediaType.IMAGE.type -> {
+                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,media.imageVersions2.candidates[0].url)
+                                    view!!.findNavController().navigate(action)
                                 }
-                                "video" -> {
+                                InstagramConstants.MediaType.VIDEO.type -> {
                                     PlayVideoActivity.playUrl(
-                                        this@DirectActivity,
+                                        activity!!,
                                         item.mediaShare.videoVersions[0].url
                                     )
                                 }
-                                "carouasel" -> {
-                                    FullScreenActivity.openPost(
-                                        this@DirectActivity,
-                                        media.id
-                                    )
+                                InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
+                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_POST,media.id)
+                                    view!!.findNavController().navigate(action)
                                 }
                             }
                         }
                     }))
 
-                    Glide.with(applicationContext).load(user.profilePicUrl)
+                    Glide.with(requireContext()).load(user.profilePicUrl)
                         .into(dataBinding.imgProfile)
                     dataBinding.txtUsername.text = user.username
                     media.caption.also {
@@ -1327,7 +1331,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         this.width = width
                         this.height = height
                     }
-                    Glide.with(applicationContext).load(url).placeholder(R.drawable.load)
+                    Glide.with(requireContext()).load(url).placeholder(R.drawable.load)
                         .into(dataBinding.imgAnim)
                 }
                 InstagramConstants.MessageType.PLACE_HOLDER.type -> {
@@ -1348,7 +1352,7 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     val user = item.felixShare.video.user
                     val videoUrl = item.felixShare.video.videoVersions[0].url
                     dataBinding.layoutImage.layoutParams.apply {
-                        val sizeArray = viewModel.getStandardWidthAndHeight(
+                        val sizeArray = shareViewModel.getStandardWidthAndHeight(
                             resources.dpToPx(image.candidates[0].width.toFloat()),
                             resources.dpToPx(image.candidates[0].height.toFloat()),
                             0.45f
@@ -1357,15 +1361,15 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                         height = sizeArray[1]
                     }
                     dataBinding.txtThreadFelixShareUsername.text = user.username
-                    Glide.with(applicationContext).load(image.candidates[0].url)
+                    Glide.with(requireContext()).load(image.candidates[0].url)
                         .into(dataBinding.imgMedia)
-                    Glide.with(applicationContext).load(user.profilePicUrl)
+                    Glide.with(requireContext()).load(user.profilePicUrl)
                         .into(dataBinding.imgThreadFelixShareProfile)
                     dataBinding.layoutImage.setOnClickListener {
-                        PlayVideoActivity.playUrl(this@DirectActivity, videoUrl)
+                        PlayVideoActivity.playUrl(activity!!, videoUrl)
                     }
                     dataBinding.btnShareLink.setOnClickListener {
-                        shareText(videoUrl)
+                        activity!!.shareText(videoUrl)
                     }
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
@@ -1379,7 +1383,10 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                 }
                 else -> {
                     val dataBinding = holder.binding as LayoutMessageBinding
-                    dataBinding.txtMessage.text = String.format(getString(R.string.item_not_supported),item.itemType.replace("_"," "))
+                    dataBinding.txtMessage.text = String.format(
+                        getString(R.string.item_not_supported),
+                        item.itemType.replace("_", " ")
+                    )
                 }
             }
 
@@ -1387,8 +1394,8 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
         }
 
         private fun showPopupOptions(item: Message, view: View) {
-            if (item.userId == viewModel.mThread.viewerId && item.isDelivered) {
-                vibration(50)
+            if (item.userId == thread.viewerId && item.isDelivered) {
+                requireContext().vibration(50)
                 val dialog = Dialog(view.context)
                 val viewDataBinding: LayoutMessageOptionBinding = DataBindingUtil.inflate(
                     layoutInflater,
@@ -1397,8 +1404,15 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
                     false
                 )
                 viewDataBinding.remove.setOnClickListener {
-                    RealTimeService.run(this@DirectActivity,RealTime_ClearItemCache(viewModel.mThread.threadId,item.itemId))
-                    viewModel.unsendMessage(item.itemId, item.clientContext)
+                    RealTimeService.run(
+                        requireContext(),
+                        RealTime_ClearItemCache(thread.threadId, item.itemId)
+                    )
+                    shareViewModel.unsendMessage(
+                        shareViewModel.currentThreadId!!,
+                        item.itemId,
+                        item.clientContext
+                    )
                     dialog.dismiss()
                 }
                 dialog.window!!.setBackgroundDrawableResource(android.R.color.transparent);
@@ -1578,46 +1592,47 @@ class DirectActivity : BaseActivity<ActivityDirectBinding, DirectViewModel>(), A
 
 
     override fun onNewMessage(message: Message) {
-        adapter.items.add(0, message)
-        adapter.notifyItemInserted(0)
+        mAdapter.items.add(0, message)
+        mAdapter.notifyItemInserted(0)
         binding.recyclerviewChats.scrollToPosition(0)
     }
 
     override fun onChangeMessage(message: Message) {
-        for (i in adapter.items.indices) {
-            val message = adapter.items[i]
+        for (i in mAdapter.items.indices) {
+            val message = mAdapter.items[i]
             if (message is Message) {
                 if (message.itemId == message.itemId) {
-                    adapter.notifyItemChanged(i)
+                    mAdapter.notifyItemChanged(i)
                 }
             }
         }
     }
 
     override fun onChangeMessageWithClientContext(message: Message) {
-        for (i in adapter.items.indices) {
-            val message = adapter.items[i]
+        for (i in mAdapter.items.indices) {
+            val message = mAdapter.items[i]
             if (message is Message) {
                 if (message.clientContext == message.clientContext) {
-                    adapter.notifyItemChanged(i)
+                    mAdapter.notifyItemChanged(i)
                 }
             }
         }
     }
 
     override fun realTimeCommand(realTimeCommand: RealTimeCommand) {
-        RealTimeService.run(this@DirectActivity, realTimeCommand)
+        RealTimeService.run(requireActivity(), realTimeCommand)
     }
 
     override fun removeMessage(itemId: String) {
-        for (index in adapter.items.indices) {
-            val item = adapter.items[index]
+        for (index in mAdapter.items.indices) {
+            val item = mAdapter.items[index]
             if (item is Message && item.itemId == itemId) {
-                adapter.items.remove(item)
-                adapter.notifyItemRemoved(index)
+                mAdapter.items.remove(item)
+                mAdapter.notifyItemRemoved(index)
                 return
             }
         }
     }
+
 
 }

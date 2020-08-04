@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.datasource.model.event.ConnectionStateEvent
-import com.idirect.app.service.fbns.FbnsIntent
-import com.idirect.app.service.fbns.FbnsService
+import com.idirect.app.fbns.service.FbnsIntent
+import com.idirect.app.fbns.service.FbnsService
 import com.idirect.app.utils.NetworkUtils
 import org.greenrobot.eventbus.EventBus
 

@@ -1,4 +1,4 @@
-package com.idirect.app.service.realtime
+package com.idirect.app.realtime.service
 
 import android.app.Service
 import android.content.Context
@@ -350,8 +350,8 @@ class RealTimeService : Service() {
                 })
             // Bind and start to accept incoming connections.
             val future = bootstrap.connect(
-                RealTimeService.SERVER_URL,
-                RealTimeService.SERVER_PORT
+                SERVER_URL,
+                SERVER_PORT
             ).sync()
             mChannel = future.channel()
             directCommands = DirectCommands(mChannel!!, Gson())

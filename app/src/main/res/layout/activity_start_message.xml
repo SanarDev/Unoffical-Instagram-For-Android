@@ -97,6 +97,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:textSize="@dimen/chat_message_size"
+                android:visibility="gone"
                 android:textColor="@color/text_light"
                 android:text="@string/page_not_found"/>
 

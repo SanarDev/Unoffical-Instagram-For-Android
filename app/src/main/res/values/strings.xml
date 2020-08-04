@@ -101,4 +101,7 @@
     <string name="invalid_code_validation">Sms code invalid. please enter valid code</string>
     <string name="item_not_supported">Sorry %s is not supported</string>
     <string name="no_direct_found">Start new message with touch pen icon</string>
+    <string name="transition_media">media</string>
+    <string name="connected">iDirect</string>
+    <string name="start_message">Start Message</string>
 </resources>

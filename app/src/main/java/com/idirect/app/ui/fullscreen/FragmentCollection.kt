@@ -23,7 +23,7 @@ class FragmentCollection constructor(var itemType:InstagramConstants.MediaType,v
         return FragmentCollectionViewModel::class.java
     }
 
-    override fun getLayoutRes(): Int {
+    override fun layoutRes():Int {
         return R.layout.fragment_collection
     }
 
@@ -37,12 +37,12 @@ class FragmentCollection constructor(var itemType:InstagramConstants.MediaType,v
             InstagramConstants.MediaType.IMAGE ->{
                 visible(binding.photoView)
                 gone(binding.videoView)
-                Glide.with(context!!).load(url).into(binding.photoView)
+                Glide.with(requireContext()).load(url).into(binding.photoView)
             }
             InstagramConstants.MediaType.VIDEO ->{
                 visible(binding.videoView)
                 gone(binding.photoView)
-                val dataSource = DefaultHttpDataSourceFactory(Util.getUserAgent(context!!, "Instagram"))
+                val dataSource = DefaultHttpDataSourceFactory(Util.getUserAgent(requireContext(), "Instagram"))
                 val uri = Uri.parse(url)
                 mediaSource =
                     ProgressiveMediaSource.Factory(dataSource)

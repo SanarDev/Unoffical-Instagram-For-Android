@@ -1,12 +1,11 @@
 package com.idirect.app.di.module
 
-import com.idirect.app.ui.direct.DirectActivity
-import com.idirect.app.ui.fullscreen.FullScreenActivity
+import com.idirect.app.ui.fullscreen.FullScreenFragment
 import com.idirect.app.ui.login.LoginActivity
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.playvideo.PlayVideoActivity
 import com.idirect.app.ui.setting.SettingActivity
-import com.idirect.app.ui.startmessage.StartMessageActivity
+import com.idirect.app.ui.startmessage.StartMessageFragment
 import com.idirect.app.ui.twofactor.TwoFactorActivity
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
@@ -24,13 +23,7 @@ abstract class ActivityModule {
     abstract fun contributeTwoFactorActivity(): TwoFactorActivity
 
     @ContributesAndroidInjector
-    abstract fun contributeDirectActivity(): DirectActivity
-
-    @ContributesAndroidInjector
-    abstract fun contributeStartMessageActivity():StartMessageActivity
-
-    @ContributesAndroidInjector
-    abstract fun contributeFullScreenActivity():FullScreenActivity
+    abstract fun contributeFullScreenActivity():FullScreenFragment
 
     @ContributesAndroidInjector
     abstract fun contributePlayVideoActivity():PlayVideoActivity

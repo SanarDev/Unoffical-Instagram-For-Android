@@ -10,9 +10,10 @@ import com.idirect.app.core.BaseViewModel
 import com.idirect.app.core.BaseApplication
 import com.idirect.app.datasource.model.response.InstagramLoginResult
 import com.idirect.app.utils.Resource
-import com.idirect.app.ui.main.MainActivity
+import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.extentions.toast
+import com.idirect.app.ui.main.MainActivity
 import javax.inject.Inject
 import kotlin.reflect.KClass
 

@@ -66,13 +66,13 @@ class InstagramRepository(
         headersGenerator: () -> Map<String, String>,
         encrypter: (InstagramLoginTwoFactorPayload) -> RequestBody
     ) {
-            NetworkCall<InstagramLoginResult>()
-                .makeCall(
-                    mInstagramRemote.twoFactorLogin(
-                        headersGenerator(),
-                        encrypter(instagramLoginTwoFactorPayload)
-                    )
-                ).observeForever {
+        NetworkCall<InstagramLoginResult>()
+            .makeCall(
+                mInstagramRemote.twoFactorLogin(
+                    headersGenerator(),
+                    encrypter(instagramLoginTwoFactorPayload)
+                )
+            ).observeForever {
                 liveData.postValue(it)
             }
     }
@@ -190,23 +190,22 @@ class InstagramRepository(
     }
 
     fun loadMoreChats(
-        result: MediatorLiveData<Resource<InstagramChats>>,
+        result: MutableLiveData<Resource<InstagramChats>>,
         cursor: String,
         threadId: String,
         seqId: Int,
         headersGenerator: () -> Map<String, String>
     ) {
-        result.addSource(NetworkCall<InstagramChats>().makeCall(
+        NetworkCall<InstagramChats>().makeCall(
             mInstagramRemote.loadMoreChats(
                 header = headersGenerator.invoke(),
                 cursor = cursor,
                 threadId = threadId,
                 seqID = seqId
             )
-        ),
-            Observer {
-                result.postValue(it)
-            })
+        ).observeForever {
+            result.postValue(it)
+        }
     }
 
     fun searchUser(
@@ -468,7 +467,7 @@ class InstagramRepository(
             )
         ),
             Observer {
-                result.postValue(it)
+                result.value = (it)
             })
     }
 
@@ -483,7 +482,7 @@ class InstagramRepository(
                 userId
             )
         ).observeForever {
-            result.postValue(it)
+            result.value = (it)
         }
     }
 
@@ -519,7 +518,19 @@ class InstagramRepository(
                 encryptor.invoke(data)
             )
         ).observeForever {
-            result.postValue(it)
+            result.value = (it)
+        }
+    }
+
+    fun getUserPosts(userPosts: MutableLiveData<Resource<InstagramPostsResponse>>, userId: Long,headersGenerator: () -> Map<String, String>) {
+        NetworkCall<InstagramPostsResponse>().makeCall(mInstagramRemote.getUserPosts(headersGenerator.invoke(),userId)).observeForever {
+            userPosts.value = it
+        }
+    }
+
+    fun loadMoreUserPosts(userPosts: MutableLiveData<Resource<InstagramPostsResponse>>, userId: Long,headersGenerator: () -> Map<String, String>,previousPostId:String){
+        NetworkCall<InstagramPostsResponse>().makeCall(mInstagramRemote.getMorePosts(headersGenerator.invoke(),userId,previousPostId = previousPostId)).observeForever {
+            userPosts.value = it
         }
     }
 }

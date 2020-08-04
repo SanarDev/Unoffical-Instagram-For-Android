@@ -8,7 +8,7 @@ import androidx.lifecycle.Observer
 import com.idirect.app.R
 import com.idirect.app.core.BaseActivity
 import com.idirect.app.databinding.ActivitySettingBinding
-import com.idirect.app.service.fbns.FbnsService
+import com.idirect.app.fbns.service.FbnsService
 import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.utils.dialog.DialogListener
 

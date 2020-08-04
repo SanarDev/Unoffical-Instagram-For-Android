@@ -3,32 +3,38 @@ package com.idirect.app.ui.startmessage
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import com.bumptech.glide.Glide
 import com.idirect.app.R
-import com.idirect.app.core.BaseActivity
 import com.idirect.app.core.BaseAdapter
+import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.ActivityStartMessageBinding
 import com.idirect.app.databinding.LayoutExplorerUserBinding
 import com.idirect.app.datasource.model.Recipients
 import com.idirect.app.datasource.model.event.ConnectionStateEvent
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
-import com.idirect.app.ui.direct.DirectActivity
-import com.idirect.app.ui.direct.DirectBundle
+import com.idirect.app.extensions.waitForTransition
+import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.utils.Resource
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
-class StartMessageActivity : BaseActivity<ActivityStartMessageBinding, StartMessageViewModel>() {
+class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMessageViewModel>() {
 
+    private lateinit var shareViewModel: ShareViewModel
     private var seqId: Int = 0
-    private lateinit var adapter: ThreadsAdapter
+    private lateinit var mAdapter: ThreadsAdapter
 
     companion object {
         fun open(context: Context, seqId: Int) {
-            context.startActivity(Intent(context, StartMessageActivity::class.java).apply {
+            context.startActivity(Intent(context, StartMessageFragment::class.java).apply {
                 putExtra("seq_id",seqId)
             })
         }
@@ -44,11 +50,12 @@ class StartMessageActivity : BaseActivity<ActivityStartMessageBinding, StartMess
         return StartMessageViewModel::class.java
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        seqId = intent.extras!!.getInt("seq_id")
-        viewModel.liveData.observe(this, Observer {
+        shareViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
+        seqId = shareViewModel.instagramDirect!!.seqId
+        viewModel.liveData.observe(viewLifecycleOwner, Observer {
             when(it.status){
                 Resource.Status.LOADING ->{
                     visible(binding.progressbar)
@@ -64,13 +71,15 @@ class StartMessageActivity : BaseActivity<ActivityStartMessageBinding, StartMess
                     }
                     gone(binding.includeLayoutNetwork.root,binding.progressbar)
                     visible(binding.recyclerviewThreads)
-                    adapter.items = it.data!!.recipients
-                    adapter.notifyDataSetChanged()
+                    mAdapter.items = it.data!!.recipients
+                    mAdapter.notifyDataSetChanged()
                 }
             }
         })
-        adapter = ThreadsAdapter(emptyArray<Recipients>().toMutableList())
-        binding.recyclerviewThreads.adapter = adapter
+        mAdapter = ThreadsAdapter(emptyArray<Recipients>().toMutableList())
+        binding.recyclerviewThreads.adapter = mAdapter
+        binding.recyclerviewThreads.adapter = mAdapter
+        waitForTransition(binding.recyclerviewThreads)
     }
 
 
@@ -106,34 +115,26 @@ class StartMessageActivity : BaseActivity<ActivityStartMessageBinding, StartMess
             }else{
                 item.user
             }
+
+            ViewCompat.setTransitionName(dataBinding.imgProfileImage,"profile_${user.pk}")
+            ViewCompat.setTransitionName(dataBinding.txtUsername,"username_${user.pk}")
+            ViewCompat.setTransitionName(dataBinding.txtFullname,"fullname_${user.pk}")
             dataBinding.txtFullname.text = user.fullName
             dataBinding.txtUsername.text = user.username
-            Glide.with(applicationContext).load(user.profilePicUrl).into(dataBinding.imgProfileImage)
+            Glide.with(requireContext()).load(user.profilePicUrl).into(dataBinding.imgProfileImage)
             dataBinding.root.setOnClickListener {
-                if(item.thread != null){
-                    DirectActivity.open(this@StartMessageActivity, DirectBundle().apply {
-                        val thread = item.thread!!
-                        this.threadId = thread.threadId
-                        this.lastActivityAt = thread.lastActivityAt
-                        this.isGroup = thread.isGroup
-                        this.profileImage = thread.users[0].profilePicUrl
-                        this.seqId = seqId
-                        this.username = thread.users[0].username
-                        this.threadTitle = username
-                    })
-                }else{
-                    DirectActivity.open(this@StartMessageActivity, DirectBundle().apply {
-                        val user = item.user!!
-                        this.profileImage = user.profilePicUrl
-                        this.seqId = seqId
-                        this.username = user.username
-                        this.name = user.fullName
-                        this.userId = user.pk!!
-                        this.threadTitle = username
-                        this.name = user.fullName
-                    })
-                }
-                finish()
+                val action = StartMessageFragmentDirections.actionStartMessageFragmentToUserProfileFragment(
+                    user.pk.toString(),
+                    user.profilePicUrl,
+                    user.username,
+                    user.fullName
+                )
+                val extras = FragmentNavigatorExtras(
+                    dataBinding.imgProfileImage to dataBinding.imgProfileImage.transitionName,
+                    dataBinding.txtUsername to dataBinding.txtUsername.transitionName,
+                    dataBinding.txtFullname to dataBinding.txtFullname.transitionName
+                )
+                it.findNavController().navigate(action,extras)
             }
             return item
         }

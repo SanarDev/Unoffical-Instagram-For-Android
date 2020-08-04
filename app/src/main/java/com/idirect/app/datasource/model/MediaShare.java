@@ -21,7 +21,7 @@ public class MediaShare {
     private Long deviceTimestamp;
     @SerializedName("media_type")
     @Expose
-    private Long mediaType;
+    private int mediaType;
     @SerializedName("code")
     @Expose
     private String code;
@@ -181,11 +181,11 @@ public class MediaShare {
         this.deviceTimestamp = deviceTimestamp;
     }
 
-    public Long getMediaType() {
+    public int getMediaType() {
         return mediaType;
     }
 
-    public void setMediaType(Long mediaType) {
+    public void setMediaType(int mediaType) {
         this.mediaType = mediaType;
     }
 
