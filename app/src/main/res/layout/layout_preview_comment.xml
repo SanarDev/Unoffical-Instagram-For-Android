@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        tools:background="@color/theme_background">
+
+        <com.idirect.app.customview.customtextview.HyperTextView
+            android:id="@+id/txt_comment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:textColor="@color/text_very_light"
+            android:textSize="14sp"
+            tools:text="examplePage" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/img_like"
+            android:layout_width="17dp"
+            android:layout_height="17dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_heart_outline"
+            android:tint="@color/text_light" />
+
+    </RelativeLayout>
+</layout>

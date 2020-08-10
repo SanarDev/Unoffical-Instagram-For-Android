@@ -5,7 +5,9 @@ import com.google.gson.annotations.SerializedName
 
 open class StatusResult {
     @NonNull
+    @SerializedName("status")
     var status: String? = null
+    @SerializedName("message")
     var message: String? = null
 
     var spam: Boolean = false

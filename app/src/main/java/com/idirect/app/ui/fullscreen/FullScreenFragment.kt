@@ -1,7 +1,5 @@
 package com.idirect.app.ui.fullscreen
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.ViewCompat
@@ -18,7 +16,7 @@ import com.idirect.app.core.BaseApplication
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.ActivityFullScreenBinding
 import com.idirect.app.extensions.visible
-import com.idirect.app.ui.main.ShareViewModel
+import com.idirect.app.ui.posts.FragmentCollection
 import com.idirect.app.utils.Resource
 import java.io.File
 
@@ -84,37 +82,43 @@ class FullScreenFragment : BaseFragment<ActivityFullScreenBinding, FullScreenVie
 
                 }
                 Resource.Status.SUCCESS -> {
-                    visible(binding.viewPager)
-                    val items = it.data!!.items[0].carouselMedias
-                    for(item in items){
-                        val fragment = if (item.videoVersions != null) {
-                            FragmentCollection(InstagramConstants.MediaType.VIDEO, item.videoVersions[0].url)
-                        } else {
-                            FragmentCollection(InstagramConstants.MediaType.IMAGE, item.imageVersions2.candidates[0].url)
-                        }
-                        fragments.add(fragment)
-                    }
-                    binding.viewPager.adapter =
-                        CollectionPagerAdapter(fragments, requireActivity().supportFragmentManager)
-
-                    binding.viewPager.addOnPageChangeListener(object:ViewPager.OnPageChangeListener{
-                        override fun onPageScrollStateChanged(state: Int) {
-                        }
-
-                        override fun onPageScrolled(
-                            position: Int,
-                            positionOffset: Float,
-                            positionOffsetPixels: Int
-                        ) {
-                            if(fragments[position].itemType == InstagramConstants.MediaType.VIDEO){
-//                                stopAllSounds()
-                                fragments[position].play()
-                            }
-                        }
-
-                        override fun onPageSelected(position: Int) {
-                        }
-                    })
+//                    visible(binding.viewPager)
+//                    val items = it.data!!.items[0].carouselMedias
+//                    for(item in items){
+//                        val fragment = if (item.videoVersions != null) {
+//                            FragmentCollection(
+//                                InstagramConstants.MediaType.VIDEO,
+//                                item.videoVersions[0].url
+//                            )
+//                        } else {
+//                            FragmentCollection(
+//                                InstagramConstants.MediaType.IMAGE,
+//                                item.imageVersions2.candidates[0].url
+//                            )
+//                        }
+//                        fragments.add(fragment)
+//                    }
+//                    binding.viewPager.adapter =
+//                        CollectionPagerAdapter(fragments, requireActivity().supportFragmentManager)
+//
+//                    binding.viewPager.addOnPageChangeListener(object:ViewPager.OnPageChangeListener{
+//                        override fun onPageScrollStateChanged(state: Int) {
+//                        }
+//
+//                        override fun onPageScrolled(
+//                            position: Int,
+//                            positionOffset: Float,
+//                            positionOffsetPixels: Int
+//                        ) {
+//                            if(fragments[position].itemType == InstagramConstants.MediaType.VIDEO){
+////                                stopAllSounds()
+//                                fragments[position].play()
+//                            }
+//                        }
+//
+//                        override fun onPageSelected(position: Int) {
+//                        }
+//                    })
                 }
             }
         })
@@ -168,7 +172,6 @@ class FullScreenFragment : BaseFragment<ActivityFullScreenBinding, FullScreenVie
 
     override fun onStop() {
         super.onStop()
-        BaseApplication.stopPlay()
     }
 
 }

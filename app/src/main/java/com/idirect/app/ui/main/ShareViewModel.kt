@@ -19,6 +19,7 @@ import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.extensions.REGEX_FIND_URL
 import com.idirect.app.extentions.dpToPx
 import com.idirect.app.extentions.toStringList
+import com.idirect.app.manager.PlayManager
 import com.idirect.app.realtime.commands.RealTime_SendLike
 import com.idirect.app.realtime.commands.RealTime_SendMessage
 import com.idirect.app.realtime.service.RealTimeService
@@ -33,7 +34,7 @@ import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
-class ShareViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
+class ShareViewModel @Inject constructor(application: Application, var mUseCase: UseCase,var mPlayManager: PlayManager) :
     BaseViewModel(application) {
 
     //audio
@@ -66,7 +67,6 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
     private val result = MediatorLiveData<Resource<InstagramDirects>>()
     val mutableLiveData = MutableLiveData<Resource<InstagramDirects>>()
 
-
     private val searchedValue = ArrayList<Thread>().toMutableList()
     private val resultPresence = MediatorLiveData<Resource<PresenceResponse>>()
 
@@ -90,7 +90,40 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
         }
         return@map it
     }.observeForever {
-        mutableLiveData.postValue(it)
+        mutableLiveData.value = (it)
+    }
+
+
+    val liveDataPresence = Transformations.map(resultPresence) {
+        return@map it
+    }
+
+    init {
+        FirebaseMessaging.getInstance().subscribeToTopic("users")
+
+        mUseCase.dismissAllNotification()
+        getDirects()
+        liveDataPresence.observeForever {
+            if (it.status == Resource.Status.SUCCESS) {
+                val presence = it.data!!
+                val threads = instagramDirect!!.inbox.threads
+                for (thread in threads) {
+                    for (item in presence.userPresence) {
+                        if (thread.users[0].pk.toString() == item.key) {
+                            try {
+                                thread.active = item.value["is_active"] as Boolean
+                                thread.lastActivityAt =
+                                    (item.value["last_activity_at_ms"] as Double).toLong()
+                                break
+                            } catch (e: Exception) {
+
+                            }
+                        }
+                    }
+                }
+                mutableLiveData.postValue(Resource.success(instagramDirect!!))
+            }
+        }
     }
 
     fun cancelAudioRecording() {
@@ -151,8 +184,8 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
             ).observeForever {
                 if (it.status == Resource.Status.SUCCESS) {
                     messageChange.value = Pair(currentThread!!.threadId, message.apply {
-                        if (BaseApplication.currentPlayerId == this.itemId) {
-                            BaseApplication.currentPlayerId = it.data!!.messageMetaDatas[0].itemId
+                        if (mPlayManager.currentPlayerId == this.itemId) {
+                            mPlayManager.currentPlayerId = it.data!!.messageMetaDatas[0].itemId
                         }
                         isDelivered = true
                         itemId = it.data!!.messageMetaDatas[0].itemId
@@ -595,9 +628,6 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
         }
     }
 
-    val liveDataPresence = Transformations.map(resultPresence) {
-        return@map it
-    }
 
     fun resetUserData() {
         mUseCase.resetUserData()
@@ -658,34 +688,6 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
             }
         }
         threadChange.value = event.threadId
-    }
-
-    init {
-        FirebaseMessaging.getInstance().subscribeToTopic("users")
-
-        mUseCase.dismissAllNotification()
-        getDirects()
-        liveDataPresence.observeForever {
-            if (it.status == Resource.Status.SUCCESS) {
-                val presence = it.data!!
-                val threads = instagramDirect!!.inbox.threads
-                for (thread in threads) {
-                    for (item in presence.userPresence) {
-                        if (thread.users[0].pk.toString() == item.key) {
-                            try {
-                                thread.active = item.value["is_active"] as Boolean
-                                thread.lastActivityAt =
-                                    (item.value["last_activity_at_ms"] as Double).toLong()
-                                break
-                            } catch (e: Exception) {
-
-                            }
-                        }
-                    }
-                }
-                mutableLiveData.postValue(Resource.success(instagramDirect!!))
-            }
-        }
     }
 
     fun reloadDirects() {

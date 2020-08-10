@@ -169,7 +169,8 @@ class InstagramConstants {
         INVALID_TWO_FACTOR_CODE("invalid_nonce"),
         INVALID_CODE_VALIDATION("sms_code_validation_code_invalid"),
         RATE_LIMIT("rate_limit_error"),
-        LOGIN_REQUIRED("login_required")
+        LOGIN_REQUIRED("login_required"),
+        NOT_AUTHORIZED_VIEW_USER("Not authorized to view user")
     }
 
     enum class ErrorCode(var code:Int){
@@ -245,5 +246,9 @@ class InstagramConstants {
         NOTIFICATION_DATA("notification_data"),
         SETTING("setting"),
         FBNS_DATA("fbns_data"),
+    }
+    enum class CommentType(var type:Int){
+        NORMAL(0),
+        REPLY(1)
     }
 }

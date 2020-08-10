@@ -43,12 +43,6 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
             }
         })
         FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
-
-        supportFragmentManager.addOnBackStackChangedListener(object :FragmentManager.OnBackStackChangedListener{
-            override fun onBackStackChanged() {
-
-            }
-        })
     }
 
 

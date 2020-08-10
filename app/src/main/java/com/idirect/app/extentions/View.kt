@@ -85,6 +85,7 @@ fun TextView.setTextLinkHTML(
     );
     setTextHTML(context,htmlText,haveUnderlineForLink)
 }
+
 fun TextView.setTextHTML(
     context: Context,
     html: String,

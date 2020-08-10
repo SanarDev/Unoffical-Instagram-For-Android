@@ -96,4 +96,7 @@
         <item name="rippleColor">@color/theme_item</item>
         <item name="useCompatPadding">true</item>
     </style>
+    <style name="EmojiCommentStyle">
+        <item name="emojiSize">30dp</item>
+    </style>
 </resources>

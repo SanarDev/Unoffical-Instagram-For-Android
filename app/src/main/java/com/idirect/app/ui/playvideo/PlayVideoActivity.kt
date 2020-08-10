@@ -20,11 +20,16 @@ import com.idirect.app.R
 import com.idirect.app.core.BaseActivity
 import com.idirect.app.core.BaseApplication
 import com.idirect.app.databinding.ActivityPlayVideoBinding
+import com.idirect.app.manager.PlayManager
 import java.io.File
+import javax.inject.Inject
+import kotlin.random.Random
 
 
 class PlayVideoActivity : BaseActivity<ActivityPlayVideoBinding, PlayVideoViewModel>() {
-    private lateinit var player: SimpleExoPlayer
+
+    @Inject
+    lateinit var mPlayManager:PlayManager
 
     var isHideUiSystem:Boolean = true
     companion object {
@@ -100,8 +105,8 @@ class PlayVideoActivity : BaseActivity<ActivityPlayVideoBinding, PlayVideoViewMo
         val mediaSource: MediaSource =
             ProgressiveMediaSource.Factory(dataSource)
                 .createMediaSource(uri)
-        BaseApplication.startPlay(mediaSource)
-        binding.videoView.player = BaseApplication.player
+        mPlayManager.startPlay(mediaSource,Random.nextInt().toString())
+        binding.videoView.player = mPlayManager.player
 
         binding.btnBack.setOnClickListener {
             onBackPressed()
@@ -113,7 +118,7 @@ class PlayVideoActivity : BaseActivity<ActivityPlayVideoBinding, PlayVideoViewMo
     }
     override fun onStop() {
         super.onStop()
-        BaseApplication.stopPlay()
+        mPlayManager.stopPlay()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

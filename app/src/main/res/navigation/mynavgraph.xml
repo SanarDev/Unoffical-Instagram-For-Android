@@ -37,14 +37,8 @@
             android:id="@+id/action_startMessageFragment_to_userProfileFragment"
             app:destination="@id/userProfileFragment">
 
-            <argument android:name="user_id"
-                app:argType="string"/>
-            <argument android:name="profile_url"
-                app:argType="string"/>
-            <argument android:name="username"
-                app:argType="string"/>
-            <argument android:name="fullname"
-                app:argType="string"/>
+            <argument android:name="user_data"
+                app:argType="com.idirect.app.ui.userprofile.UserBundle" />
 
         </action>
     </fragment>
@@ -75,14 +69,8 @@
             android:id="@+id/action_fragmentDirect_to_userProfileFragment"
             app:destination="@id/userProfileFragment">
 
-            <argument android:name="user_id"
-                app:argType="string"/>
-            <argument android:name="profile_url"
-                app:argType="string"/>
-            <argument android:name="username"
-                app:argType="string"/>
-            <argument android:name="fullname"
-                app:argType="string"/>
+            <argument android:name="user_data"
+                app:argType="com.idirect.app.ui.userprofile.UserBundle" />
 
         </action>
     </fragment>
@@ -101,5 +89,49 @@
         <action
             android:id="@+id/action_userProfileFragment_to_fragmentDirect"
             app:destination="@id/fragmentDirect" />
+        <action
+            android:id="@+id/action_userProfileFragment_to_postsFragment"
+            app:destination="@id/postsFragment">
+            <argument android:name="user_id"
+                app:argType="string"/>
+            <argument android:name="scroll_to_item_id"
+                app:argType="string"
+                app:nullable="true"/>
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/postsFragment"
+        android:name="com.idirect.app.ui.posts.PostsFragment"
+        android:label="PostsFragment"
+        tools:layout="@layout/fragment_posts">
+        <action
+            android:id="@+id/action_postsFragment_to_userProfileFragment"
+            app:destination="@id/userProfileFragment">
+
+            <argument android:name="user_data"
+                app:argType="com.idirect.app.ui.userprofile.UserBundle" />
+        </action>
+        <action
+            android:id="@+id/action_postsFragment_to_commentsFragment"
+            app:destination="@id/commentsFragment" >
+
+            <argument android:name="data"
+                app:argType="com.idirect.app.datasource.model.UserPost"/>
+
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/commentsFragment"
+        android:name="com.idirect.app.ui.postcomments.CommentsFragment"
+        android:label="CommentsFragment"
+        tools:layout="@layout/fragment_comment">
+        <action
+            android:id="@+id/action_commentsFragment_to_userProfileFragment"
+            app:destination="@id/userProfileFragment">
+
+            <argument android:name="user_data"
+                app:argType="com.idirect.app.ui.userprofile.UserBundle" />
+
+        </action>
     </fragment>
 </navigation>

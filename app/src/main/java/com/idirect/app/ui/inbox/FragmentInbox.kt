@@ -19,6 +19,7 @@ import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
@@ -42,6 +43,7 @@ import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.utils.dialog.DialogListener
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
+import javax.inject.Inject
 
 
 class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
@@ -52,6 +54,9 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
     override fun getViewModelClass(): Class<InboxViewModel> {
         return InboxViewModel::class.java
     }
+
+    @Inject
+    lateinit var mGlideRequestManager:RequestManager
 
     private lateinit var shareViewModel: ShareViewModel
     private lateinit var layoutManager: LinearLayoutManager
@@ -430,20 +435,20 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 visible(dataBinding.layoutProfileImageGroup)
                 gone(dataBinding.layoutProfileImageUser)
                 if (item.users.size >= 2) {
-                    Glide.with(context!!).load(item.users[1].profilePicUrl)
+                    mGlideRequestManager.load(item.users[1].profilePicUrl)
                         .into(dataBinding.profileImageG1)
-                    Glide.with(context!!).load(item.users[0].profilePicUrl)
+                    mGlideRequestManager.load(item.users[0].profilePicUrl)
                         .into(dataBinding.profileImageG2)
                 } else {
-                    Glide.with(context!!).load(user.profilePicUrl)
+                    mGlideRequestManager.load(user.profilePicUrl)
                         .into(dataBinding.profileImageG1)
-                    Glide.with(context!!).load(item.users[0].profilePicUrl)
+                    mGlideRequestManager.load(item.users[0].profilePicUrl)
                         .into(dataBinding.profileImageG2)
                 }
             } else {
                 gone(dataBinding.layoutProfileImageGroup)
                 visible(dataBinding.layoutProfileImageUser)
-                Glide.with(context!!).load(item.users[0].profilePicUrl)
+                mGlideRequestManager.load(item.users[0].profilePicUrl)
                     .into(dataBinding.profileImage)
             }
             dataBinding.profileMoreOption.setOnClickListener {
@@ -470,26 +475,6 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 shareViewModel.currentThreadId = shareViewModel.currentThread!!.threadId
                 Navigation.findNavController(it)
                     .navigate(R.id.action_fragmentInbox_to_fragmentDirect)
-//                FragmentDirect.open(activity!!, DirectBundle().apply {
-//                    threadId = item.threadId
-//                    profileImage = item.users[0].profilePicUrl
-//                    if (item.users.size >= 2) {
-//                        profileImage2 = item.users[1].profilePicUrl
-//                    } else {
-//                        profileImage2 = user.profilePicUrl
-//                    }
-//                    username = item.users[0].username
-//                    isActive = item.active
-//                    lastActivityAt = item.lastActivityAt
-//                    seqId = shareViewModel.instagramDirect!!.seqId
-//                    userId = item.users[0].pk
-//                    isGroup = item.isGroup
-//                    if (item.isGroup && item.threadTitle.isNotEmpty()) {
-//                        threadTitle = item.threadTitle
-//                    } else {
-//                        threadTitle = username
-//                    }
-//                })
                 if (binding.edtSearch.text.toString().isNotEmpty()) {
                     binding.edtSearch.setText("")
                 }

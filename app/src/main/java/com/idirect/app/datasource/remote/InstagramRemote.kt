@@ -208,7 +208,7 @@ interface InstagramRemote {
     @GET(InstagramConstants.API_VERSION + "feed/user/{user_id}/")
     fun getUserPosts(@HeaderMap header: Map<String, String>,
                      @Path("user_id") userId:Long,
-                     @Query("exclude_comment") excludeComment:Boolean = true,
+                     @Query("exclude_comment") excludeComment:Boolean = false,
                      @Query("only_fetch_first_carousel_media") onlyFetchFirstCarouselMedia:Boolean = false):Call<InstagramPostsResponse>
 
     @GET(InstagramConstants.API_VERSION + "feed/user/{user_id}")
@@ -218,4 +218,47 @@ interface InstagramRemote {
                      @Query("only_fetch_first_carousel_media") onlyFetchFirstCarouselMedia:Boolean = false,
                      @Query("max_id") previousPostId:String
                      ):Call<InstagramPostsResponse>
+
+    @POST(InstagramConstants.API_VERSION + "media/{media_id}/like/")
+    fun likePost(@HeaderMap header: Map<String, String>,
+                 @Path("media_id") mediaId:String,
+                 @Body requestBody: RequestBody
+    ):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION + "media/{media_id}/unlike/")
+    fun unlikePost(@HeaderMap header: Map<String, String>,
+                 @Path("media_id") mediaId:String,
+                 @Body requestBody: RequestBody
+    ):Call<ResponseBody>
+
+    @GET(InstagramConstants.API_VERSION + "media/{media_id}/comments/")
+    fun getPostComments(
+        @HeaderMap header: Map<String, String>,
+        @Path("media_id") mediaId: String,
+        @Query("inventory_source") inventorySource:String = "media_or_ad",
+        @Query("carousel_index") carouselIndex:Int=1,
+        @Query("analytics_module") analyticsModule:String = "comments_v2",
+        @Query("can_support_threading") canSupportThreading:Boolean = true,
+        @Query("is_carousel_bumped_post") isCarouselBumpedPost:Boolean = true
+    ):Call<InstagramCommentResponse>
+
+    @GET(InstagramConstants.API_VERSION + "media/{media_id}/comments/")
+    fun loadMorePostComments(
+        @HeaderMap header: Map<String, String>,
+        @Path("media_id") mediaId: String,
+        @Query("min_id") minId:String,
+        @Query("inventory_source") inventorySource:String = "media_or_ad",
+        @Query("analytics_module") analyticsModule:String = "comments_v2",
+        @Query("can_support_threading") canSupportThreading:Boolean = true,
+        @Query("is_carousel_bumped_post") isCarouselBumpedPost:Boolean = true
+    ):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION  + "media/{media_id}/comment_like/")
+    fun likeComment(@HeaderMap header: Map<String, String>, @Path("media_id")mediaId: String,@Body requestBody: RequestBody):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION  + "media/{media_id}/comment_unlike/")
+    fun unlikeComment(@HeaderMap header: Map<String, String>, @Path("media_id")mediaId: String,@Body requestBody: RequestBody):Call<ResponseBody>
+
+    @GET(InstagramConstants.API_VERSION + "users/{user_name}/usernameinfo/")
+    fun getUsernameInfo(@HeaderMap header: Map<String, String>,@Path("user_name") userUsername:String,@Query("from_module") fromModule:String = "feed_timeline"):Call<InstagramUserInfo>
 }

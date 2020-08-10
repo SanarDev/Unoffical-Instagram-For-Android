@@ -21,6 +21,7 @@ import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
 import com.idirect.app.extensions.waitForTransition
 import com.idirect.app.ui.main.ShareViewModel
+import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -123,12 +124,13 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
             dataBinding.txtUsername.text = user.username
             Glide.with(requireContext()).load(user.profilePicUrl).into(dataBinding.imgProfileImage)
             dataBinding.root.setOnClickListener {
-                val action = StartMessageFragmentDirections.actionStartMessageFragmentToUserProfileFragment(
-                    user.pk.toString(),
-                    user.profilePicUrl,
-                    user.username,
-                    user.fullName
-                )
+                val userData = UserBundle().apply {
+                    this.userId = user.pk.toString()
+                    this.profilePic = user.profilePicUrl
+                    this.username = user.username
+                    this.fullname = user.fullName
+                }
+                val action = StartMessageFragmentDirections.actionStartMessageFragmentToUserProfileFragment(userData)
                 val extras = FragmentNavigatorExtras(
                     dataBinding.imgProfileImage to dataBinding.imgProfileImage.transitionName,
                     dataBinding.txtUsername to dataBinding.txtUsername.transitionName,

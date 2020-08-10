@@ -10,6 +10,7 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
+import com.google.gson.internal.LinkedTreeMap
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseApplication
@@ -48,6 +49,7 @@ class UseCase(
 ) {
     private var currentCookie: Cookie? = null
     private var currentUser: InstagramLoggedUser? = null
+    private var defaultHeaderMap:HashMap<String,String>?=null
     val XLATE = "0123456789abcdef"
 
     var isNotificationEnable: Boolean
@@ -343,7 +345,6 @@ class UseCase(
 
     fun getUserProfile(userId:Long,liveData:MutableLiveData<Resource<InstagramUserInfo>>?=null): MutableLiveData<Resource<InstagramUserInfo>> {
         val result = liveData ?: MutableLiveData<Resource<InstagramUserInfo>>()
-        val user = getUserData()
         mInstagramRepository.getUserInfo(result, { getHeaders() },userId)
         return result
     }
@@ -797,42 +798,46 @@ class UseCase(
     }
 
     private fun getHeaders(): HashMap<String, String> {
+
+        if(defaultHeaderMap != null){
+            return defaultHeaderMap!!
+        }
         val cookie = getCookie()
         val user = getUserData()
-        val map = HashMap<String, String>()
-        map[InstagramConstants.X_DEVICE_ID] = cookie.deviceID
-        map[InstagramConstants.X_DEVICE_ID] = "en_US"
-        map[InstagramConstants.X_IG_DEVICE_LOCALE] = "en_US"
-        map[InstagramConstants.X_IG_MAPPED_LOCALE] = "en_US"
-        map[InstagramConstants.X_PIGEON_SESSION_ID] = UUID.randomUUID().toString()
-        map[InstagramConstants.X_PIGEON_RAWCLIENT_TIEM] = System.currentTimeMillis().toString()
-        map[InstagramConstants.X_IG_CONNECTION_SPEED] = "-1kbps"
-        map[InstagramConstants.X_IG_BANDWIDTH_SPEED_KBPS] = "1665"
-        map[InstagramConstants.X_IG_BANDWIDTH_TOTALBYTES_B] = "465691"
-        map[InstagramConstants.X_IG_BAND_WIDTH_TOTALTIME_MS] = "3322"
-        map[InstagramConstants.X_IG_APP_STARTUP_COUNTRY] = "IR"
-        map[InstagramConstants.X_BLOKS_VERSION_ID] = InstagramConstants.BLOKS_VERSION_ID
-        map[InstagramConstants.X_IG_WWW_CLAIM] = 0.toString()
-        map[InstagramConstants.X_BLOKS_IS_LAYOUT_RTL] = false.toString()
-        map[InstagramConstants.X_BLOKS_ENABLE_RENDER_CORE] = false.toString()
-        map[InstagramConstants.X_IG_DEVICE_ID] = cookie.deviceID
-        map[InstagramConstants.X_IG_ANDROID_ID] = "android-2d397713fddd2a9d"
-        map[InstagramConstants.X_IG_CONNECTION_TYPE] = "WIFI"
-        map[InstagramConstants.X_IG_CAPABILITIES] = InstagramConstants.DEVICE_CAPABILITIES
-        map[InstagramConstants.X_IG_APP_ID] = InstagramConstants.APP_ID
-        map[InstagramConstants.X_USER_AGENT] =
+        defaultHeaderMap = HashMap<String, String>()
+        defaultHeaderMap!![InstagramConstants.X_DEVICE_ID] = cookie.deviceID
+        defaultHeaderMap!![InstagramConstants.X_DEVICE_ID] = "en_US"
+        defaultHeaderMap!![InstagramConstants.X_IG_DEVICE_LOCALE] = "en_US"
+        defaultHeaderMap!![InstagramConstants.X_IG_MAPPED_LOCALE] = "en_US"
+        defaultHeaderMap!![InstagramConstants.X_PIGEON_SESSION_ID] = UUID.randomUUID().toString()
+        defaultHeaderMap!![InstagramConstants.X_PIGEON_RAWCLIENT_TIEM] = System.currentTimeMillis().toString()
+        defaultHeaderMap!![InstagramConstants.X_IG_CONNECTION_SPEED] = "-1kbps"
+        defaultHeaderMap!![InstagramConstants.X_IG_BANDWIDTH_SPEED_KBPS] = "1665"
+        defaultHeaderMap!![InstagramConstants.X_IG_BANDWIDTH_TOTALBYTES_B] = "465691"
+        defaultHeaderMap!![InstagramConstants.X_IG_BAND_WIDTH_TOTALTIME_MS] = "3322"
+        defaultHeaderMap!![InstagramConstants.X_IG_APP_STARTUP_COUNTRY] = "IR"
+        defaultHeaderMap!![InstagramConstants.X_BLOKS_VERSION_ID] = InstagramConstants.BLOKS_VERSION_ID
+        defaultHeaderMap!![InstagramConstants.X_IG_WWW_CLAIM] = 0.toString()
+        defaultHeaderMap!![InstagramConstants.X_BLOKS_IS_LAYOUT_RTL] = false.toString()
+        defaultHeaderMap!![InstagramConstants.X_BLOKS_ENABLE_RENDER_CORE] = false.toString()
+        defaultHeaderMap!![InstagramConstants.X_IG_DEVICE_ID] = cookie.deviceID
+        defaultHeaderMap!![InstagramConstants.X_IG_ANDROID_ID] = "android-2d397713fddd2a9d"
+        defaultHeaderMap!![InstagramConstants.X_IG_CONNECTION_TYPE] = "WIFI"
+        defaultHeaderMap!![InstagramConstants.X_IG_CAPABILITIES] = InstagramConstants.DEVICE_CAPABILITIES
+        defaultHeaderMap!![InstagramConstants.X_IG_APP_ID] = InstagramConstants.APP_ID
+        defaultHeaderMap!![InstagramConstants.X_USER_AGENT] =
             "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
-        map[InstagramConstants.ACCEPT_LANGUAGE] = "en-US"
-        map[InstagramConstants.COOKIE] =
+        defaultHeaderMap!![InstagramConstants.ACCEPT_LANGUAGE] = "en-US"
+        defaultHeaderMap!![InstagramConstants.COOKIE] =
             "mid=${cookie.mid}; csrftoken=${cookie.csrftoken};sessionid=${cookie.sessionID};dc_user=${user?.username.toString()
                 .toLowerCase()};dc_user_id=${user?.pk.toString()}"
-        map[InstagramConstants.X_MID] = cookie.mid.toString()
-        map[InstagramConstants.ACCEPT] = "application/json"
-        map[InstagramConstants.CONTENT_TYPE] = "application/x-www-form-urlencoded; charset=UTF-8"
-        map[InstagramConstants.HOST] = "i.instagram.com"
-        map[InstagramConstants.X_FB_HTTP_ENGINE] = "Liger"
-        map[InstagramConstants.CONNECTION] = "keep-alive"
-        return map
+        defaultHeaderMap!![InstagramConstants.X_MID] = cookie.mid.toString()
+        defaultHeaderMap!![InstagramConstants.ACCEPT] = "application/json"
+        defaultHeaderMap!![InstagramConstants.CONTENT_TYPE] = "application/x-www-form-urlencoded; charset=UTF-8"
+        defaultHeaderMap!![InstagramConstants.HOST] = "i.instagram.com"
+        defaultHeaderMap!![InstagramConstants.X_FB_HTTP_ENGINE] = "Liger"
+        defaultHeaderMap!![InstagramConstants.CONNECTION] = "keep-alive"
+        return defaultHeaderMap!!
     }
 
 
@@ -1318,13 +1323,100 @@ class UseCase(
         return result
     }
 
-    fun getUserPosts(userId: Long, userPosts: MutableLiveData<Resource<InstagramPostsResponse>>) {
+    fun getUserPosts(userId: Long): LiveData<Resource<InstagramPostsResponse>> {
+        val userPosts=  MutableLiveData<Resource<InstagramPostsResponse>>()
         mInstagramRepository.getUserPosts(userPosts,userId,{getHeaders()})
+        return Transformations.map(userPosts){
+            if(it.status == Resource.Status.ERROR && it.apiError != null){
+                val error = gson.fromJson(it.apiError.data!!.string(),Any::class.java) as LinkedTreeMap<*, *>
+                it.apiError.message =  error["message"].toString()
+            }
+            return@map it
+        }
     }
 
     fun loadMoreUserPosts(userId: Long,previousPostId:String,userPosts: MutableLiveData<Resource<InstagramPostsResponse>>){
         mInstagramRepository.loadMoreUserPosts(userPosts,userId,{getHeaders()},previousPostId)
     }
 
+    fun likePost(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val data = HashMap<String,Any>().apply {
+            put("inventory_source","media_or_ad")
+            put("media_id",mediaId)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("radio_type","wifi_none")
+            put("_uid",user.pk!!.toString())
+            put("_uuid",cookie.adid)
+            put("is_carousel_bumped_post",false)
+            put("container_module",containerModule)
+            put("feed_position",0)
+        }
+        mInstagramRepository.likePost(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        return result
+    }
 
+    fun unlikePost(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val data = HashMap<String,Any>().apply {
+            put("inventory_source","media_or_ad")
+            put("media_id",mediaId)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("radio_type","wifi_none")
+            put("_uid",user.pk!!.toString())
+            put("_uuid",cookie.adid)
+            put("is_carousel_bumped_post",false)
+            put("container_module",containerModule)
+            put("feed_position",0)
+        }
+        mInstagramRepository.unlikePost(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        return result
+    }
+
+    fun likeComment(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val data = HashMap<String,Any>().apply {
+            put("_csrftoken",cookie.csrftoken!!)
+            put("_uid",user.pk!!.toString())
+            put("_uuid",cookie.adid)
+            put("is_carousel_bumped_post",false)
+            put("container_module",containerModule)
+            put("feed_position",0)
+        }
+        mInstagramRepository.likeComment(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        return result
+    }
+
+    fun unlikeComment(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val data = HashMap<String,Any>().apply {
+            put("_csrftoken",cookie.csrftoken!!)
+            put("_uid",user.pk!!.toString())
+            put("_uuid",cookie.adid)
+            put("is_carousel_bumped_post",false)
+            put("container_module",containerModule)
+            put("feed_position",0)
+        }
+        mInstagramRepository.unlikeComment(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        return result
+    }
+
+    fun getPostComments(mediaId: String): MutableLiveData<Resource<InstagramCommentResponse>> {
+        val result = MutableLiveData<Resource<InstagramCommentResponse>>()
+        mInstagramRepository.getPostComments(result,{getHeaders()},mediaId)
+        return result
+    }
+
+    fun getUserInfoFromUsername(result:MutableLiveData<Resource<InstagramUserInfo>>,username:String,fromModule:String="feed_contextual_profile"): MutableLiveData<Resource<InstagramUserInfo>> {
+        mInstagramRepository.getUserInfoFromUsername(result,{getHeaders()},username,fromModule)
+        return result
+    }
 }

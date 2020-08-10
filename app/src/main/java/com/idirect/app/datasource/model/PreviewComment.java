@@ -5,12 +5,13 @@ import com.google.gson.annotations.SerializedName;
 
 public class PreviewComment {
 
+
     @SerializedName("pk")
     @Expose
-    private long pk;
+    private Long pk;
     @SerializedName("user_id")
     @Expose
-    private long userId;
+    private Long userId;
     @SerializedName("text")
     @Expose
     private String text;
@@ -19,10 +20,10 @@ public class PreviewComment {
     private int type;
     @SerializedName("created_at")
     @Expose
-    private long createdAt;
+    private Long createdAt;
     @SerializedName("created_at_utc")
     @Expose
-    private long createdAtUtc;
+    private Long createdAtUtc;
     @SerializedName("content_type")
     @Expose
     private String contentType;
@@ -31,7 +32,7 @@ public class PreviewComment {
     private String status;
     @SerializedName("bit_flags")
     @Expose
-    private int bitFlags;
+    private Long bitFlags;
     @SerializedName("did_report_as_spam")
     @Expose
     private Boolean didReportAsSpam;
@@ -41,29 +42,26 @@ public class PreviewComment {
     @SerializedName("user")
     @Expose
     private User user;
-    @SerializedName("media_id")
+    @SerializedName("has_liked_comment")
     @Expose
-    private long mediaId;
-    @SerializedName("has_translation")
+    private Boolean hasLikedComment;
+    @SerializedName("comment_like_count")
     @Expose
-    private Boolean hasTranslation;
-    @SerializedName("parent_comment_id")
-    @Expose
-    private long parentCommentId;
+    private Long commentLikeCount;
 
-    public long getPk() {
+    public Long getPk() {
         return pk;
     }
 
-    public void setPk(long pk) {
+    public void setPk(Long pk) {
         this.pk = pk;
     }
 
-    public long getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(long userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 
@@ -83,19 +81,19 @@ public class PreviewComment {
         this.type = type;
     }
 
-    public long getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
-    public long getCreatedAtUtc() {
+    public Long getCreatedAtUtc() {
         return createdAtUtc;
     }
 
-    public void setCreatedAtUtc(long createdAtUtc) {
+    public void setCreatedAtUtc(Long createdAtUtc) {
         this.createdAtUtc = createdAtUtc;
     }
 
@@ -115,11 +113,11 @@ public class PreviewComment {
         this.status = status;
     }
 
-    public int getBitFlags() {
+    public Long getBitFlags() {
         return bitFlags;
     }
 
-    public void setBitFlags(int bitFlags) {
+    public void setBitFlags(Long bitFlags) {
         this.bitFlags = bitFlags;
     }
 
@@ -147,27 +145,20 @@ public class PreviewComment {
         this.user = user;
     }
 
-    public long getMediaId() {
-        return mediaId;
+    public Boolean getHasLikedComment() {
+        return hasLikedComment;
     }
 
-    public void setMediaId(long mediaId) {
-        this.mediaId = mediaId;
+    public void setHasLikedComment(Boolean hasLikedComment) {
+        this.hasLikedComment = hasLikedComment;
     }
 
-    public Boolean getHasTranslation() {
-        return hasTranslation;
+    public Long getCommentLikeCount() {
+        return commentLikeCount;
     }
 
-    public void setHasTranslation(Boolean hasTranslation) {
-        this.hasTranslation = hasTranslation;
+    public void setCommentLikeCount(Long commentLikeCount) {
+        this.commentLikeCount = commentLikeCount;
     }
 
-    public long getParentCommentId() {
-        return parentCommentId;
-    }
-
-    public void setParentCommentId(long parentCommentId) {
-        this.parentCommentId = parentCommentId;
-    }
 }

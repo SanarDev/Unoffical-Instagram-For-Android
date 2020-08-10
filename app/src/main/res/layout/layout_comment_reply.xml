@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <RelativeLayout
+        android:gravity="center_vertical"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="horizontal"
+        android:paddingBottom="15dp"
+        android:paddingEnd="20dp"
+        android:paddingStart="50dp"
+        android:paddingTop="15dp"
+        tools:background="@color/theme_background">
+
+
+        <com.tylersuehr.chips.CircleImageView
+            android:id="@+id/img_profile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentTop="true"
+            tools:src="@mipmap/example" />
+
+        <com.idirect.app.customview.customtextview.HyperTextView
+            android:id="@+id/txt_comment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@id/img_profile"
+            android:layout_toStartOf="@id/btn_like"
+            android:layout_marginEnd="20dp"
+            android:textColor="@color/text_very_light"
+            tools:text="Username" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/txt_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txt_comment"
+            android:layout_alignStart="@id/txt_comment"
+            android:layout_marginTop="5dp"
+            android:textColor="@color/text_light"
+            android:textSize="12sp"
+            tools:text="11h" />
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/btn_like"
+            android:layout_width="17dp"
+            android:layout_height="17dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@null"
+            android:src="@drawable/ic_heart_outline"
+            android:tint="@color/text_light" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/btn_reply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/txt_time"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@id/txt_time"
+            android:background="@null"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:text="@string/reply"
+            android:textColor="@color/text_light"
+            android:textSize="12sp" />
+
+    </RelativeLayout>
+</layout>
+
+

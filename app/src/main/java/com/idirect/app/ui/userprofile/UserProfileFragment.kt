@@ -7,9 +7,13 @@ import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionInflater
 import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
@@ -19,12 +23,18 @@ import com.idirect.app.databinding.LayoutUserPostBinding
 import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
+import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
+import javax.inject.Inject
 
 class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfileViewModel>() {
 
+    @Inject
+    lateinit var mGlideRequestManager: RequestManager
+
+    private var userId: String?=null
     private lateinit var mLayoutManager: GridLayoutManager
     private var isMoreAvailable: Boolean = false
     private var isLoading: Boolean = false
@@ -52,24 +62,27 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
+    val size = DisplayUtils.getScreenWidth()
+    val picStandardSize = size / 3
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val bundle = requireArguments()
-        val userId = bundle.getString("user_id")!!
-        val profileImageUrl = bundle.getString("profile_url")!!
-        val username = bundle.getString("username")!!
-        val fullname = bundle.getString("fullname")!!
+        val userBundle = bundle.getParcelable<UserBundle>("user_data")!!
+        userId = userBundle.userId
+        val profileImageUrl = userBundle.profilePic
+        val username = userBundle.username
+        val fullname = userBundle.fullname
 
         binding.txtUsername.text = username
         binding.txtFullname.text = fullname
-        Glide.with(requireContext()).load(profileImageUrl).into(binding.imgProfile)
+        mGlideRequestManager.load(profileImageUrl).into(binding.imgProfile)
 
         ViewCompat.setTransitionName(binding.imgProfile, "profile_${userId}")
         ViewCompat.setTransitionName(binding.txtUsername, "username_${userId}")
         ViewCompat.setTransitionName(binding.txtFullname, "fullname_${userId}")
 
-        viewModel.init(userId.toLong())
+        viewModel.init(username,userId)
 
         val mAdapter = PostsAdapter(emptyArray<UserPost>().toMutableList())
         binding.recyclerviewPosts.adapter = mAdapter
@@ -78,14 +91,20 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
         viewModel.userLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
                 val user = it.data!!.user
+                userId = user.pk.toString()
                 binding.txtUsername.text = user.username
                 binding.txtBio.text = user.biography
                 binding.txtFullname.text = user.fullName
                 binding.txtFollowersCount.text = user.followerCount.toString()
                 binding.txtFollowingCount.text = user.followingCount.toString()
                 binding.txtPostCount.text = user.mediaCount.toString()
-                Glide.with(requireContext()).load(user.hdProfilePicVersions[0].url)
-                    .into(binding.imgProfile)
+                if(user.hdProfilePicVersions != null && user.hdProfilePicVersions.isNotEmpty()){
+                    mGlideRequestManager.load(user.hdProfilePicVersions[0].url)
+                        .into(binding.imgProfile)
+                }else{
+                    mGlideRequestManager.load(user.profilePicUrl)
+                        .into(binding.imgProfile)
+                }
             }
         })
         viewModel.resultUsePosts.observe(viewLifecycleOwner, Observer {
@@ -94,6 +113,13 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
                     if (mAdapter.items.isEmpty()) {
                         visible(binding.postsProgress)
                         gone(binding.recyclerviewPosts)
+                    }
+                }
+
+                Resource.Status.ERROR ->{
+                    if(it.apiError!!.message == InstagramConstants.Error.NOT_AUTHORIZED_VIEW_USER.msg){
+                        gone(binding.postsProgress)
+                        visible(binding.layoutPrivatePage)
                     }
                 }
                 Resource.Status.SUCCESS -> {
@@ -113,18 +139,14 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
             requireActivity().onBackPressed()
         }
 
-        binding.nestedScrollView.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
-            if (v.getChildAt(v.childCount - 1) != null) {
-                if (scrollY >= v.getChildAt(v.childCount - 1)
-                        .measuredHeight - v.measuredHeight &&
-                    scrollY > oldScrollY
-                ) {
-                    if (!isLoading && isMoreAvailable) {
-                        val totalItemCount = mLayoutManager.itemCount
-                        if (mLayoutManager != null && mLayoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
-                            viewModel.loadMorePosts()
-                            isLoading = true
-                        }
+        binding.recyclerviewPosts.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (!isLoading && isMoreAvailable) {
+                    val totalItemCount = mLayoutManager.itemCount
+                    if (mLayoutManager != null && mLayoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
+                        viewModel.loadMorePosts()
+                        isLoading = true
                     }
                 }
             }
@@ -138,20 +160,38 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
             when (item.mediaType) {
                 InstagramConstants.MediaType.IMAGE.type -> {
                     dataBinding.imgPostType.setImageDrawable(null)
-                    Glide.with(context!!).load(item.imageVersions2.candidates[1].url).centerCrop()
-                        .placeholder(R.drawable.post_load_place_holder).into(dataBinding.imgPost)
+                    mGlideRequestManager
+                        .load(item.imageVersions2.candidates[1].url)
+                        .override(picStandardSize,picStandardSize)
+                        .centerCrop()
+                        .placeholder(R.drawable.post_load_place_holder)
+                        .into(dataBinding.imgPost)
                 }
                 InstagramConstants.MediaType.VIDEO.type -> {
                     dataBinding.imgPostType.setImageDrawable(requireContext().getDrawable(R.drawable.ic_play))
-                    Glide.with(context!!).load(item.imageVersions2.candidates[1].url).centerCrop()
-                        .placeholder(R.drawable.post_load_place_holder).into(dataBinding.imgPost)
+                    mGlideRequestManager
+                        .load(item.imageVersions2.candidates[1].url)
+                        .override(picStandardSize,picStandardSize)
+                        .centerCrop()
+                        .placeholder(R.drawable.post_load_place_holder)
+                        .into(dataBinding.imgPost)
                 }
                 InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
                     dataBinding.imgPostType.setImageDrawable(requireContext().getDrawable(R.drawable.ic_collection))
-                    Glide.with(context!!)
-                        .load(item.carouselMedias[0].imageVersions2.candidates[1].url).centerCrop()
-                        .placeholder(R.drawable.post_load_place_holder).into(dataBinding.imgPost)
+                    mGlideRequestManager
+                        .load(item.carouselMedias[0].imageVersions2.candidates[1].url)
+                        .override(picStandardSize,picStandardSize)
+                        .centerCrop()
+                        .placeholder(R.drawable.post_load_place_holder)
+                        .into(dataBinding.imgPost)
                 }
+            }
+            dataBinding.root.setOnClickListener {
+                val action = UserProfileFragmentDirections.actionUserProfileFragmentToPostsFragment(
+                    userId = userId!!,
+                    scrollToItemId = item.id
+                )
+                it.findNavController().navigate(action)
             }
             return item
         }

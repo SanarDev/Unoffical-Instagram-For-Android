@@ -12,6 +12,7 @@ import android.os.Handler
 import android.widget.ProgressBar
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatImageButton
+import com.bumptech.glide.module.AppGlideModule
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.MediaSource
@@ -20,6 +21,7 @@ import com.idirect.app.R
 import com.idirect.app.di.component.DaggerAppComponent
 import com.idirect.app.receiver.NetworkChangeReceiver
 import com.idirect.app.utils.StorageUtils
+import com.squareup.leakcanary.LeakCanary
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
@@ -31,26 +33,8 @@ import javax.inject.Inject
 class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
 
     companion object{
-        lateinit var player:SimpleExoPlayer
-        var currentPlayerId:String = ""
-        var seekbarPlay:ProgressBar?=null
-        var btnPlay:AppCompatImageButton?=null
         var isAppInOnStop:Boolean = false
-        private var isFinishMedia = false
-
-        fun startPlay(mediaSource: MediaSource){
-            seekbarPlay?.progress = 0
-            btnPlay?.setImageResource(R.drawable.ic_play_circle)
-            player.prepare(mediaSource)
-            player.playWhenReady = true
-
-        }
-        fun stopPlay(){
-            player.playWhenReady = false
-        }
     }
-
-    private lateinit var runnable: Runnable
 
     @Inject
     lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Activity>
@@ -82,18 +66,16 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
         }
         registerReceiver(br, filter)
 
-        initializePlayer()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel(getString(R.string.packageName),getString(R.string.packageName))
         }
-/*
+
         if (LeakCanary.isInAnalyzerProcess(this)) {
             // This process is dedicated to LeakCanary for heap analysis.
             // You should not init your app in this process.
             return;
         }
         LeakCanary.install(this);
-        */
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -107,34 +89,4 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
         return channelId
     }
 
-    private fun initializePlayer() {
-        player = SimpleExoPlayer.Builder(this).build()
-
-        player.addListener(object :Player.EventListener{
-            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                when(playbackState){
-                    Player.STATE_ENDED ->{
-                        seekbarPlay?.progress = 0
-                        btnPlay?.setImageResource(R.drawable.ic_play_circle)
-                        currentPlayerId = ""
-                        isFinishMedia = true
-                    }
-                    Player.STATE_READY ->{
-                        isFinishMedia = false
-                    }
-                    else ->{
-
-                    }
-                }
-            }
-        })
-        val handler = Handler()
-        runnable = Runnable {
-            if(!isFinishMedia){
-                seekbarPlay?.progress = (player.currentPosition * 100 / player.duration).toInt()
-            }
-            handler.postDelayed(runnable, 100)
-        }
-        handler.postDelayed(runnable, 0)
-    }
 }

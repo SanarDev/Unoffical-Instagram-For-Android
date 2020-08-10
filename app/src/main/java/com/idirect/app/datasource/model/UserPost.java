@@ -1,11 +1,14 @@
 package com.idirect.app.datasource.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class UserPost {
+public class UserPost implements Parcelable {
 
     @SerializedName("taken_at")
     @Expose
@@ -76,6 +79,9 @@ public class UserPost {
     @SerializedName("hash_more_comments")
     @Expose
     private boolean hashMoreComments;
+    @SerializedName("preview_comments")
+    @Expose
+    private List<PreviewComment> previewComments;
     @SerializedName("max_num_visible_preview_comments")
     @Expose
     private int maxNumVisiblePreviewComments;
@@ -84,7 +90,7 @@ public class UserPost {
     private boolean canViewMorePreviewComments;
     @SerializedName("comment_count")
     @Expose
-    private int comment_count;
+    private int commentCount;
     @SerializedName("like_count")
     @Expose
     private int likeCount;
@@ -96,7 +102,7 @@ public class UserPost {
     private int inlineComposerImpTriggerTime;
     @SerializedName("has_liked")
     @Expose
-    private boolean has_liked;
+    private boolean hasLiked;
     @SerializedName("top_likers")
     @Expose
     private List<String> topLikers;
@@ -121,6 +127,103 @@ public class UserPost {
     @SerializedName("profile_grid_control_enabled")
     @Expose
     private boolean profileGridControlEnabled;
+    @SerializedName("caption")
+    @Expose
+    private Caption caption;
+    @SerializedName("parent_comment_id")
+    @Expose
+    private long parentCommentId;
+
+    protected UserPost(Parcel in) {
+        takenAt = in.readLong();
+        pk = in.readLong();
+        id = in.readString();
+        deviceTimestamp = in.readLong();
+        mediaType = in.readInt();
+        code = in.readString();
+        clientCacheKey = in.readString();
+        filterType = in.readInt();
+        carouselMediaCount = in.readInt();
+        originalWidth = in.readInt();
+        originalHeight = in.readInt();
+        lat = in.readDouble();
+        lng = in.readDouble();
+        canViewerReshare = in.readByte() != 0;
+        captionIsEdited = in.readByte() != 0;
+        commentLikesEnabled = in.readByte() != 0;
+        commentThreadingEnabled = in.readByte() != 0;
+        hashMoreComments = in.readByte() != 0;
+        maxNumVisiblePreviewComments = in.readInt();
+        canViewMorePreviewComments = in.readByte() != 0;
+        commentCount = in.readInt();
+        likeCount = in.readInt();
+        inlineComposerDisplayCondition = in.readString();
+        inlineComposerImpTriggerTime = in.readInt();
+        hasLiked = in.readByte() != 0;
+        topLikers = in.createStringArrayList();
+        photoOfYou = in.readByte() != 0;
+        canViewerSave = in.readByte() != 0;
+        organicTrackingToken = in.readString();
+        isInProfileGrid = in.readByte() != 0;
+        profileGridControlEnabled = in.readByte() != 0;
+        parentCommentId = in.readLong();
+        productType = in.readString();
+    }
+
+    public static final Creator<UserPost> CREATOR = new Creator<UserPost>() {
+        @Override
+        public UserPost createFromParcel(Parcel in) {
+            return new UserPost(in);
+        }
+
+        @Override
+        public UserPost[] newArray(int size) {
+            return new UserPost[size];
+        }
+    };
+
+    public long getParentCommentId() {
+        return parentCommentId;
+    }
+
+    public void setParentCommentId(long parentCommentId) {
+        this.parentCommentId = parentCommentId;
+    }
+    @SerializedName("product_type")
+    @Expose
+    private String productType;
+
+    public String getProductType() {
+        return productType;
+    }
+
+    public void setProductType(String productType) {
+        this.productType = productType;
+    }
+
+    public List<PreviewComment> getPreviewComments() {
+        return previewComments;
+    }
+
+    public void setPreviewComments(List<PreviewComment> previewComments) {
+        this.previewComments = previewComments;
+    }
+
+    public int getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
+    }
+
+    public Caption getCaption() {
+        return caption;
+    }
+
+    public void setCaption(Caption caption) {
+        this.caption = caption;
+    }
 
     public long getTakenAt() {
         return takenAt;
@@ -298,13 +401,6 @@ public class UserPost {
         this.canViewMorePreviewComments = canViewMorePreviewComments;
     }
 
-    public int getComment_count() {
-        return comment_count;
-    }
-
-    public void setComment_count(int comment_count) {
-        this.comment_count = comment_count;
-    }
 
     public int getLikeCount() {
         return likeCount;
@@ -330,12 +426,12 @@ public class UserPost {
         this.inlineComposerImpTriggerTime = inlineComposerImpTriggerTime;
     }
 
-    public boolean isHas_liked() {
-        return has_liked;
+    public boolean isHasLiked() {
+        return hasLiked;
     }
 
-    public void setHas_liked(boolean has_liked) {
-        this.has_liked = has_liked;
+    public void setHasLiked(boolean hasLiked) {
+        this.hasLiked = hasLiked;
     }
 
     public List<String> getTopLikers() {
@@ -424,5 +520,47 @@ public class UserPost {
 
     public void setCarouselMedias(List<CarouselMedia> carouselMedias) {
         this.carouselMedias = carouselMedias;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(takenAt);
+        dest.writeLong(pk);
+        dest.writeString(id);
+        dest.writeLong(deviceTimestamp);
+        dest.writeInt(mediaType);
+        dest.writeString(code);
+        dest.writeString(clientCacheKey);
+        dest.writeInt(filterType);
+        dest.writeInt(carouselMediaCount);
+        dest.writeInt(originalWidth);
+        dest.writeInt(originalHeight);
+        dest.writeDouble(lat);
+        dest.writeDouble(lng);
+        dest.writeByte((byte) (canViewerReshare ? 1 : 0));
+        dest.writeByte((byte) (captionIsEdited ? 1 : 0));
+        dest.writeByte((byte) (commentLikesEnabled ? 1 : 0));
+        dest.writeByte((byte) (commentThreadingEnabled ? 1 : 0));
+        dest.writeByte((byte) (hashMoreComments ? 1 : 0));
+        dest.writeInt(maxNumVisiblePreviewComments);
+        dest.writeByte((byte) (canViewMorePreviewComments ? 1 : 0));
+        dest.writeInt(commentCount);
+        dest.writeInt(likeCount);
+        dest.writeString(inlineComposerDisplayCondition);
+        dest.writeInt(inlineComposerImpTriggerTime);
+        dest.writeByte((byte) (hasLiked ? 1 : 0));
+        dest.writeStringList(topLikers);
+        dest.writeByte((byte) (photoOfYou ? 1 : 0));
+        dest.writeByte((byte) (canViewerSave ? 1 : 0));
+        dest.writeString(organicTrackingToken);
+        dest.writeByte((byte) (isInProfileGrid ? 1 : 0));
+        dest.writeByte((byte) (profileGridControlEnabled ? 1 : 0));
+        dest.writeLong(parentCommentId);
+        dest.writeString(productType);
     }
 }

@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionInflater
 import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
 import com.devlomi.record_view.OnRecordListener
 import com.google.android.exoplayer2.source.MediaSource
@@ -56,6 +57,7 @@ import com.idirect.app.datasource.model.event.*
 import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.extensions.*
 import com.idirect.app.extentions.*
+import com.idirect.app.manager.PlayManager
 import com.idirect.app.realtime.commands.*
 import com.idirect.app.realtime.service.RealTimeService
 import com.idirect.app.ui.fullscreen.FullScreenFragment
@@ -63,6 +65,7 @@ import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.playvideo.PlayVideoActivity
 import com.idirect.app.ui.selectimage.SelectImageDialog
 import com.idirect.app.ui.selectimage.SelectImageListener
+import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.*
 import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
@@ -71,10 +74,16 @@ import com.vanniktech.emoji.EmojiTextView
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import java.io.File
 import java.util.regex.Pattern
+import javax.inject.Inject
 
 
 class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), ActionListener,
     View.OnClickListener {
+
+    @Inject
+    lateinit var mGlideRequestManager : RequestManager
+    @Inject
+    lateinit var mPlayManager:PlayManager
 
     private lateinit var shareViewModel: ShareViewModel
     private lateinit var thread: Thread
@@ -142,14 +151,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         if (!thread.isGroup) {
             gone(binding.layoutProfileImageGroup)
             visible(binding.imgProfileImage)
-            Glide.with(requireContext()).load(thread.users[0].profilePicUrl)
+            mGlideRequestManager.load(thread.users[0].profilePicUrl)
                 .into(binding.imgProfileImage)
         } else {
             visible(binding.layoutProfileImageGroup)
             gone(binding.imgProfileImage)
-            Glide.with(requireContext()).load(thread.users[1].profilePicUrl)
+            mGlideRequestManager.load(thread.users[1].profilePicUrl)
                 .into(binding.profileImageG1)
-            Glide.with(requireContext()).load(thread.users[0].profilePicUrl)
+            mGlideRequestManager.load(thread.users[0].profilePicUrl)
                 .into(binding.profileImageG2)
         }
 
@@ -363,12 +372,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     ViewCompat.setTransitionName(binding.imgProfileImage,"profile_$userId")
                     ViewCompat.setTransitionName(binding.txtProfileName,"username_$userId")
                     ViewCompat.setTransitionName(binding.txtProfileDec,"fullname_$userId")
-                    val action = FragmentDirectDirections.actionFragmentDirectToUserProfileFragment(
-                        userId,
-                        user.profilePicUrl,
-                        user.username,
-                        user.fullName
-                    )
+
+                    val userData = UserBundle().apply {
+                        this.userId = userId
+                        this.profilePic = user.profilePicUrl
+                        this.username = user.username
+                        this.fullname = user.fullName
+                    }
+                    val action = FragmentDirectDirections.actionFragmentDirectToUserProfileFragment(userData)
                     val extras = FragmentNavigatorExtras(
                         binding.imgProfileImage to binding.imgProfileImage.transitionName,
                         binding.txtProfileName to binding.txtProfileName.transitionName,
@@ -493,8 +504,8 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         override fun onViewRecycled(holder: BaseViewHolder) {
             if (holder.binding is LayoutVoiceMediaBinding) {
                 val dataBinding = holder.binding as LayoutVoiceMediaBinding
-                if (dataBinding.seekbarPlay.tag == BaseApplication.currentPlayerId) {
-                    BaseApplication.seekbarPlay = null
+                if (dataBinding.seekbarPlay.tag == mPlayManager.currentPlayerId) {
+                    mPlayManager.seekbarPlay = null
                 }
             }
         }
@@ -717,7 +728,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                 resources.dpToPx(25f)
                             )
                             image.setBackgroundResource(R.drawable.bg_stroke_circluar)
-                            Glide.with(requireContext()).load(profileUrl).into(image)
+                            mGlideRequestManager.load(profileUrl).into(image)
                             image.setPadding(
                                 includeReaction.imgHeart.paddingLeft,
                                 includeReaction.imgHeart.paddingTop,
@@ -799,7 +810,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     imgThreadProfileImage.visibility = View.GONE
                 } else {
                     imgThreadProfileImage.visibility = View.VISIBLE
-                    Glide.with(requireContext()).load(shareViewModel.getUserProfilePic(item.userId))
+                    mGlideRequestManager.load(shareViewModel.getUserProfilePic(item.userId))
                         .into(imgThreadProfileImage)
                 }
             }
@@ -871,7 +882,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     if (link.linkContext == null || link.linkContext.linkImageUrl.isNullOrBlank()) {
                         dataBinding.imgLinkImage.visibility = View.GONE
                     } else {
-                        Glide.with(requireContext()).load(link.linkContext.linkImageUrl)
+                        mGlideRequestManager.load(link.linkContext.linkImageUrl)
                             .placeholder(R.drawable.placeholder_loading)
                             .into(dataBinding.imgLinkImage)
                     }
@@ -886,7 +897,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
                                 shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
-                            Glide.with(requireContext())
+                            mGlideRequestManager
                                 .load(image.url)
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
@@ -953,11 +964,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             val size =
                                 shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
                             val user = item.reelShare.media.user
-                            Glide.with(requireContext()).load(image.url)
+                            mGlideRequestManager.load(image.url)
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgStory)
-                            Glide.with(requireContext()).load(user.profilePicUrl)
+                            mGlideRequestManager.load(user.profilePicUrl)
                                 .into(dataBinding.imgProfile)
                             dataBinding.txtUsername.text = user.username
                         } else {
@@ -972,7 +983,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
                                 shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
-                            Glide.with(requireContext())
+                            mGlideRequestManager
                                 .load(image.url)
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
@@ -1003,7 +1014,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             dataBinding.layoutStory.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
                             dataBinding.imgThreadProfileImage.visibility = View.VISIBLE
-                            Glide.with(requireContext())
+                            mGlideRequestManager
                                 .load(shareViewModel.getUserProfilePic(item.userId))
                                 .into(dataBinding.imgThreadProfileImage)
                         }
@@ -1036,9 +1047,9 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                 images[0].height,
                                 0.4f
                             )
-                        Glide.with(requireContext()).load(images[0].url)
+                        mGlideRequestManager.load(images[0].url)
                             .placeholder(R.drawable.placeholder_loading).into(dataBinding.imgStory)
-                        Glide.with(requireContext()).load(user.profilePicUrl)
+                        mGlideRequestManager.load(user.profilePicUrl)
                             .into(dataBinding.imgProfile)
                         dataBinding.txtUsername.text = user.username
                         dataBinding.txtReelStatus.text = String.format(
@@ -1102,26 +1113,24 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     }
 
                     dataBinding.seekbarPlay.tag = id
-                    if (BaseApplication.currentPlayerId == id) {
-                        BaseApplication.seekbarPlay = dataBinding.seekbarPlay
-                        BaseApplication.btnPlay = dataBinding.btnPlayPause
+                    if (mPlayManager.currentPlayerId == id) {
+                        mPlayManager.seekbarPlay = dataBinding.seekbarPlay
+                        mPlayManager.btnPlay = dataBinding.btnPlayPause
                         dataBinding.btnPlayPause.setImageResource(R.drawable.ic_pause_circle)
                     } else {
                         dataBinding.seekbarPlay.progress = 0
                         dataBinding.btnPlayPause.setImageResource(R.drawable.ic_play_circle)
                     }
                     dataBinding.btnPlayPause.setOnClickListener {
-                        if (BaseApplication.currentPlayerId != id) {
-                            BaseApplication.startPlay(mediaSource)
+                        if (mPlayManager.currentPlayerId != id) {
+                            mPlayManager.startPlay(mediaSource,id)
                             dataBinding.btnPlayPause.setImageResource(R.drawable.ic_pause_circle)
-                            BaseApplication.seekbarPlay = dataBinding.seekbarPlay
-                            BaseApplication.btnPlay = dataBinding.btnPlayPause
-                            BaseApplication.currentPlayerId = id
+                            mPlayManager.seekbarPlay = dataBinding.seekbarPlay
+                            mPlayManager.btnPlay = dataBinding.btnPlayPause
                             this@FragmentDirect.stopAllAudio()
                         } else {
-                            BaseApplication.currentPlayerId = ""
                             dataBinding.btnPlayPause.setImageResource(R.drawable.ic_play_circle)
-                            BaseApplication.stopPlay()
+                            mPlayManager.stopPlay()
                         }
                     }
                     dataBinding.layoutMessage.minimumWidth =
@@ -1144,14 +1153,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             0.5f
                         )
                         if (item.media.mediaType == 1) {
-                            Glide.with(requireContext()).load(File(item.media.localFilePath))
+                            mGlideRequestManager.load(File(item.media.localFilePath))
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgMedia)
                             gone(dataBinding.btnPlay)
                         } else {
                             val options = RequestOptions().frame(0)
-                            Glide.with(this@FragmentDirect).asBitmap()
+                            mGlideRequestManager.asBitmap()
                                 .load(File(item.media.localFilePath))
                                 .override(size[0], size[1])
                                 .centerCrop()
@@ -1163,7 +1172,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         val images = item.media.imageVersions2.candidates[0]
                         val size =
                             shareViewModel.getStandardWidthAndHeight(images.width, images.height, 0.5f)
-                        Glide.with(requireContext()).load(images.url)
+                        mGlideRequestManager.load(images.url)
                             .override(size[0], size[1])
                             .placeholder(R.drawable.placeholder_loading)
                             .into(dataBinding.imgMedia)
@@ -1248,7 +1257,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             val image = media.imageVersions2
                             gone(dataBinding.layoutVideoView, dataBinding.imgMultipleItem)
                             dataBinding.layoutImageView.visibility = View.VISIBLE
-                            Glide.with(requireContext()).load(image.candidates[0].url)
+                            mGlideRequestManager.load(image.candidates[0].url)
                                 .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
                             dataBinding.layoutImageView.layoutParams.apply {
                                 val sizeArray = shareViewModel.getStandardWidthAndHeight(
@@ -1264,14 +1273,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             dataBinding.layoutVideoView.visibility = View.VISIBLE
                             val videoSrc = item.mediaShare.videoVersions[0].url
                             val image = item.mediaShare.imageVersions2.candidates[1].url
-                            Glide.with(requireContext()).load(image).into(dataBinding.imgPreviewVideo)
+                            mGlideRequestManager.load(image).into(dataBinding.imgPreviewVideo)
                         }
                         InstagramConstants.MediaType.CAROUSEL_MEDIA.type ->{
                             val image = media.carouselMedia[0].imageVersions2
                             gone(dataBinding.layoutVideoView)
                             visible(dataBinding.imgMultipleItem)
                             dataBinding.layoutImageView.visibility = View.VISIBLE
-                            Glide.with(requireContext()).load(image.candidates[0].url)
+                            mGlideRequestManager.load(image.candidates[0].url)
                                 .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
                             dataBinding.layoutImageView.layoutParams.apply {
                                 val sizeArray = shareViewModel.getStandardWidthAndHeight(
@@ -1314,7 +1323,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         }
                     }))
 
-                    Glide.with(requireContext()).load(user.profilePicUrl)
+                    mGlideRequestManager.load(user.profilePicUrl)
                         .into(dataBinding.imgProfile)
                     dataBinding.txtUsername.text = user.username
                     media.caption.also {
@@ -1331,7 +1340,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         this.width = width
                         this.height = height
                     }
-                    Glide.with(requireContext()).load(url).placeholder(R.drawable.load)
+                    mGlideRequestManager.load(url).placeholder(R.drawable.load)
                         .into(dataBinding.imgAnim)
                 }
                 InstagramConstants.MessageType.PLACE_HOLDER.type -> {
@@ -1361,9 +1370,9 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         height = sizeArray[1]
                     }
                     dataBinding.txtThreadFelixShareUsername.text = user.username
-                    Glide.with(requireContext()).load(image.candidates[0].url)
+                    mGlideRequestManager.load(image.candidates[0].url)
                         .into(dataBinding.imgMedia)
-                    Glide.with(requireContext()).load(user.profilePicUrl)
+                    mGlideRequestManager.load(user.profilePicUrl)
                         .into(dataBinding.imgThreadFelixShareProfile)
                     dataBinding.layoutImage.setOnClickListener {
                         PlayVideoActivity.playUrl(activity!!, videoUrl)

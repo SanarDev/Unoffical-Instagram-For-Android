@@ -1,8 +1,10 @@
 package com.idirect.app.di.module
 
 import com.idirect.app.ui.direct.FragmentDirect
-import com.idirect.app.ui.fullscreen.FragmentCollection
+import com.idirect.app.ui.posts.FragmentCollection
 import com.idirect.app.ui.inbox.FragmentInbox
+import com.idirect.app.ui.postcomments.CommentsFragment
+import com.idirect.app.ui.posts.PostsFragment
 import com.idirect.app.ui.startmessage.StartMessageFragment
 import com.idirect.app.ui.userprofile.UserProfileFragment
 import dagger.Module
@@ -26,5 +28,9 @@ abstract class FragmentsModule {
     @ContributesAndroidInjector
     abstract fun contributeUserProfileFragment(): UserProfileFragment
 
+    @ContributesAndroidInjector
+    abstract fun contributePostsFragment(): PostsFragment
 
+    @ContributesAndroidInjector
+    abstract fun contributeCommentsFragment(): CommentsFragment
 }

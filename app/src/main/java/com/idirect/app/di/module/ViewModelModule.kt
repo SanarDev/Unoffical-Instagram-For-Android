@@ -5,12 +5,14 @@ import androidx.lifecycle.ViewModelProvider
 import com.idirect.app.di.DaggerViewModelFactory
 import com.idirect.app.di.ViewModelKey
 import com.idirect.app.ui.direct.DirectViewModel
-import com.idirect.app.ui.fullscreen.FragmentCollectionViewModel
+import com.idirect.app.ui.posts.FragmentCollectionViewModel
 import com.idirect.app.ui.fullscreen.FullScreenViewModel
 import com.idirect.app.ui.inbox.InboxViewModel
 import com.idirect.app.ui.login.LoginViewModel
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.playvideo.PlayVideoViewModel
+import com.idirect.app.ui.postcomments.CommentsViewModel
+import com.idirect.app.ui.posts.PostsViewModel
 import com.idirect.app.ui.setting.SettingViewModel
 import com.idirect.app.ui.startmessage.StartMessageViewModel
 import com.idirect.app.ui.twofactor.TwoFactorViewModel
@@ -79,5 +81,15 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(UserProfileViewModel::class)
     abstract fun userProfileViewModel(userProfileViewModel: UserProfileViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(PostsViewModel::class)
+    abstract fun postsViewModel(postsViewModel: PostsViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(CommentsViewModel::class)
+    abstract fun commentsViewModel(commentsViewModel: CommentsViewModel):ViewModel
 
 }
