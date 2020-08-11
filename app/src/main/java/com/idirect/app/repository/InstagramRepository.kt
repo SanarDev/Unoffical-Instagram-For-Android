@@ -36,15 +36,14 @@ class InstagramRepository(
 
     fun login(
         liveData: MutableLiveData<Resource<InstagramLoginResult>>,
-        instagramLoginPayload: InstagramLoginPayload,
-        headersGenerator: () -> Map<String, String>,
-        encrypter: (InstagramLoginPayload) -> RequestBody
+        header: HashMap<String, String>,
+        data:RequestBody
     ) {
         NetworkCall<InstagramLoginResult>()
             .makeCall(
                 mInstagramRemote.login(
-                    headersGenerator.invoke(),
-                    encrypter.invoke(instagramLoginPayload)
+                    header,
+                    data
                 )
             ).observeForever {
                 liveData.postValue(it)
@@ -65,15 +64,14 @@ class InstagramRepository(
 
     fun verifyTwoFactor(
         liveData: MutableLiveData<Resource<InstagramLoginResult>>,
-        instagramLoginTwoFactorPayload: InstagramLoginTwoFactorPayload,
-        headersGenerator: () -> Map<String, String>,
-        encrypter: (InstagramLoginTwoFactorPayload) -> RequestBody
+        header: HashMap<String, String>,
+        data:RequestBody
     ) {
         NetworkCall<InstagramLoginResult>()
             .makeCall(
                 mInstagramRemote.twoFactorLogin(
-                    headersGenerator(),
-                    encrypter(instagramLoginTwoFactorPayload)
+                    header,
+                    data
                 )
             ).observeForever {
                 liveData.postValue(it)
@@ -82,14 +80,14 @@ class InstagramRepository(
 
     fun getDirectInbox(
         responseLiveData: MediatorLiveData<Resource<InstagramDirects>>,
-        headersGenerator: () -> Map<String, String>,
+        header: HashMap<String, String>,
         limit: Int = 20
     ) {
         responseLiveData.addSource(
             NetworkCall<InstagramDirects>()
                 .makeCall(
                     mInstagramRemote.getDirectIndex(
-                        headersGenerator.invoke(),
+                        header,
                         limit = limit
                     )
                 ), Observer {
@@ -101,7 +99,7 @@ class InstagramRepository(
 
     fun loadMoreDirects(
         responseLiveData: MediatorLiveData<Resource<InstagramDirects>>,
-        headersGenerator: () -> Map<String, String>,
+        header: HashMap<String, String>,
         seqId: Int,
         cursor: String,
         threadMessageLimit: Int = 10,
@@ -109,7 +107,7 @@ class InstagramRepository(
     ) {
         responseLiveData.addSource(NetworkCall<InstagramDirects>().makeCall(
             mInstagramRemote.loadMoreDirects(
-                header = headersGenerator.invoke(),
+                header = header,
                 seqId = seqId,
                 cursor = cursor,
                 threadMessageLimit = threadMessageLimit,
@@ -122,11 +120,11 @@ class InstagramRepository(
 
     fun getDirectPresence(
         responseLiveData: MediatorLiveData<Resource<PresenceResponse>>,
-        headersGenerator: () -> Map<String, String>
+        header: HashMap<String, String>
     ) {
         responseLiveData.addSource(NetworkCall<PresenceResponse>().makeCall(
             mInstagramRemote.getDirectPresence(
-                headersGenerator.invoke()
+                header
             )
         ),
             Observer {
@@ -140,14 +138,14 @@ class InstagramRepository(
         threadId: String,
         limit: Int,
         seqID: Int,
-        function: () -> HashMap<String, String>
+        header: HashMap<String, String>
     ) {
         responseLiveData.value = Resource.loading(null)
         responseLiveData.addSource(
             NetworkCall<InstagramChats>()
                 .makeCall(
                     mInstagramRemote.getChats(
-                        function.invoke(),
+                        header,
                         threadId = threadId,
                         limit = limit,
                         seqID = seqID
@@ -160,14 +158,13 @@ class InstagramRepository(
 
     fun sendPushRegister(
         result: MediatorLiveData<Resource<ResponseBody>>,
-        registerPush: Map<String, *>,
-        encrypter: (Map<String, *>) -> okhttp3.RequestBody,
-        function: () -> HashMap<String, String>
+        data:okhttp3.RequestBody,
+        header: HashMap<String, String>
     ) {
         result.addSource(NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.sendPushRegister(
-                function.invoke(),
-                encrypter.invoke(registerPush)
+                header,
+                data
             )
         ),
             Observer {
@@ -197,11 +194,11 @@ class InstagramRepository(
         cursor: String,
         threadId: String,
         seqId: Int,
-        headersGenerator: () -> Map<String, String>
+        header: HashMap<String, String>
     ) {
         NetworkCall<InstagramChats>().makeCall(
             mInstagramRemote.loadMoreChats(
-                header = headersGenerator.invoke(),
+                header = header,
                 cursor = cursor,
                 threadId = threadId,
                 seqID = seqId
@@ -214,10 +211,10 @@ class InstagramRepository(
     fun searchUser(
         responseLiveData: MediatorLiveData<Resource<ResponseBody>>,
         query: String,
-        headersGenerator: () -> Map<String, String>
+        header: HashMap<String, String>
     ) {
         responseLiveData.addSource(NetworkCall<ResponseBody>().makeCall(
-            mInstagramRemote.searchUser(headersGenerator.invoke(), query = query)
+            mInstagramRemote.searchUser(header, query = query)
         ),
             Observer {
                 responseLiveData.postValue(it)
@@ -227,7 +224,7 @@ class InstagramRepository(
     fun getRecipients(
         result: MediatorLiveData<Resource<InstagramRecipients>>,
         query: String? = null,
-        headersGenerator: () -> Map<String, String>
+        header: HashMap<String, String>
     ) {
         if(query.isNullOrBlank()){
             recipients?.let {
@@ -237,9 +234,9 @@ class InstagramRepository(
         }
         result.addSource(NetworkCall<InstagramRecipients>().makeCall(
             if (query == null || query.isEmpty()) mInstagramRemote.getRecipients(
-                headersGenerator.invoke()
+                header
             ) else mInstagramRemote.searchRecipients(
-                headersGenerator.invoke(),
+                header,
                 query = query
             )
         )
@@ -253,14 +250,13 @@ class InstagramRepository(
 
     fun sendReaction(
         result: MutableLiveData<Resource<ResponseDirectAction>>,
-        headersGenerator: () -> Map<String, String>,
-        data: Map<*, *>,
-        encryptor: (Map<*, *>) -> okhttp3.RequestBody
+        header: HashMap<String, String>,
+        data: okhttp3.RequestBody
     ) {
         NetworkCall<ResponseDirectAction>().makeCall(
             mInstagramRemote.sendReaction(
-                headersGenerator.invoke(),
-                encryptor.invoke(data)
+                header,
+                data
             )
         ).observeForever {
             result.value = it
@@ -270,18 +266,17 @@ class InstagramRepository(
 
     fun markAsSeen(
         result: MutableLiveData<Resource<ResponseDirectAction>>,
-        headersGenerator: () -> Map<String, String>,
+        header: HashMap<String, String>,
         threadId: String,
         itemId: String,
-        data: Map<*, *>,
-        encryptor: (Map<*, *>) -> okhttp3.RequestBody
+        data:okhttp3.RequestBody
     ) {
         NetworkCall<ResponseDirectAction>().makeCall(
             mInstagramRemote.markAsSeen(
-                headersGenerator.invoke(),
+                header,
                 threadId,
                 itemId,
-                encryptor.invoke(data)
+                data
             )
         ).observeForever {
             result.value = it
@@ -290,16 +285,15 @@ class InstagramRepository(
 
     fun markAsSeenRavenMedia(
         result: MutableLiveData<Resource<ResponseBody>>,
-        headersGenerator: () -> Map<String, String>,
+        header: HashMap<String, String>,
         threadId: String,
-        data: Map<*, *>,
-        encryptor: (Map<*, *>) -> okhttp3.RequestBody
+        data: okhttp3.RequestBody
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.markAsSeenRavenMedia(
-                headersGenerator.invoke(),
+                header,
                 threadId,
-                encryptor.invoke(data)
+                data
             )
         ).observeForever {
             result.value = it
@@ -308,12 +302,12 @@ class InstagramRepository(
 
     fun getMediaUploadUrl(
         result: MutableLiveData<Resource<ResponseBody>>,
-        headersGenerator: () -> Map<String, String>,
+        header: HashMap<String, String>,
         uploadName: String
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.getMediaUploadUrl(
-                headersGenerator.invoke(),
+                header,
                 uploadName
             )
         ).observeForever {
@@ -323,12 +317,12 @@ class InstagramRepository(
 
     fun getMediaImageUploadUrl(
         result: MutableLiveData<Resource<ResponseBody>>,
-        headersGenerator: () -> Map<String, String>,
+        header: HashMap<String, String>,
         uploadName: String
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.getMediaImageUploadUrl(
-                headersGenerator.invoke(),
+                header,
                 uploadName
             )
         ).observeForever {
@@ -339,12 +333,12 @@ class InstagramRepository(
     fun uploadMedia(
         liveDataUploadMedia: MutableLiveData<Resource<ResponseBody>>,
         uploadName: String,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         mediaRequestBody: RequestBody
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.uploadMedia(
-                header.invoke(),
+                header,
                 uploadName,
                 mediaRequestBody
             )
@@ -356,12 +350,12 @@ class InstagramRepository(
     fun uploadMediaImage(
         liveDataUploadMedia: MutableLiveData<Resource<ResponseBody>>,
         uploadName: String,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         mediaRequestBody: RequestBody
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.uploadMediaImage(
-                header.invoke(),
+                header,
                 uploadName,
                 mediaRequestBody
             )
@@ -372,12 +366,12 @@ class InstagramRepository(
 
     fun uploadFinish(
         result: MutableLiveData<Resource<ResponseBody>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         requestBody: RequestBody
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.uploadFinish(
-                header.invoke(),
+                header,
                 requestBody
             )
         ).observeForever {
@@ -387,12 +381,12 @@ class InstagramRepository(
 
     fun sendMediaVoice(
         result: MutableLiveData<Resource<InstagramSendItemResponse>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         requestBody: RequestBody
     ) {
         NetworkCall<InstagramSendItemResponse>().makeCall(
             mInstagramRemote.sendMediaVoice(
-                header.invoke(),
+                header,
                 requestBody
             )
         ).observeForever {
@@ -402,12 +396,12 @@ class InstagramRepository(
 
     fun sendMediaVideo(
         result: MutableLiveData<Resource<MessageResponse>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         requestBody: RequestBody
     ) {
         NetworkCall<MessageResponse>().makeCall(
             mInstagramRemote.sendMediaVideo(
-                header.invoke(),
+                header,
                 requestBody
             )
         ).observeForever {
@@ -417,12 +411,12 @@ class InstagramRepository(
 
     fun sendMediaImage(
         result: MutableLiveData<Resource<MessageResponse>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         requestBody: RequestBody
     ) {
         NetworkCall<MessageResponse>().makeCall(
             mInstagramRemote.sendMediaImage(
-                header.invoke(),
+                header,
                 requestBody
             )
         ).observeForever {
@@ -432,14 +426,14 @@ class InstagramRepository(
 
     fun getByParticipants(
         result: MutableLiveData<Resource<ResponseBody>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         userId: String,
         seqId: Int,
         limit: Int = 20
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.getByParticipants(
-                header.invoke(),
+                header,
                 userId,
                 seqId,
                 limit
@@ -451,14 +445,13 @@ class InstagramRepository(
 
     fun sendLinkMessage(
         result: MutableLiveData<Resource<MessageResponse>>,
-        header: () -> Map<String, String>,
-        data: Map<*, *>,
-        encryptor: (Map<*, *>) -> RequestBody
+        header: HashMap<String, String>,
+        data:RequestBody
     ) {
         NetworkCall<MessageResponse>().makeCall(
             mInstagramRemote.sendLinkMessage(
-                header.invoke(),
-                encryptor.invoke(data)
+                header,
+                data
             )
         ).observeForever {
             result.value = it
@@ -468,12 +461,12 @@ class InstagramRepository(
 
     fun getMediaById(
         result: MediatorLiveData<Resource<InstagramPost>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         mediaId: String
     ) {
         result.addSource(NetworkCall<InstagramPost>().makeCall(
             mInstagramRemote.getMediaById(
-                header.invoke(),
+                header,
                 mediaId
             )
         ),
@@ -484,12 +477,12 @@ class InstagramRepository(
 
     fun getUserInfo(
         result: MutableLiveData<Resource<InstagramUserInfo>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         userId: Long
     ) {
         NetworkCall<InstagramUserInfo>().makeCall(
             mInstagramRemote.getUserInfo(
-                header.invoke(),
+                header,
                 userId
             )
         ).observeForever {
@@ -499,14 +492,13 @@ class InstagramRepository(
 
     fun logout(
         result: MutableLiveData<Resource<ResponseBody>>,
-        header: () -> Map<String, String>,
-        data: Map<*, *>,
-        encryptor: (Map<*, *>) -> RequestBody
+        header: HashMap<String, String>,
+        data:RequestBody
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.logout(
-                header.invoke(),
-                encryptor.invoke(data)
+                header,
+                data
             )
         ).observeForever {
             result.postValue(it)
@@ -515,30 +507,29 @@ class InstagramRepository(
 
     fun unsendMessage(
         result: MutableLiveData<Resource<ResponseBody>>,
-        header: () -> Map<String, String>,
+        header: HashMap<String, String>,
         threadId: String,
         itemId: String,
-        data: Map<*, *>,
-        encryptor: (Map<*, *>) -> RequestBody
+        data:RequestBody
     ) {
         NetworkCall<ResponseBody>().makeCall(
             mInstagramRemote.unsendMessage(
-                header.invoke(),
+                header,
                 threadId,
                 itemId,
-                encryptor.invoke(data)
+                data
             )
         ).observeForever {
             result.value = (it)
         }
     }
 
-    fun getUserPosts(userPosts: MutableLiveData<Resource<InstagramPostsResponse>>, userId: Long,headersGenerator: () -> Map<String, String>) {
+    fun getUserPosts(userPosts: MutableLiveData<Resource<InstagramPostsResponse>>, userId: Long,header: HashMap<String, String>) {
         if(userPostCache != null && userPostCache!!.first == userId){
             userPosts.value = Resource.success(userPostCache!!.second)
             return
         }
-        NetworkCall<InstagramPostsResponse>().makeCall(mInstagramRemote.getUserPosts(headersGenerator.invoke(),userId)).observeForever {
+        NetworkCall<InstagramPostsResponse>().makeCall(mInstagramRemote.getUserPosts(header,userId)).observeForever {
             if(it.status == Resource.Status.SUCCESS){
                 userPostCache = Pair(userId,it.data!!)
             }
@@ -546,8 +537,8 @@ class InstagramRepository(
         }
     }
 
-    fun loadMoreUserPosts(userPosts: MutableLiveData<Resource<InstagramPostsResponse>>, userId: Long,headersGenerator: () -> Map<String, String>,previousPostId:String){
-        NetworkCall<InstagramPostsResponse>().makeCall(mInstagramRemote.getMorePosts(headersGenerator.invoke(),userId,previousPostId = previousPostId)).observeForever {
+    fun loadMoreUserPosts(userPosts: MutableLiveData<Resource<InstagramPostsResponse>>, userId: Long,header: HashMap<String, String>,previousPostId:String){
+        NetworkCall<InstagramPostsResponse>().makeCall(mInstagramRemote.getMorePosts(header,userId,previousPostId = previousPostId)).observeForever {
             if( it.status == Resource.Status.SUCCESS &&
                 userPostCache != null &&
                 userPostCache!!.first == userId){
@@ -564,34 +555,34 @@ class InstagramRepository(
         }
     }
 
-    fun likePost(result:MutableLiveData<Resource<ResponseBody>>, headersGenerator: () -> Map<String, String>, mediaId:String, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
-        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.likePost(headersGenerator.invoke(),mediaId,encryptor.invoke(data))).observeForever {
+    fun likePost(result:MutableLiveData<Resource<ResponseBody>>, header: HashMap<String, String>, mediaId:String, data:RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.likePost(header,mediaId,data)).observeForever {
             result.value = it
         }
     }
-    fun unlikePost(result:MutableLiveData<Resource<ResponseBody>>, headersGenerator: () -> Map<String, String>, mediaId:String, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
-        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.unlikePost(headersGenerator.invoke(),mediaId,encryptor.invoke(data))).observeForever {
-            result.value = it
-        }
-    }
-
-    fun likeComment(result: MutableLiveData<Resource<ResponseBody>>, headersGenerator: () -> Map<String, String>, mediaId: String, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
-        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.likeComment(headersGenerator.invoke(),mediaId,encryptor.invoke(data))).observeForever {
-            result.value = it
-        }
-    }
-    fun unlikeComment(result: MutableLiveData<Resource<ResponseBody>>, headersGenerator: () -> Map<String, String>, mediaId: String, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
-        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.unlikeComment(headersGenerator.invoke(),mediaId,encryptor.invoke(data))).observeForever {
+    fun unlikePost(result:MutableLiveData<Resource<ResponseBody>>, header: HashMap<String, String>, mediaId:String, data:RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.unlikePost(header,mediaId,data)).observeForever {
             result.value = it
         }
     }
 
-    fun getPostComments(result: MutableLiveData<Resource<InstagramCommentResponse>>, headersGenerator: () -> Map<String, String>,mediaId:String){
+    fun likeComment(result: MutableLiveData<Resource<ResponseBody>>, header: HashMap<String, String>, mediaId: String, data:RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.likeComment(header,mediaId,data)).observeForever {
+            result.value = it
+        }
+    }
+    fun unlikeComment(result: MutableLiveData<Resource<ResponseBody>>, header: HashMap<String, String>, mediaId: String, data:RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.unlikeComment(header,mediaId,data)).observeForever {
+            result.value = it
+        }
+    }
+
+    fun getPostComments(result: MutableLiveData<Resource<InstagramCommentResponse>>, header: HashMap<String, String>, mediaId:String){
         if(userComments != null && userComments!!.mediaId == mediaId){
             result.value = Resource.success(userComments)
             return
         }
-        NetworkCall<InstagramCommentResponse>().makeCall(mInstagramRemote.getPostComments(headersGenerator.invoke(),mediaId)).observeForever {
+        NetworkCall<InstagramCommentResponse>().makeCall(mInstagramRemote.getPostComments(header,mediaId)).observeForever {
             if(it.status == Resource.Status.SUCCESS){
                 userComments = it.data!!.apply {
                     this.mediaId = mediaId
@@ -601,20 +592,20 @@ class InstagramRepository(
         }
     }
 
-    fun getUserInfoFromUsername(result: MutableLiveData<Resource<InstagramUserInfo>>, headersGenerator: () -> Map<String, String>, username:String,fromModule:String="feed_timeline"){
-        NetworkCall<InstagramUserInfo>().makeCall(mInstagramRemote.getUsernameInfo(headersGenerator.invoke(),username,fromModule)).observeForever {
+    fun getUserInfoFromUsername(result: MutableLiveData<Resource<InstagramUserInfo>>, header: HashMap<String, String>, username:String, fromModule:String="feed_timeline"){
+        NetworkCall<InstagramUserInfo>().makeCall(mInstagramRemote.getUsernameInfo(header,username,fromModule)).observeForever {
             result.value = it
         }
     }
 
-    fun getTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>, headersGenerator: () -> Map<String, String>, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
-        NetworkCall<InstagramFeedTimeLineResponse>().makeCall(mInstagramRemote.getFeedTimeline(headersGenerator.invoke(),encryptor.invoke(data))).observeForever {
+    fun getTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>,header:HashMap<String,String>, data: RequestBody){
+        NetworkCall<InstagramFeedTimeLineResponse>().makeCall(mInstagramRemote.getFeedTimeline(header,data)).observeForever {
             result.value = it
         }
     }
 
-    fun getTimelineStory(result: MutableLiveData<Resource<ResponseBody>>, headersGenerator: () -> Map<String, String>, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
-        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.getStoryTimeline(headersGenerator.invoke(),encryptor.invoke(data))).observeForever {
+    fun getTimelineStory(result: MutableLiveData<Resource<ResponseBody>>, header:HashMap<String,String>, data: RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.getStoryTimeline(header,data)).observeForever {
             result.value = it
         }
     }

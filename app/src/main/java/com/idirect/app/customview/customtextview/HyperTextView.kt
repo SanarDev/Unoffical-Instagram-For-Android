@@ -1,7 +1,6 @@
 package com.idirect.app.customview.customtextview
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Build
 import android.text.Html
 import android.text.Spannable
@@ -12,12 +11,15 @@ import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import android.widget.TextView
 import com.idirect.app.R
 import com.idirect.app.extentions.color
 import com.idirect.app.utils.URLSpanNoUnderline
 import com.vanniktech.emoji.EmojiTextView
+
 
 class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
     EmojiTextView(context, attr) {
@@ -31,6 +33,30 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
     }
 
     var mHyperTextClick: OnHyperTextClick? = null
+
+    init {
+        setOnTouchListener(OnTouchListener { v, event ->
+            val tv = v as TextView
+            if (event.action === MotionEvent.ACTION_UP) {
+                val x = event.x.toInt()
+                val y = event.y.toInt()
+                val layout = tv.layout
+                val line = layout.getLineForVertical(y)
+                val off = layout.getOffsetForHorizontal(line, x.toFloat())
+                val charSequence = tv.text
+                if (charSequence is Spannable){
+                    val link: Array<ClickableSpan> =
+                        charSequence.getSpans(off, off, ClickableSpan::class.java)
+                    if (link.size != 0) {
+                        mHyperTextClick?.onClick(tv,(link[0] as URLSpan).url)
+                    } else {
+                        //do other click
+                    }
+                }
+            }
+            true
+        })
+    }
 
     fun setText(username: String,userId:Long, text: String) {
         val hyperUsername = "<a href=\"$userId\"><b>$username</b></a>"
@@ -74,12 +100,6 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
         val start = strBuilder.getSpanStart(span)
         val end = strBuilder.getSpanEnd(span)
         val flags = strBuilder.getSpanFlags(span)
-        val clickable: ClickableSpan = object : ClickableSpan() {
-            override fun onClick(view: View) {
-                mHyperTextClick?.onClick(view, onClickData)
-            }
-        }
-        strBuilder.setSpan(clickable, start, end, flags)
         if (!haveUnderlineForLink) {
             strBuilder.setSpan(URLSpanNoUnderline(onClickData), start, end, flags)
         }

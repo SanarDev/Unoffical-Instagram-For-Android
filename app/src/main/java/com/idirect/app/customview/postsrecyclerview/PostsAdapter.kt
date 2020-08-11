@@ -37,6 +37,7 @@ import com.idirect.app.extentions.dpToPx
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.posts.PostsFragmentDirections
 import com.idirect.app.utils.DisplayUtils
+import com.squareup.picasso.Picasso
 import com.tylersuehr.chips.CircleImageView
 import java.lang.Exception
 
@@ -50,6 +51,7 @@ class PostsAdapter(
 
     private val dataSource: DataSource.Factory = DefaultHttpDataSourceFactory(Util.getUserAgent(context, "Instagram"))
     private val mGlide = GlideApp.with(context)
+    private val mPicasso = Picasso.Builder(context).build()
     var currentMediaPosition: Int = PlayManager.NONE
     private var displayWidth = DisplayUtils.getScreenWidth()
     private var displayHeight = DisplayUtils.getScreenHeight()
@@ -57,6 +59,7 @@ class PostsAdapter(
     val adapters = HashMap<Int,CollectionMediaAdapter>()
 
     init {
+        Log.i(InstagramConstants.DEBUG_TAG,"init PostsAdapter")
         mPlayManager.playChangeLiveData.observe(viewLifecycleOwner, Observer {
             if (!it.isPlay) {
                 for (index in items.indices) {
@@ -115,7 +118,7 @@ class PostsAdapter(
 
         }
         val showCommentClickListener = View.OnClickListener {
-            val action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment(item)
+            val action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment("")
             it.findNavController().navigate(action)
         }
 
@@ -231,7 +234,8 @@ class PostsAdapter(
                     context.resources.dpToPx(20f),
                     context.resources.dpToPx(20f)
                 )
-                mGlide.load(liker.profilePicUrl).into(likerProfile)
+//                mGlide.load(liker.profilePicUrl).into(likerProfile)
+//                mPicasso.load(liker.profilePicUrl).into(likerProfile)
                 layoutLikersProfile.addView(likerProfile)
             }
         } else {
@@ -253,6 +257,7 @@ class PostsAdapter(
             )
             txtCaption.mHyperTextClick = mHyperTextClick
         }
+//        mPicasso.load(item.user.profilePicUrl).into(imgProfile)
         mGlide.load(item.user.profilePicUrl).into(imgProfile)
         when (item.mediaType) {
             InstagramConstants.MediaType.IMAGE.type -> {
@@ -261,6 +266,11 @@ class PostsAdapter(
                     .load(item.imageVersions2.candidates[0].url)
                     .placeholder(R.drawable.post_load_place_holder)
                     .into(dataBinding.photoView)
+
+//                mPicasso
+//                    .load(item.imageVersions2.candidates[0].url)
+//                    .placeholder(R.drawable.post_load_place_holder)
+//                    .into(dataBinding.photoView)
             }
             InstagramConstants.MediaType.VIDEO.type -> {
                 val dataBinding = (holder.binding as LayoutPostVideoBinding)
@@ -287,6 +297,7 @@ class PostsAdapter(
                     dataBinding.photoView.visibility = View.VISIBLE
                     dataBinding.imgPlay.visibility = View.VISIBLE
 
+//                    mPicasso.load(previewImage.url).into(dataBinding.photoView)
                     mGlide.load(previewImage.url).centerCrop().into(dataBinding.photoView)
                 }
                 dataBinding.layoutMedia.setOnClickListener {
@@ -331,27 +342,27 @@ class PostsAdapter(
                 }
                 adapters.put(position, CollectionMediaAdapter(position, carouselMedias))
                 dataBinding.recyclerviewMedias.adapter = adapters[position]
-//                dataBinding.recyclerviewMedias.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-//                    override fun onScrollStateChanged(
-//                        recyclerView: RecyclerView,
-//                        newState: Int
-//                    ) {
-//                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-//                            val visibleItem =
-//                                (recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-//                            dataBinding.txtPagePosition.text = String.format(
-//                                context.getString(R.string.page_position),
-//                                visibleItem + 1,
-//                                carouselMedias.size
-//                            )
-//                            if (carouselMedias[visibleItem].mediaType == InstagramConstants.MediaType.VIDEO.type &&
-//                                    mPlayManager.currentPlayerId != carouselMedias[visibleItem].id) {
-//                                carouselMedias[visibleItem].videoVersions[0].isPlay = true
-//                                recyclerView.adapter!!.notifyDataSetChanged()
-//                            }
-//                        }
-//                    }
-//                })
+                dataBinding.recyclerviewMedias.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                    override fun onScrollStateChanged(
+                        recyclerView: RecyclerView,
+                        newState: Int
+                    ) {
+                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                            val visibleItem =
+                                (recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                            dataBinding.txtPagePosition.text = String.format(
+                                context.getString(R.string.page_position),
+                                visibleItem + 1,
+                                carouselMedias.size
+                            )
+                            if (carouselMedias[visibleItem].mediaType == InstagramConstants.MediaType.VIDEO.type &&
+                                    mPlayManager.currentPlayerId != carouselMedias[visibleItem].id) {
+                                carouselMedias[visibleItem].videoVersions[0].isPlay = true
+                                recyclerView.adapter!!.notifyDataSetChanged()
+                            }
+                        }
+                    }
+                })
             }
         }
         if (!item.isCommentThreadingEnabled) {
@@ -384,6 +395,7 @@ class PostsAdapter(
                 val imgLike: AppCompatImageView = layoutPreviewComment.findViewById(R.id.img_like)
 
                 txtComment.setText(comment.user.username, comment.user.pk, comment.text)
+//                txtComment.setText(comment.text)
                 txtComment.mHyperTextClick = mHyperTextClick
 
                 if (comment.hasLikedComment) {
@@ -475,16 +487,23 @@ class PostsAdapter(
                 val dataBinding = holder.binding as LayoutCarouselImageBinding
                 mGlide.load(item.imageVersions2.candidates[0].url)
                     .into(dataBinding.imgPhoto)
+//                mPicasso.load(item.imageVersions2.candidates[1].url)
+//                    .into(dataBinding.imgPhoto)
             } else {
                 val dataBinding = holder.binding as LayoutCarouselVideoBinding
                 dataBinding.videoView.visibility = View.GONE
-                val video = item.videoVersions[0]
-                val image = item.imageVersions2.candidates[0]
+                val video = item.videoVersions[1]
+                val image = item.imageVersions2.candidates[1]
                 mGlide
                     .asBitmap()
                     .load(image.url)
                     .placeholder(R.drawable.post_load_place_holder)
                     .into(dataBinding.photoView)
+//
+//                mPicasso
+//                    .load(image.url)
+//                    .placeholder(R.drawable.post_load_place_holder)
+//                    .into(dataBinding.photoView)
                 val dataSource =
                     DefaultHttpDataSourceFactory(
                         Util.getUserAgent(
@@ -502,6 +521,8 @@ class PostsAdapter(
 
                 mGlide.load(item.imageVersions2.candidates[0].url)
                     .into(dataBinding.photoView)
+//                mPicasso.load(item.imageVersions2.candidates[1].url)
+//                    .into(dataBinding.photoView)
 
                 if (item.videoVersions[0].isPlay) {
                     val uri = Uri.parse(video.url)

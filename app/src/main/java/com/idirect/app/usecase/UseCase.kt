@@ -49,7 +49,7 @@ class UseCase(
 ) {
     private var currentCookie: Cookie? = null
     private var currentUser: InstagramLoggedUser? = null
-    private var defaultHeaderMap:HashMap<String,String>?=null
+    private var defaultHeaderMap: HashMap<String, String>? = null
     val XLATE = "0123456789abcdef"
 
     var isNotificationEnable: Boolean
@@ -162,8 +162,13 @@ class UseCase(
         val liveData = MutableLiveData<Resource<InstagramLoginResult>>()
         getInstagramToken(liveData).observeForever {
 
-            if(it == null){
-                liveData.value = Resource.error(APIErrors(InstagramConstants.ErrorCode.INTERNET_CONNECTION.code,""))
+            if (it == null) {
+                liveData.value = Resource.error(
+                    APIErrors(
+                        InstagramConstants.ErrorCode.INTERNET_CONNECTION.code,
+                        ""
+                    )
+                )
                 return@observeForever
             }
             val cookie = getCookie()
@@ -182,11 +187,11 @@ class UseCase(
                 )
             StorageUtils.saveLastLoginData(application, instagramLoginPayload)
             StorageUtils.saveLoginCookie(application, cookie)
+
             mInstagramRepository.login(
                 liveData,
-                instagramLoginPayload,
-                { getHeaders() },
-                { t -> getSignaturePayload(t) }
+                getHeaders(),
+                getSignaturePayload(instagramLoginPayload)
             )
         }
 
@@ -223,7 +228,8 @@ class UseCase(
     fun getDirectPresence(responseLiveData: MediatorLiveData<Resource<PresenceResponse>>) {
         mInstagramRepository.getDirectPresence(
             responseLiveData,
-            headersGenerator = { getHeaders() })
+            getHeaders()
+        )
     }
 
     fun sendReaction(
@@ -251,9 +257,9 @@ class UseCase(
         }
         mInstagramRepository.sendReaction(
             liveData,
-            { getHeaders() },
-            data,
-            { t -> formUrlEncode(t) })
+            getHeaders(),
+            formUrlEncode(data)
+        )
         return liveData
     }
 
@@ -271,9 +277,8 @@ class UseCase(
 
         mInstagramRepository.verifyTwoFactor(
             responseLiveData,
-            instagramLoginTwoFactorPayload,
-            { getHeaders() },
-            { t -> getSignaturePayload(t) }
+            getHeaders(),
+            getSignaturePayload(instagramLoginTwoFactorPayload)
         )
         return Transformations.map(responseLiveData) {
             if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
@@ -339,13 +344,16 @@ class UseCase(
     fun getMe(): MutableLiveData<Resource<InstagramUserInfo>> {
         val result = MutableLiveData<Resource<InstagramUserInfo>>()
         val user = getUserData()
-        mInstagramRepository.getUserInfo(result, { getHeaders() }, user!!.pk!!)
+        mInstagramRepository.getUserInfo(result, getHeaders(), user!!.pk!!)
         return result
     }
 
-    fun getUserProfile(userId:Long,liveData:MutableLiveData<Resource<InstagramUserInfo>>?=null): MutableLiveData<Resource<InstagramUserInfo>> {
+    fun getUserProfile(
+        userId: Long,
+        liveData: MutableLiveData<Resource<InstagramUserInfo>>? = null
+    ): MutableLiveData<Resource<InstagramUserInfo>> {
         val result = liveData ?: MutableLiveData<Resource<InstagramUserInfo>>()
-        mInstagramRepository.getUserInfo(result, { getHeaders() },userId)
+        mInstagramRepository.getUserInfo(result, getHeaders(), userId)
         return result
     }
 
@@ -385,7 +393,7 @@ class UseCase(
     }
 
     fun getDirectInbox(responseLiveData: MediatorLiveData<Resource<InstagramDirects>>) {
-        mInstagramRepository.getDirectInbox(responseLiveData, { getHeaders() }, 20)
+        mInstagramRepository.getDirectInbox(responseLiveData, getHeaders(), 20)
     }
 
     fun getMoreDirectItems(
@@ -393,7 +401,7 @@ class UseCase(
         seqId: Int,
         cursor: String
     ) {
-        mInstagramRepository.loadMoreDirects(responseLiveData, { getHeaders() }, seqId, cursor)
+        mInstagramRepository.loadMoreDirects(responseLiveData, getHeaders(), seqId, cursor)
     }
 
     fun sendLinkMessage(
@@ -416,7 +424,7 @@ class UseCase(
             put("offline_threading_id", clientContext)
             put("_uuid", cookie.adid)
         }
-        mInstagramRepository.sendLinkMessage(result, { getHeaders() }, data, { formUrlEncode(it) })
+        mInstagramRepository.sendLinkMessage(result, getHeaders(), formUrlEncode(data))
         return result
     }
 
@@ -448,7 +456,7 @@ class UseCase(
 
         mInstagramRepository.getMediaImageUploadUrl(
             liveDataGetUrl,
-            { getUploadImageUrlHeader(userId, uploadId) },
+            getUploadImageUrlHeader(userId, uploadId),
             uploadName
         )
         liveDataGetUrl.observeForever {
@@ -456,15 +464,14 @@ class UseCase(
                 mInstagramRepository.uploadMediaImage(
                     liveDataUploadMedia,
                     uploadName,
-                    {
-                        getUploadImageHeader(
-                            byteLength,
-                            userId,
-                            uploadId,
-                            uploadName,
-                            type
-                        )
-                    },
+                    getUploadImageHeader(
+                        byteLength,
+                        userId,
+                        uploadId,
+                        uploadName,
+                        type
+                    )
+                    ,
                     getMediaRequestBody(path)
                 )
             }
@@ -509,7 +516,7 @@ class UseCase(
                 sendMediaImageData["offline_threading_id"] = clientContext
                 mInstagramRepository.sendMediaImage(
                     liveDataResult,
-                    { getUploadFinishHeader() },
+                    getUploadFinishHeader(),
                     formUrlEncode(sendMediaImageData)
                 )
             }
@@ -546,7 +553,7 @@ class UseCase(
         val mediaDuration = MediaUtils.getMediaDuration(application, filePath)
         mInstagramRepository.getMediaUploadUrl(
             liveDataGetUrl,
-            { getUploadVideoUrlHeader(userId, mediaHeight, mediaWidth, mediaDuration, uploadId) },
+            getUploadVideoUrlHeader(userId, mediaHeight, mediaWidth, mediaDuration, uploadId),
             uploadName
         )
         liveDataGetUrl.observeForever {
@@ -554,7 +561,6 @@ class UseCase(
                 mInstagramRepository.uploadMedia(
                     liveDataUploadMedia,
                     uploadName,
-                    {
                         getUploadVideoHeader(
                             byteLength,
                             userId,
@@ -565,7 +571,7 @@ class UseCase(
                             mediaHeight,
                             type
                         )
-                    },
+                    ,
                     getMediaRequestBody(filePath)
                 )
             }
@@ -599,7 +605,7 @@ class UseCase(
             finishUploadData["poster_frame_index"] = 0
             mInstagramRepository.uploadFinish(
                 liveDataUploadFinish,
-                { getUploadFinishHeader() },
+                getUploadFinishHeader(),
                 getSignaturePayload(finishUploadData)
             )
         }
@@ -618,7 +624,7 @@ class UseCase(
                 sendMediaVoiceData["offline_threading_id"] = clientContext
                 mInstagramRepository.sendMediaVideo(
                     liveDataResult,
-                    { getUploadFinishHeader() },
+                    getUploadFinishHeader(),
                     formUrlEncode(sendMediaVoiceData)
                 )
             }
@@ -651,7 +657,7 @@ class UseCase(
 
         mInstagramRepository.getMediaUploadUrl(
             liveDataGetUrl,
-            { getUploadMediaUrlHeader(userId, mediaDuration, uploadId) },
+            getUploadMediaUrlHeader(userId, mediaDuration, uploadId),
             uploadName
         )
         liveDataGetUrl.observeForever {
@@ -659,7 +665,6 @@ class UseCase(
                 mInstagramRepository.uploadMedia(
                     liveDataUploadMedia,
                     uploadName,
-                    {
                         getUploadMediaHeader(
                             byteLength,
                             userId,
@@ -668,7 +673,7 @@ class UseCase(
                             uploadName,
                             type
                         )
-                    },
+                    ,
                     getMediaRequestBody(filePath)
                 )
             }
@@ -691,7 +696,7 @@ class UseCase(
                 }
                 mInstagramRepository.uploadFinish(
                     liveDataUploadFinish,
-                    { getUploadFinishHeader() },
+                    getUploadFinishHeader(),
                     getSignaturePayload(finishUploadData)
                 )
             }
@@ -712,7 +717,7 @@ class UseCase(
                 sendMediaVoiceData["thread_ids"] = "[$threadId]"
                 mInstagramRepository.sendMediaVoice(
                     liveDataResult,
-                    { getUploadFinishHeader() },
+                    getUploadFinishHeader(),
                     formUrlEncode(sendMediaVoiceData)
                 )
             }
@@ -754,10 +759,9 @@ class UseCase(
         }
         mInstagramRepository.markAsSeenRavenMedia(
             result,
-            { getHeaders() },
+            getHeaders(),
             threadId,
-            data,
-            { t -> getSignaturePayload(t) })
+            getSignaturePayload(data))
         return result
     }
 
@@ -778,11 +782,10 @@ class UseCase(
         }
         mInstagramRepository.markAsSeen(
             result,
-            { getHeaders() },
+            getHeaders(),
             threadId,
             itemId,
-            data,
-            { t -> formUrlEncode(t) })
+            formUrlEncode(data))
         return result
     }
 
@@ -799,7 +802,7 @@ class UseCase(
 
     private fun getHeaders(): HashMap<String, String> {
 
-        if(defaultHeaderMap != null){
+        if (defaultHeaderMap != null) {
             return defaultHeaderMap!!
         }
         val cookie = getCookie()
@@ -810,20 +813,23 @@ class UseCase(
         defaultHeaderMap!![InstagramConstants.X_IG_DEVICE_LOCALE] = "en_US"
         defaultHeaderMap!![InstagramConstants.X_IG_MAPPED_LOCALE] = "en_US"
         defaultHeaderMap!![InstagramConstants.X_PIGEON_SESSION_ID] = UUID.randomUUID().toString()
-        defaultHeaderMap!![InstagramConstants.X_PIGEON_RAWCLIENT_TIEM] = System.currentTimeMillis().toString()
+        defaultHeaderMap!![InstagramConstants.X_PIGEON_RAWCLIENT_TIEM] =
+            System.currentTimeMillis().toString()
         defaultHeaderMap!![InstagramConstants.X_IG_CONNECTION_SPEED] = "-1kbps"
         defaultHeaderMap!![InstagramConstants.X_IG_BANDWIDTH_SPEED_KBPS] = "1665"
         defaultHeaderMap!![InstagramConstants.X_IG_BANDWIDTH_TOTALBYTES_B] = "465691"
         defaultHeaderMap!![InstagramConstants.X_IG_BAND_WIDTH_TOTALTIME_MS] = "3322"
         defaultHeaderMap!![InstagramConstants.X_IG_APP_STARTUP_COUNTRY] = "IR"
-        defaultHeaderMap!![InstagramConstants.X_BLOKS_VERSION_ID] = InstagramConstants.BLOKS_VERSION_ID
+        defaultHeaderMap!![InstagramConstants.X_BLOKS_VERSION_ID] =
+            InstagramConstants.BLOKS_VERSION_ID
         defaultHeaderMap!![InstagramConstants.X_IG_WWW_CLAIM] = 0.toString()
         defaultHeaderMap!![InstagramConstants.X_BLOKS_IS_LAYOUT_RTL] = false.toString()
         defaultHeaderMap!![InstagramConstants.X_BLOKS_ENABLE_RENDER_CORE] = false.toString()
         defaultHeaderMap!![InstagramConstants.X_IG_DEVICE_ID] = cookie.deviceID
         defaultHeaderMap!![InstagramConstants.X_IG_ANDROID_ID] = "android-2d397713fddd2a9d"
         defaultHeaderMap!![InstagramConstants.X_IG_CONNECTION_TYPE] = "WIFI"
-        defaultHeaderMap!![InstagramConstants.X_IG_CAPABILITIES] = InstagramConstants.DEVICE_CAPABILITIES
+        defaultHeaderMap!![InstagramConstants.X_IG_CAPABILITIES] =
+            InstagramConstants.DEVICE_CAPABILITIES
         defaultHeaderMap!![InstagramConstants.X_IG_APP_ID] = InstagramConstants.APP_ID
         defaultHeaderMap!![InstagramConstants.X_USER_AGENT] =
             "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
@@ -833,7 +839,8 @@ class UseCase(
                 .toLowerCase()};dc_user_id=${user?.pk.toString()}"
         defaultHeaderMap!![InstagramConstants.X_MID] = cookie.mid.toString()
         defaultHeaderMap!![InstagramConstants.ACCEPT] = "application/json"
-        defaultHeaderMap!![InstagramConstants.CONTENT_TYPE] = "application/x-www-form-urlencoded; charset=UTF-8"
+        defaultHeaderMap!![InstagramConstants.CONTENT_TYPE] =
+            "application/x-www-form-urlencoded; charset=UTF-8"
         defaultHeaderMap!![InstagramConstants.HOST] = "i.instagram.com"
         defaultHeaderMap!![InstagramConstants.X_FB_HTTP_ENGINE] = "Liger"
         defaultHeaderMap!![InstagramConstants.CONNECTION] = "keep-alive"
@@ -962,7 +969,7 @@ class UseCase(
         userId: String,
         uploadMediaDuration: Int,
         uploadId: String
-    ): Map<String, String> {
+    ): HashMap<String, String> {
         val map = HashMap<String, String>()
         map[InstagramConstants.X_INSTAGRAM_RUPLOAD_PARAMS] =
             gson.toJson(HashMap<String, Any>().apply {
@@ -986,7 +993,7 @@ class UseCase(
         uploadId: String,
         uploadName: String,
         type: String
-    ): Map<String, String> {
+    ): HashMap<String, String> {
         val map = HashMap<String, String>()
         map[InstagramConstants.X_ENTITY_LENGTH] = byteLength.toString()
         map[InstagramConstants.X_ENTITY_NAME] = uploadName
@@ -1018,7 +1025,7 @@ class UseCase(
         return retryContext
     }
 
-    private fun getUploadFinishHeader(): Map<String, String> {
+    private fun getUploadFinishHeader(): HashMap<String, String> {
         val map = HashMap<String, String>()
         map["retry_context"] = gson.toJson(getRetryContext())
         val header = getHeaders()
@@ -1037,7 +1044,7 @@ class UseCase(
         threadId: String,
         seqID: Int
     ) {
-        mInstagramRepository.getChats(result, threadId, limit, seqID, { getHeaders() })
+        mInstagramRepository.getChats(result, threadId, limit, seqID,getHeaders())
     }
 
 
@@ -1072,9 +1079,8 @@ class UseCase(
         mHandler.post {
             mInstagramRepository.sendPushRegister(
                 res,
-                map,
-                { t -> formUrlEncode(t) },
-                { getHeaders() })
+                formUrlEncode(map),
+                getHeaders())
             res.observeForever {
                 if (it.status == Resource.Status.SUCCESS) {
                     saveFbnsRegisterToken(token)
@@ -1205,20 +1211,20 @@ class UseCase(
         threadId: String,
         seqId: Int
     ): MutableLiveData<Resource<InstagramChats>> {
-        val result=  MutableLiveData<Resource<InstagramChats>>()
-        mInstagramRepository.loadMoreChats(result, cursor, threadId, seqId, { getHeaders() })
+        val result = MutableLiveData<Resource<InstagramChats>>()
+        mInstagramRepository.loadMoreChats(result, cursor, threadId, seqId,getHeaders())
         return result
     }
 
     fun searchUser(result: MediatorLiveData<Resource<ResponseBody>>, query: String) {
-        mInstagramRepository.searchUser(result, query) { getHeaders() }
+        mInstagramRepository.searchUser(result, query,getHeaders())
     }
 
     fun getRecipients(
         result: MediatorLiveData<Resource<InstagramRecipients>>,
         query: String? = null
     ) {
-        mInstagramRepository.getRecipients(result, query, { getHeaders() })
+        mInstagramRepository.getRecipients(result, query,getHeaders())
     }
 
     fun getUserByRecipients(
@@ -1226,7 +1232,7 @@ class UseCase(
         userId: Int,
         seqId: Int
     ) {
-        mInstagramRepository.getByParticipants(result, { getHeaders() }, "[[$userId]]", seqId)
+        mInstagramRepository.getByParticipants(result,getHeaders(), "[[$userId]]", seqId)
     }
 
     fun getLastFbnsRegisterToken() =
@@ -1256,7 +1262,7 @@ class UseCase(
     }
 
     fun getMediaById(mediaId: String, liveDataPost: MediatorLiveData<Resource<InstagramPost>>) {
-        mInstagramRepository.getMediaById(liveDataPost, { getHeaders() }, mediaId)
+        mInstagramRepository.getMediaById(liveDataPost, getHeaders(), mediaId)
     }
 
     fun logout(): LiveData<Resource<ResponseBody>> {
@@ -1269,7 +1275,7 @@ class UseCase(
             put("device_id", cookie.deviceID)
             put("_uuid", cookie.adid)
         }
-        mInstagramRepository.logout(result, { getHeaders() }, data, { t -> formUrlEncode(t) })
+        mInstagramRepository.logout(result, getHeaders(),formUrlEncode(data))
         return Transformations.map(result) {
             if (it.status == Resource.Status.SUCCESS) {
                 clearAllData()
@@ -1315,150 +1321,197 @@ class UseCase(
         }
         mInstagramRepository.unsendMessage(
             result,
-            { getHeaders() },
+            getHeaders(),
             threadId,
             itemId,
-            data,
-            { t -> formUrlEncode(t) })
+            formUrlEncode(data))
         return result
     }
 
     fun getUserPosts(userId: Long): LiveData<Resource<InstagramPostsResponse>> {
-        val userPosts=  MutableLiveData<Resource<InstagramPostsResponse>>()
-        mInstagramRepository.getUserPosts(userPosts,userId,{getHeaders()})
-        return Transformations.map(userPosts){
-            if(it.status == Resource.Status.ERROR && it.apiError != null){
-                val error = gson.fromJson(it.apiError.data!!.string(),Any::class.java) as LinkedTreeMap<*, *>
-                it.apiError.message =  error["message"].toString()
+        val userPosts = MutableLiveData<Resource<InstagramPostsResponse>>()
+        mInstagramRepository.getUserPosts(userPosts, userId,getHeaders())
+        return Transformations.map(userPosts) {
+            if (it.status == Resource.Status.ERROR && it.apiError != null) {
+                val error = gson.fromJson(
+                    it.apiError.data!!.string(),
+                    Any::class.java
+                ) as LinkedTreeMap<*, *>
+                it.apiError.message = error["message"].toString()
             }
             return@map it
         }
     }
 
-    fun loadMoreUserPosts(userId: Long,previousPostId:String,userPosts: MutableLiveData<Resource<InstagramPostsResponse>>){
-        mInstagramRepository.loadMoreUserPosts(userPosts,userId,{getHeaders()},previousPostId)
+    fun loadMoreUserPosts(
+        userId: Long,
+        previousPostId: String,
+        userPosts: MutableLiveData<Resource<InstagramPostsResponse>>
+    ) {
+        mInstagramRepository.loadMoreUserPosts(userPosts, userId,getHeaders(), previousPostId)
     }
 
-    fun likePost(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+    fun likePost(
+        mediaId: String,
+        containerModule: String = "feed_contextual_profile"
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
-        val data = HashMap<String,Any>().apply {
-            put("inventory_source","media_or_ad")
-            put("media_id",mediaId)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("radio_type","wifi_none")
-            put("_uid",user.pk!!.toString())
-            put("_uuid",cookie.adid)
-            put("is_carousel_bumped_post",false)
-            put("container_module",containerModule)
-            put("feed_position",0)
+        val data = HashMap<String, Any>().apply {
+            put("inventory_source", "media_or_ad")
+            put("media_id", mediaId)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("radio_type", "wifi_none")
+            put("_uid", user.pk!!.toString())
+            put("_uuid", cookie.adid)
+            put("is_carousel_bumped_post", false)
+            put("container_module", containerModule)
+            put("feed_position", 0)
         }
-        mInstagramRepository.likePost(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        mInstagramRepository.likePost(
+            result,
+            getHeaders(),
+            mediaId,
+            getSignaturePayload(data))
         return result
     }
 
-    fun unlikePost(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+    fun unlikePost(
+        mediaId: String,
+        containerModule: String = "feed_contextual_profile"
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
-        val data = HashMap<String,Any>().apply {
-            put("inventory_source","media_or_ad")
-            put("media_id",mediaId)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("radio_type","wifi_none")
-            put("_uid",user.pk!!.toString())
-            put("_uuid",cookie.adid)
-            put("is_carousel_bumped_post",false)
-            put("container_module",containerModule)
-            put("feed_position",0)
+        val data = HashMap<String, Any>().apply {
+            put("inventory_source", "media_or_ad")
+            put("media_id", mediaId)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("radio_type", "wifi_none")
+            put("_uid", user.pk!!.toString())
+            put("_uuid", cookie.adid)
+            put("is_carousel_bumped_post", false)
+            put("container_module", containerModule)
+            put("feed_position", 0)
         }
-        mInstagramRepository.unlikePost(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        mInstagramRepository.unlikePost(
+            result,
+            getHeaders(),
+            mediaId,
+            getSignaturePayload(data))
         return result
     }
 
-    fun likeComment(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+    fun likeComment(
+        mediaId: String,
+        containerModule: String = "feed_contextual_profile"
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
-        val data = HashMap<String,Any>().apply {
-            put("_csrftoken",cookie.csrftoken!!)
-            put("_uid",user.pk!!.toString())
-            put("_uuid",cookie.adid)
-            put("is_carousel_bumped_post",false)
-            put("container_module",containerModule)
-            put("feed_position",0)
+        val data = HashMap<String, Any>().apply {
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uid", user.pk!!.toString())
+            put("_uuid", cookie.adid)
+            put("is_carousel_bumped_post", false)
+            put("container_module", containerModule)
+            put("feed_position", 0)
         }
-        mInstagramRepository.likeComment(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        mInstagramRepository.likeComment(
+            result,
+            getHeaders(),
+            mediaId,
+            getSignaturePayload(data))
         return result
     }
 
-    fun unlikeComment(mediaId: String,containerModule:String="feed_contextual_profile"): MutableLiveData<Resource<ResponseBody>> {
+    fun unlikeComment(
+        mediaId: String,
+        containerModule: String = "feed_contextual_profile"
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
-        val data = HashMap<String,Any>().apply {
-            put("_csrftoken",cookie.csrftoken!!)
-            put("_uid",user.pk!!.toString())
-            put("_uuid",cookie.adid)
-            put("is_carousel_bumped_post",false)
-            put("container_module",containerModule)
-            put("feed_position",0)
+        val data = HashMap<String, Any>().apply {
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uid", user.pk!!.toString())
+            put("_uuid", cookie.adid)
+            put("is_carousel_bumped_post", false)
+            put("container_module", containerModule)
+            put("feed_position", 0)
         }
-        mInstagramRepository.unlikeComment(result,{getHeaders()},mediaId,data,{t -> getSignaturePayload(t)})
+        mInstagramRepository.unlikeComment(
+            result,
+            getHeaders(),
+            mediaId,
+            getSignaturePayload(data))
         return result
     }
 
     fun getPostComments(mediaId: String): MutableLiveData<Resource<InstagramCommentResponse>> {
         val result = MutableLiveData<Resource<InstagramCommentResponse>>()
-        mInstagramRepository.getPostComments(result,{getHeaders()},mediaId)
+        mInstagramRepository.getPostComments(result,getHeaders(), mediaId)
         return result
     }
 
-    fun getUserInfoFromUsername(result:MutableLiveData<Resource<InstagramUserInfo>>,username:String,fromModule:String="feed_contextual_profile"): MutableLiveData<Resource<InstagramUserInfo>> {
-        mInstagramRepository.getUserInfoFromUsername(result,{getHeaders()},username,fromModule)
+    fun getUserInfoFromUsername(
+        result: MutableLiveData<Resource<InstagramUserInfo>>,
+        username: String,
+        fromModule: String = "feed_contextual_profile"
+    ): MutableLiveData<Resource<InstagramUserInfo>> {
+        mInstagramRepository.getUserInfoFromUsername(result,getHeaders(), username, fromModule)
         return result
     }
 
-    fun getTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>){
+    fun getTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>) {
         val cookie = getCookie()
-        val data = HashMap<String,Any>().apply {
-            put("phone_id",cookie.phoneID)
-            put("reason","cold_start_fetch")
-            put("battery_level","86")
-            put("timezone_offset",TimeUtils.getTimeZoneOffset().toString())
-            put("_csrftoken",cookie.csrftoken!!)
-            put("device_id",cookie.deviceID)
-            put("request_id",UUID.randomUUID().toString())
-            put("is_pull_to_refresh",0)
-            put("_uuid",cookie.adid)
-            put("is_charging",0)
-            put("will_sound_on",0)
-            put("session_id",cookie.sessionID)
-            put("bloks_versioning_id",InstagramConstants.BLOKS_VERSION_ID)
+        val data = HashMap<String, Any>().apply {
+            put("phone_id", cookie.phoneID)
+            put("reason", "cold_start_fetch")
+            put("battery_level", "86")
+            put("timezone_offset", TimeUtils.getTimeZoneOffset().toString())
+            put("_csrftoken", cookie.csrftoken!!)
+            put("device_id", cookie.deviceID)
+            put("request_id", UUID.randomUUID().toString())
+            put("is_pull_to_refresh", 0)
+            put("_uuid", cookie.adid)
+            put("is_charging", 0)
+            put("will_sound_on", 0)
+            put("session_id", cookie.sessionID)
+            put("bloks_versioning_id", InstagramConstants.BLOKS_VERSION_ID)
         }
-        mInstagramRepository.getTimelinePosts(result,{getHeaders()},data,{t -> formUrlEncode(t)})
+        mInstagramRepository.getTimelinePosts(
+            result,
+            getHeaders(),
+            formUrlEncode(data))
     }
 
-    fun loadMoreTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>,maxId:String) {
+    fun loadMoreTimelinePosts(
+        result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>,
+        maxId: String
+    ) {
         val cookie = getCookie()
-        val data = HashMap<String,Any>().apply {
-            put("phone_id",cookie.phoneID)
-            put("reason","cold_start_fetch")
-            put("battery_level","86")
-            put("timezone_offset",TimeUtils.getTimeZoneOffset().toString())
-            put("_csrftoken",cookie.csrftoken!!)
-            put("device_id",cookie.deviceID)
-            put("request_id",UUID.randomUUID().toString())
-            put("is_pull_to_refresh",0)
-            put("_uuid",cookie.adid)
-            put("is_charging",0)
-            put("will_sound_on",0)
-            put("session_id",cookie.sessionID)
-            put("max_id",maxId)
-            put("bloks_versioning_id",InstagramConstants.BLOKS_VERSION_ID)
+        val data = HashMap<String, Any>().apply {
+            put("phone_id", cookie.phoneID)
+            put("reason", "cold_start_fetch")
+            put("battery_level", "86")
+            put("timezone_offset", TimeUtils.getTimeZoneOffset().toString())
+            put("_csrftoken", cookie.csrftoken!!)
+            put("device_id", cookie.deviceID)
+            put("request_id", UUID.randomUUID().toString())
+            put("is_pull_to_refresh", 0)
+            put("_uuid", cookie.adid)
+            put("is_charging", 0)
+            put("will_sound_on", 0)
+            put("session_id", cookie.sessionID)
+            put("max_id", maxId)
+            put("bloks_versioning_id", InstagramConstants.BLOKS_VERSION_ID)
         }
-        mInstagramRepository.getTimelinePosts(result,{getHeaders()},data,{t -> formUrlEncode(t)})
+        mInstagramRepository.getTimelinePosts(
+            result,
+            getHeaders(),
+            formUrlEncode(data))
     }
 
 }

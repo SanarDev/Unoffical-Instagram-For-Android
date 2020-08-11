@@ -70,7 +70,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding,CommentsViewModel>(
         super.onViewCreated(view, savedInstanceState)
 
         val bundle = requireArguments()
-        val postData = bundle.getParcelable<UserPost>("data")!!
+//        val postData = bundle.getParcelable<UserPost>("data")!!
+        val postData = UserPost()
         viewModel.init(postData.id)
 
         mAdapter = CommentAdapter(emptyArray<Comment>().toMutableList())

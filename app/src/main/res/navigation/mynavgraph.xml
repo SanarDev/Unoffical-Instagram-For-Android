@@ -126,7 +126,7 @@
             app:destination="@id/commentsFragment" >
 
             <argument android:name="data"
-                app:argType="com.idirect.app.datasource.model.UserPost"/>
+                app:argType="string"/>
 
         </action>
     </fragment>

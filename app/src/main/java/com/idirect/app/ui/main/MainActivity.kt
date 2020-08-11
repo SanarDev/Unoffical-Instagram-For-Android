@@ -37,13 +37,13 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
         viewModel.mutableLiveData.observe(this, Observer {
             if(it.status == Resource.Status.SUCCESS){
-                RealTimeService.run(
-                    this,
-                    RealTime_StartService(
-                        it.data!!.seqId.toLong(),
-                        it.data!!.snapshotAtMs
-                    )
-                )
+//                RealTimeService.run(
+//                    this,
+//                    RealTime_StartService(
+//                        it.data!!.seqId.toLong(),
+//                        it.data!!.snapshotAtMs
+//                    )
+//                )
             }
         })
 
