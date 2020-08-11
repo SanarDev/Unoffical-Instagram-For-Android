@@ -261,4 +261,10 @@ interface InstagramRemote {
 
     @GET(InstagramConstants.API_VERSION + "users/{user_name}/usernameinfo/")
     fun getUsernameInfo(@HeaderMap header: Map<String, String>,@Path("user_name") userUsername:String,@Query("from_module") fromModule:String = "feed_timeline"):Call<InstagramUserInfo>
+
+    @POST(InstagramConstants.API_VERSION + "feed/timeline/")
+    fun getFeedTimeline(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<InstagramFeedTimeLineResponse>
+    
+    @POST(InstagramConstants.API_VERSION + "feed/reels_tray/")
+    fun getStoryTimeline(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
 }

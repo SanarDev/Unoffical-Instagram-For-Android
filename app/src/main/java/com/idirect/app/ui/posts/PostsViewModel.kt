@@ -54,13 +54,5 @@ class PostsViewModel @Inject constructor(application: Application,var mUseCase: 
         mUseCase.likeComment(mediaId.toString())
     }
 
-    fun getStandardVideoSize(width: Int, height: Int): Array<Int> {
-        val screenWidth = DisplayUtils.getScreenWidth()
-        val screenHeight = DisplayUtils.getScreenHeight()
-        var standardHeight = (height * screenWidth) / width
-        if(standardHeight > width && standardHeight > screenHeight/3){
-            standardHeight = (screenHeight.toFloat() / 1.7f).toInt()
-        }
-        return arrayOf(screenWidth,standardHeight)
-    }
+
 }

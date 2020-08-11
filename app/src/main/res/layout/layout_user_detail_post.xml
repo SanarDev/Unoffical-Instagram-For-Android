@@ -6,7 +6,7 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/theme_background"
+        app:cardBackgroundColor="@color/theme_item"
         app:cardCornerRadius="10dp"
         app:cardUseCompatPadding="true">
 
@@ -16,8 +16,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingTop="10dp"
-            android:paddingBottom="10dp"
-            tools:background="@color/theme_background">
+            android:paddingBottom="10dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -180,6 +179,8 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginEnd="10dp"
+                android:ellipsize="end"
+                android:maxLines="3"
                 android:textColor="@color/text_very_light"
                 tools:text="What do you like? Tell me..." />
 

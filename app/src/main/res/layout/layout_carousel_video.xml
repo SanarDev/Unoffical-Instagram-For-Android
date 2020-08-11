@@ -14,7 +14,7 @@
             app:controller_layout_id="@layout/media_share_exo_controller"
             app:hide_on_touch="false"
             app:repeat_toggle_modes="all"
-            app:resize_mode="zoom"
+            app:resize_mode="fit"
             app:show_buffering="always"
             app:show_timeout="0"
             app:use_controller="true" />

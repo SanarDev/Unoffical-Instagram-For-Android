@@ -7,6 +7,7 @@ import com.idirect.app.di.ViewModelKey
 import com.idirect.app.ui.direct.DirectViewModel
 import com.idirect.app.ui.posts.FragmentCollectionViewModel
 import com.idirect.app.ui.fullscreen.FullScreenViewModel
+import com.idirect.app.ui.home.HomeViewModel
 import com.idirect.app.ui.inbox.InboxViewModel
 import com.idirect.app.ui.login.LoginViewModel
 import com.idirect.app.ui.main.ShareViewModel
@@ -91,5 +92,13 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(CommentsViewModel::class)
     abstract fun commentsViewModel(commentsViewModel: CommentsViewModel):ViewModel
+
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(HomeViewModel::class)
+    abstract fun homeViewModel(homeViewModel: HomeViewModel):ViewModel
+
+
 
 }

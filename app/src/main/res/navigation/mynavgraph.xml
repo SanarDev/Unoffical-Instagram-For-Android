@@ -6,6 +6,16 @@
     app:startDestination="@id/fragmentInbox">
 
     <fragment
+        android:id="@+id/fragmentHome"
+        android:name="com.idirect.app.ui.home.FragmentHome"
+        android:label="FragmentHome"
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_fragmentHome_to_fragmentInbox"
+            app:destination="@id/fragmentInbox" />
+    </fragment>
+
+    <fragment
         android:id="@+id/fragmentInbox"
         android:name="com.idirect.app.ui.inbox.FragmentInbox"
         android:label="FragmentInbox"
@@ -134,4 +144,5 @@
 
         </action>
     </fragment>
+
 </navigation>

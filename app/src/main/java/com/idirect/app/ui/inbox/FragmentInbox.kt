@@ -146,9 +146,6 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
 
         user = shareViewModel.getUser()
 
-        binding.fabStartMessage.setOnClickListener {
-            it.findNavController().navigate(R.id.action_fragmentInbox_to_startMessageFragment)
-        }
 
         binding.recyclerviewDirects.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {

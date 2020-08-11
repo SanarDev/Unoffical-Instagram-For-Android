@@ -1,6 +1,7 @@
 package com.idirect.app.di.module
 
 import com.idirect.app.ui.direct.FragmentDirect
+import com.idirect.app.ui.home.FragmentHome
 import com.idirect.app.ui.posts.FragmentCollection
 import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.ui.postcomments.CommentsFragment
@@ -33,4 +34,7 @@ abstract class FragmentsModule {
 
     @ContributesAndroidInjector
     abstract fun contributeCommentsFragment(): CommentsFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeFragmentHome(): FragmentHome
 }

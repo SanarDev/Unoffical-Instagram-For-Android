@@ -1,6 +1,7 @@
 package com.idirect.app.ui.postcomments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.MutableLiveData
@@ -10,6 +11,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.fasterxml.jackson.core.io.NumberInput
 import com.idirect.app.R
+import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
@@ -102,6 +104,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding,CommentsViewModel>(
 
     inner class CommentAdapter(var items:MutableList<Comment>):BaseAdapter(){
         override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
+            Log.i(InstagramConstants.DEBUG_TAG,"position $position is created now")
             val item = items[position]
             val dataBinding = holder.binding as LayoutCommentBinding
             dataBinding.txtComment.setText(item.user.username,item.user.pk,item.text)

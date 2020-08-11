@@ -607,4 +607,16 @@ class InstagramRepository(
         }
     }
 
+    fun getTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>, headersGenerator: () -> Map<String, String>, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
+        NetworkCall<InstagramFeedTimeLineResponse>().makeCall(mInstagramRemote.getFeedTimeline(headersGenerator.invoke(),encryptor.invoke(data))).observeForever {
+            result.value = it
+        }
+    }
+
+    fun getTimelineStory(result: MutableLiveData<Resource<ResponseBody>>, headersGenerator: () -> Map<String, String>, data: Map<*, *>, encryptor: (Map<*, *>) -> RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.getStoryTimeline(headersGenerator.invoke(),encryptor.invoke(data))).observeForever {
+            result.value = it
+        }
+    }
+
 }

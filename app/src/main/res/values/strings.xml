@@ -16,7 +16,7 @@
     <string name="try_again">Try Again</string>
     <string name="invalid_two_factor_code">Your code is not valid. Please try again to get a new code</string>
     <string name="Ok">Ok</string>
-    <string name="message">Message...</string>
+    <string name="message">Message</string>
     <string name="youre_been_logged_out">You\'re been logged out. please loggin again.</string>
     <string name="unknownError">Unknown error. please try again</string>
     <string name="five_min_ago">5m ago</string>
@@ -117,4 +117,9 @@
     <string name="comment_hint">Comment as %s</string>
     <string name="page_is_private">This page is private</string>
     <string name="page_position">%d/%d</string>
+    <string name="home">Home</string>
+    <string name="direct">Direct</string>
+    <string name="profile">Profile</string>
+    <string name="explore">Explore</string>
+    <string name="your_story">Your story</string>
 </resources>

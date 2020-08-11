@@ -1,22 +1,25 @@
 package com.idirect.app.ui.main
 
 import android.os.Bundle
-import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Observer
+import com.aurelhubert.ahbottomnavigation.AHBottomNavigation
+import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem
 import com.idirect.app.R
 import com.idirect.app.core.BaseActivity
 import com.idirect.app.databinding.ActivityMainBinding
 import com.idirect.app.datasource.model.event.*
+import com.idirect.app.extentions.color
+import com.idirect.app.fbns.service.FbnsIntent
+import com.idirect.app.fbns.service.FbnsService
 import com.idirect.app.realtime.commands.RealTime_ClearCache
 import com.idirect.app.realtime.commands.RealTime_StartService
 import com.idirect.app.realtime.commands.RealTime_StopService
-import com.idirect.app.fbns.service.FbnsIntent
-import com.idirect.app.fbns.service.FbnsService
 import com.idirect.app.realtime.service.RealTimeService
 import com.idirect.app.utils.Resource
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+
 
 class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
@@ -42,6 +45,23 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
                 )
             }
         })
+
+        val itemHome = AHBottomNavigationItem(R.string.home, R.drawable.instagram_home_outline_24, R.color.white)
+        val itemDirect = AHBottomNavigationItem(R.string.direct, R.drawable.instagram_direct_outline_24, R.color.white)
+        val itemProfile = AHBottomNavigationItem(R.string.profile, R.drawable.profile_single, R.color.white)
+        val itemExplore = AHBottomNavigationItem(R.string.explore, R.drawable.instagram_search_outline_24, R.color.white)
+
+        binding.bottomNavigation.addItem(itemHome)
+        binding.bottomNavigation.addItem(itemDirect)
+        binding.bottomNavigation.addItem(itemExplore)
+        binding.bottomNavigation.addItem(itemProfile)
+
+        binding.bottomNavigation.defaultBackgroundColor = color(R.color.theme_item)
+        binding.bottomNavigation.inactiveColor = color(R.color.text_light)
+        binding.bottomNavigation.accentColor = color(R.color.text_very_light)
+
+        binding.bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_HIDE)
+        binding.bottomNavigation.isForceTint = true
         FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
     }
 
