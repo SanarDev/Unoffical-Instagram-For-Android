@@ -12,9 +12,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_marginStart="20dp"
+        android:layout_marginEnd="40dp"
+        android:layout_alignEnd="@id/img_like"
         android:textColor="@color/text_very_light"
         android:textSize="14sp"
-        android:textStyle="bold"
         tools:text="examplePage" />
 
     <androidx.appcompat.widget.AppCompatImageView

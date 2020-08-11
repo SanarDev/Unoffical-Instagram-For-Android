@@ -1,10 +1,12 @@
 package com.idirect.app.datasource.model.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.idirect.app.datasource.model.ClientGapEnforcerMatrix;
 import com.idirect.app.datasource.model.FeedItem;
 import com.idirect.app.datasource.model.StartupPrefetchConfigs;
+import com.idirect.app.datasource.model.UserPost;
 
 import java.util.List;
 
@@ -55,6 +57,24 @@ public class InstagramFeedTimeLineResponse {
     @SerializedName("status")
     @Expose
     private String status;
+    @JsonIgnore
+    private List<UserPost> posts = null;
+
+    public Boolean getDirectV2Enabled() {
+        return isDirectV2Enabled;
+    }
+
+    public void setDirectV2Enabled(Boolean directV2Enabled) {
+        isDirectV2Enabled = directV2Enabled;
+    }
+
+    public List<UserPost> getPosts() {
+        return posts;
+    }
+
+    public void setPosts(List<UserPost> posts) {
+        this.posts = posts;
+    }
 
     public Long getNumResults() {
         return numResults;

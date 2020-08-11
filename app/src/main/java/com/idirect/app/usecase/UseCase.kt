@@ -1420,8 +1420,7 @@ class UseCase(
         return result
     }
 
-    fun getTimelinePosts(): MutableLiveData<Resource<InstagramFeedTimeLineResponse>> {
-        val result= MutableLiveData<Resource<InstagramFeedTimeLineResponse>>()
+    fun getTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>){
         val cookie = getCookie()
         val data = HashMap<String,Any>().apply {
             put("phone_id",cookie.phoneID)
@@ -1439,7 +1438,27 @@ class UseCase(
             put("bloks_versioning_id",InstagramConstants.BLOKS_VERSION_ID)
         }
         mInstagramRepository.getTimelinePosts(result,{getHeaders()},data,{t -> formUrlEncode(t)})
-        return result
+    }
+
+    fun loadMoreTimelinePosts(result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>,maxId:String) {
+        val cookie = getCookie()
+        val data = HashMap<String,Any>().apply {
+            put("phone_id",cookie.phoneID)
+            put("reason","cold_start_fetch")
+            put("battery_level","86")
+            put("timezone_offset",TimeUtils.getTimeZoneOffset().toString())
+            put("_csrftoken",cookie.csrftoken!!)
+            put("device_id",cookie.deviceID)
+            put("request_id",UUID.randomUUID().toString())
+            put("is_pull_to_refresh",0)
+            put("_uuid",cookie.adid)
+            put("is_charging",0)
+            put("will_sound_on",0)
+            put("session_id",cookie.sessionID)
+            put("max_id",maxId)
+            put("bloks_versioning_id",InstagramConstants.BLOKS_VERSION_ID)
+        }
+        mInstagramRepository.getTimelinePosts(result,{getHeaders()},data,{t -> formUrlEncode(t)})
     }
 
 }

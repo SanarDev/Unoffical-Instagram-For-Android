@@ -81,9 +81,10 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     View.OnClickListener {
 
     @Inject
-    lateinit var mGlideRequestManager : RequestManager
+    lateinit var mGlideRequestManager: RequestManager
+
     @Inject
-    lateinit var mPlayManager:PlayManager
+    lateinit var mPlayManager: PlayManager
 
     private lateinit var shareViewModel: ShareViewModel
     private lateinit var thread: Thread
@@ -124,7 +125,6 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     override fun getViewModelClass(): Class<DirectViewModel> {
         return DirectViewModel::class.java
     }
-
 
 
     private val mHandler = Handler()
@@ -242,17 +242,17 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         })
 
         shareViewModel.connectionState.observe(viewLifecycleOwner, Observer {
-            when(it.connection){
-                ConnectionStateEvent.State.CONNECTED ->{
+            when (it.connection) {
+                ConnectionStateEvent.State.CONNECTED -> {
                     checkUserStatus()
                 }
-                ConnectionStateEvent.State.CONNECTING ->{
+                ConnectionStateEvent.State.CONNECTING -> {
                     binding.txtProfileDec.text = getString(R.string.connecting)
                 }
-                ConnectionStateEvent.State.NETWORK_DISCONNECTED ->{
+                ConnectionStateEvent.State.NETWORK_DISCONNECTED -> {
                     binding.txtProfileDec.text = getString(R.string.waiting_for_network)
                 }
-                else ->{
+                else -> {
                     binding.txtProfileDec.text = getString(R.string.connecting)
                 }
             }
@@ -365,13 +365,13 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 
     override fun onClick(v: View?) {
         when (v!!.id) {
-            binding.toolbar.id ->{
-                if(!thread.isGroup){
+            binding.toolbar.id -> {
+                if (!thread.isGroup) {
                     val user = thread.users[0]
                     val userId = user.pk.toString()
-                    ViewCompat.setTransitionName(binding.imgProfileImage,"profile_$userId")
-                    ViewCompat.setTransitionName(binding.txtProfileName,"username_$userId")
-                    ViewCompat.setTransitionName(binding.txtProfileDec,"fullname_$userId")
+                    ViewCompat.setTransitionName(binding.imgProfileImage, "profile_$userId")
+                    ViewCompat.setTransitionName(binding.txtProfileName, "username_$userId")
+                    ViewCompat.setTransitionName(binding.txtProfileDec, "fullname_$userId")
 
                     val userData = UserBundle().apply {
                         this.userId = userId
@@ -379,13 +379,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         this.username = user.username
                         this.fullname = user.fullName
                     }
-                    val action = FragmentDirectDirections.actionFragmentDirectToUserProfileFragment(userData)
+                    val action =
+                        FragmentDirectDirections.actionFragmentDirectToUserProfileFragment(userData)
                     val extras = FragmentNavigatorExtras(
                         binding.imgProfileImage to binding.imgProfileImage.transitionName,
                         binding.txtProfileName to binding.txtProfileName.transitionName,
                         binding.txtProfileDec to binding.txtProfileDec.transitionName
                     )
-                    v.findNavController().navigate(action,extras)
+                    v.findNavController().navigate(action, extras)
                 }
             }
             binding.edtTextChat.id -> {
@@ -433,7 +434,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     PERMISSION_RECORD_AUDIO_CODE
                 )
             }
-            binding.btnEmoji.id ->{
+            binding.btnEmoji.id -> {
                 if (emojiPopup.isShowing) {
                     emojiPopup.dismiss()
                 } else {
@@ -537,159 +538,147 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 
             when (item.itemType) {
                 InstagramConstants.MessageType.TEXT.type -> {
-                    includeTime = (holder.binding as LayoutMessageBinding).includeTime
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutMessageBinding).imgThreadProfileImage
-                    layoutParent = (holder.binding as LayoutMessageBinding).layoutParent
-                    layoutMessage = (holder.binding as LayoutMessageBinding).layoutMessage
-                    includeReaction = (holder.binding as LayoutMessageBinding).includeReaction
-                    txtSendername = (holder.binding as LayoutMessageBinding).txtSendername
+                    val dataBinding = (holder.binding as LayoutMessageBinding)
+                    includeTime = dataBinding.includeTime
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutParent = dataBinding.layoutParent
+                    layoutMessage = dataBinding.layoutMessage
+                    includeReaction = dataBinding.includeReaction
+                    txtSendername = dataBinding.txtSendername
                 }
                 InstagramConstants.MessageType.LINK.type -> {
-                    includeTime = (holder.binding as LayoutLinkBinding).includeTime
-                    layoutParent = (holder.binding as LayoutLinkBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutLinkBinding).imgThreadProfileImage
-                    layoutMessage = (holder.binding as LayoutLinkBinding).layoutMessage
-                    includeReaction = (holder.binding as LayoutLinkBinding).includeReaction
-                    txtSendername = (holder.binding as LayoutLinkBinding).txtSendername
+                    val dataBinding = (holder.binding as LayoutLinkBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutMessage = dataBinding.layoutMessage
+                    includeReaction = dataBinding.includeReaction
+                    txtSendername = dataBinding.txtSendername
                 }
                 InstagramConstants.MessageType.REEL_SHARE.type -> {
                     when (item.reelShare.type) {
                         InstagramConstants.ReelType.REPLY.type -> {
-                            includeTime =
-                                (holder.binding as LayoutReelShareReplyBinding).includeTime
-                            layoutParent =
-                                (holder.binding as LayoutReelShareReplyBinding).layoutParent
-                            imgThreadProfileImage =
-                                (holder.binding as LayoutReelShareReplyBinding).imgThreadProfileImage
-                            layoutMessage =
-                                (holder.binding as LayoutReelShareReplyBinding).layoutMessage
-                            includeReaction =
-                                (holder.binding as LayoutReelShareReplyBinding).includeReaction
+                            val dataBinding = (holder.binding as LayoutReelShareReplyBinding)
+                            includeTime = dataBinding.includeTime
+                            layoutParent = dataBinding.layoutParent
+                            imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                            layoutMessage = dataBinding.layoutMessage
+                            includeReaction = dataBinding.includeReaction
                         }
                         InstagramConstants.ReelType.MENTION.type -> {
-                            includeTime = (holder.binding as LayoutReelShareBinding).includeTime
-                            layoutParent = (holder.binding as LayoutReelShareBinding).layoutParent
-                            layoutMessage = (holder.binding as LayoutReelShareBinding).layoutMessage
-                            imgThreadProfileImage =
-                                (holder.binding as LayoutReelShareBinding).imgThreadProfileImage
-                            includeReaction =
-                                (holder.binding as LayoutReelShareBinding).includeReaction
+                            val dataBinding = (holder.binding as LayoutReelShareBinding)
+                            includeTime = dataBinding.includeTime
+                            layoutParent = dataBinding.layoutParent
+                            layoutMessage = dataBinding.layoutMessage
+                            imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                            includeReaction = dataBinding.includeReaction
                         }
                         else -> { // item.reelShare.type == InstagramConstants.ReelType.REACTION.type
-                            includeTime = (holder.binding as LayoutReactionStoryBinding).includeTime
-                            imgThreadProfileImage =
-                                (holder.binding as LayoutReactionStoryBinding).imgThreadProfileImage
-                            includeReaction =
-                                (holder.binding as LayoutReactionStoryBinding).includeReaction
-                            layoutParent =
-                                (holder.binding as LayoutReactionStoryBinding).layoutParent
-                            layoutMessage =
-                                (holder.binding as LayoutReactionStoryBinding).layoutMessage
+                            val dataBinding = (holder.binding as LayoutReactionStoryBinding)
+                            includeTime = dataBinding.includeTime
+                            imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                            includeReaction = dataBinding.includeReaction
+                            layoutParent = dataBinding.layoutParent
+                            layoutMessage = dataBinding.layoutMessage
                         }
                     }
                 }
                 InstagramConstants.MessageType.STORY_SHARE.type -> {
                     if (item.storyShare.media != null) {
-                        includeTime = (holder.binding as LayoutReelShareBinding).includeTime
-                        layoutParent = (holder.binding as LayoutReelShareBinding).layoutParent
-                        layoutMessage = (holder.binding as LayoutReelShareBinding).layoutMessage
-                        imgThreadProfileImage =
-                            (holder.binding as LayoutReelShareBinding).imgThreadProfileImage
-                        includeReaction = (holder.binding as LayoutReelShareBinding).includeReaction
+                        val dataBinding = (holder.binding as LayoutReelShareBinding)
+                        includeTime = dataBinding.includeTime
+                        layoutParent = dataBinding.layoutParent
+                        layoutMessage = dataBinding.layoutMessage
+                        imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                        includeReaction = dataBinding.includeReaction
                     } else {
-                        includeTime =
-                            (holder.binding as LayoutStoryShareNotLinkedBinding).includeTime
-                        layoutParent =
-                            (holder.binding as LayoutStoryShareNotLinkedBinding).layoutParent
-                        imgThreadProfileImage =
-                            (holder.binding as LayoutStoryShareNotLinkedBinding).imgThreadProfileImage
-                        layoutMessage =
-                            (holder.binding as LayoutStoryShareNotLinkedBinding).layoutMessage
-                        includeReaction =
-                            (holder.binding as LayoutStoryShareNotLinkedBinding).includeReaction
+                        val dataBinding = (holder.binding as LayoutStoryShareNotLinkedBinding)
+                        includeTime = dataBinding.includeTime
+                        layoutParent = dataBinding.layoutParent
+                        imgThreadProfileImage =dataBinding.imgThreadProfileImage
+                        layoutMessage = dataBinding.layoutMessage
+                        includeReaction = dataBinding.includeReaction
                     }
                 }
                 InstagramConstants.MessageType.VOICE_MEDIA.type -> {
-                    includeTime = (holder.binding as LayoutVoiceMediaBinding).includeTime
-                    layoutParent = (holder.binding as LayoutVoiceMediaBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutVoiceMediaBinding).imgThreadProfileImage
-                    includeReaction =
-                        (holder.binding as LayoutVoiceMediaBinding).includeReaction
-                    layoutMessage = (holder.binding as LayoutVoiceMediaBinding).layoutMessage
-                    txtSendername = (holder.binding as LayoutVoiceMediaBinding).txtSendername
+                    val dataBinding = (holder.binding as LayoutVoiceMediaBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    includeReaction = dataBinding.includeReaction
+                    layoutMessage = dataBinding.layoutMessage
+                    txtSendername = dataBinding.txtSendername
                 }
                 InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
                 }
                 InstagramConstants.MessageType.MEDIA.type -> {
-                    includeTime = (holder.binding as LayoutMediaBinding).includeTime
-                    layoutParent = (holder.binding as LayoutMediaBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutMediaBinding).imgThreadProfileImage
-                    layoutMessage = (holder.binding as LayoutMediaBinding).layoutMessage
-                    includeReaction = (holder.binding as LayoutMediaBinding).includeReaction
+                    val dataBinding = (holder.binding as LayoutMediaBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutMessage = dataBinding.layoutMessage
+                    includeReaction = dataBinding.includeReaction
                 }
                 InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
-                    includeTime = (holder.binding as LayoutRavenMediaBinding).includeTime
-                    layoutParent = (holder.binding as LayoutRavenMediaBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutRavenMediaBinding).imgThreadProfileImage
-                    layoutMessage = (holder.binding as LayoutRavenMediaBinding).layoutMessage
-                    includeReaction = (holder.binding as LayoutRavenMediaBinding).includeReaction
-                    txtSendername = (holder.binding as LayoutRavenMediaBinding).txtSendername
+                    val dataBinding = (holder.binding as LayoutRavenMediaBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutMessage = dataBinding.layoutMessage
+                    includeReaction = dataBinding.includeReaction
+                    txtSendername = dataBinding.txtSendername
                 }
                 InstagramConstants.MessageType.LIKE.type -> {
-                    includeTime = (holder.binding as LayoutLikeBinding).includeTime
-                    layoutParent = (holder.binding as LayoutLikeBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutLikeBinding).imgThreadProfileImage
-                    includeReaction = (holder.binding as LayoutLikeBinding).includeReaction
-                    layoutMessage = (holder.binding as LayoutLikeBinding).layoutMessage
+                    val dataBinding = (holder.binding as LayoutLikeBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    includeReaction = dataBinding.includeReaction
+                    layoutMessage = dataBinding.layoutMessage
 //                            holder.binding as LayoutLikeBinding
                 }
                 InstagramConstants.MessageType.MEDIA_SHARE.type -> {
-                    includeTime = (holder.binding as LayoutMediaShareBinding).includeTime
-                    layoutParent = (holder.binding as LayoutMediaShareBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutMediaShareBinding).imgThreadProfileImage
-                    layoutMessage = (holder.binding as LayoutMediaShareBinding).layoutMessage
-                    includeReaction = (holder.binding as LayoutMediaShareBinding).includeReaction
-                    txtSendername = (holder.binding as LayoutMediaShareBinding).txtSendername
+                    val dataBinding = (holder.binding as LayoutMediaShareBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutMessage = dataBinding.layoutMessage
+                    includeReaction = dataBinding.includeReaction
+                    txtSendername = dataBinding.txtSendername
                 }
                 InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
-                    layoutParent = (holder.binding as LayoutAnimatedMediaBinding).layoutParent
-                    includeReaction = (holder.binding as LayoutAnimatedMediaBinding).includeReaction
+                    val dataBinding = (holder.binding as LayoutAnimatedMediaBinding)
+                    layoutParent = dataBinding.layoutParent
+                    includeReaction = dataBinding.includeReaction
 //                    imgThreadProfileImage =  (holder.binding as LayoutAnimatedMediaBinding).imgThreadProfileImage
                 }
                 InstagramConstants.MessageType.FELIX_SHARE.type -> {
-                    includeTime = (holder.binding as LayoutFelixShareBinding).includeTime
-                    layoutParent = (holder.binding as LayoutFelixShareBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutFelixShareBinding).imgThreadProfileImage
-                    layoutMessage = (holder.binding as LayoutFelixShareBinding).layoutMessage
-                    includeReaction = (holder.binding as LayoutFelixShareBinding).includeReaction
+                    val dataBinding = (holder.binding as LayoutFelixShareBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutMessage = dataBinding.layoutMessage
+                    includeReaction = dataBinding.includeReaction
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
 
                 }
                 InstagramConstants.MessageType.PLACE_HOLDER.type -> {
-                    includeTime = (holder.binding as LayoutPlaceholderBinding).includeTime
-                    layoutParent = (holder.binding as LayoutPlaceholderBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutPlaceholderBinding).imgThreadProfileImage
-                    layoutMessage = (holder.binding as LayoutPlaceholderBinding).layoutMessage
-                    txtSendername = (holder.binding as LayoutPlaceholderBinding).txtSendername
+                    val dataBinding = (holder.binding as LayoutPlaceholderBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutMessage = dataBinding.layoutMessage
+                    txtSendername = dataBinding.txtSendername
                 }
                 else -> {
-                    includeTime = (holder.binding as LayoutMessageBinding).includeTime
-                    layoutParent = (holder.binding as LayoutMessageBinding).layoutParent
-                    imgThreadProfileImage =
-                        (holder.binding as LayoutMessageBinding).imgThreadProfileImage
-                    layoutMessage = (holder.binding as LayoutMessageBinding).layoutMessage
-                    includeReaction = (holder.binding as LayoutMessageBinding).includeReaction
-                    txtSendername = (holder.binding as LayoutMessageBinding).txtSendername
+                    val dataBinding = (holder.binding as LayoutMessageBinding)
+                    includeTime = dataBinding.includeTime
+                    layoutParent = dataBinding.layoutParent
+                    imgThreadProfileImage = dataBinding.imgThreadProfileImage
+                    layoutMessage = dataBinding.layoutMessage
+                    includeReaction = dataBinding.includeReaction
+                    txtSendername = dataBinding.txtSendername
                 }
             }
 
@@ -896,7 +885,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         if (item.reelShare.media?.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
-                                shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
+                                shareViewModel.getStandardWidthAndHeight(
+                                    image.width,
+                                    image.height,
+                                    0.2f
+                                )
                             mGlideRequestManager
                                 .load(image.url)
                                 .override(size[0], size[1])
@@ -962,7 +955,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         if (item.reelShare.media.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
-                                shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
+                                shareViewModel.getStandardWidthAndHeight(
+                                    image.width,
+                                    image.height,
+                                    0.2f
+                                )
                             val user = item.reelShare.media.user
                             mGlideRequestManager.load(image.url)
                                 .override(size[0], size[1])
@@ -982,7 +979,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         if (item.reelShare.media?.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
-                                shareViewModel.getStandardWidthAndHeight(image.width, image.height, 0.2f)
+                                shareViewModel.getStandardWidthAndHeight(
+                                    image.width,
+                                    image.height,
+                                    0.2f
+                                )
                             mGlideRequestManager
                                 .load(image.url)
                                 .override(size[0], size[1])
@@ -1021,14 +1022,18 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 
                     }
 
-                    layoutMessage?.setOnClickListener(object:View.OnClickListener{
+                    layoutMessage?.setOnClickListener(object : View.OnClickListener {
                         override fun onClick(v: View?) {
                             item.reelShare.media?.videoVersions?.also {
                                 PlayVideoActivity.playUrl(requireContext(), it[0].url)
                                 return
                             }
                             item.reelShare.media?.imageVersions2?.also {
-                                val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,it.candidates[0].url)
+                                val action =
+                                    FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
+                                        FullScreenFragment.TYPE_URL,
+                                        it.candidates[0].url
+                                    )
                                 view!!.findNavController().navigate(action)
                                 return
                             }
@@ -1076,7 +1081,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                         item.storyShare.media.videoVersions[0].url
                                     )
                                 } else {
-                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,images[0].url)
+                                    val action =
+                                        FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
+                                            FullScreenFragment.TYPE_URL,
+                                            images[0].url
+                                        )
                                     view!!.findNavController().navigate(action)
                                 }
                             }
@@ -1123,7 +1132,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     }
                     dataBinding.btnPlayPause.setOnClickListener {
                         if (mPlayManager.currentPlayerId != id) {
-                            mPlayManager.startPlay(mediaSource,id)
+                            mPlayManager.startPlay(mediaSource, id)
                             dataBinding.btnPlayPause.setImageResource(R.drawable.ic_pause_circle)
                             mPlayManager.seekbarPlay = dataBinding.seekbarPlay
                             mPlayManager.btnPlay = dataBinding.btnPlayPause
@@ -1143,7 +1152,10 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 }
                 InstagramConstants.MessageType.MEDIA.type -> {
                     val dataBinding = holder.binding as LayoutMediaBinding
-                    ViewCompat.setTransitionName(dataBinding.imgMedia,"media_${item.clientContext}")
+                    ViewCompat.setTransitionName(
+                        dataBinding.imgMedia,
+                        "media_${item.clientContext}"
+                    )
                     if (item.media.isLocal) {
                         val originalSize =
                             MediaUtils.getMediaWidthAndHeight(item.media.localFilePath)
@@ -1171,7 +1183,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     } else {
                         val images = item.media.imageVersions2.candidates[0]
                         val size =
-                            shareViewModel.getStandardWidthAndHeight(images.width, images.height, 0.5f)
+                            shareViewModel.getStandardWidthAndHeight(
+                                images.width,
+                                images.height,
+                                0.5f
+                            )
                         mGlideRequestManager.load(images.url)
                             .override(size[0], size[1])
                             .placeholder(R.drawable.placeholder_loading)
@@ -1199,13 +1215,16 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                         item.media.videoVersions[0].url
                                     )
                                 } else {
-                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
-                                        FullScreenFragment.TYPE_URL,
-                                        images.url,
-                                        item.clientContext)
+                                    val action =
+                                        FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
+                                            FullScreenFragment.TYPE_URL,
+                                            images.url,
+                                            item.clientContext
+                                        )
                                     val extras = FragmentNavigatorExtras(
-                                        dataBinding.imgMedia to dataBinding.imgMedia.transitionName)
-                                    view!!.findNavController().navigate(action,extras)
+                                        dataBinding.imgMedia to dataBinding.imgMedia.transitionName
+                                    )
+                                    view!!.findNavController().navigate(action, extras)
                                 }
                             }
                         }))
@@ -1222,7 +1241,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                 item.itemId,
                                 item.clientContext
                             )
-                            val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,media.imageVersions2.candidates[0].url)
+                            val action =
+                                FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
+                                    FullScreenFragment.TYPE_URL,
+                                    media.imageVersions2.candidates[0].url
+                                )
                             it!!.findNavController().navigate(action)
                         }
                     } else if (media.videoVersions != null) {
@@ -1252,13 +1275,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     val media = item.mediaShare
                     val user = media.user
                     val id = item.mediaShare.id
-                    when(media.mediaType){
-                        InstagramConstants.MediaType.IMAGE.type ->{
+                    when (media.mediaType) {
+                        InstagramConstants.MediaType.IMAGE.type -> {
                             val image = media.imageVersions2
                             gone(dataBinding.layoutVideoView, dataBinding.imgMultipleItem)
                             dataBinding.layoutImageView.visibility = View.VISIBLE
                             mGlideRequestManager.load(image.candidates[0].url)
-                                .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
+                                .placeholder(R.drawable.placeholder_loading)
+                                .into(dataBinding.imageView)
                             dataBinding.layoutImageView.layoutParams.apply {
                                 val sizeArray = shareViewModel.getStandardWidthAndHeight(
                                     resources.dpToPx(image.candidates[0].width.toFloat()),
@@ -1275,13 +1299,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             val image = item.mediaShare.imageVersions2.candidates[1].url
                             mGlideRequestManager.load(image).into(dataBinding.imgPreviewVideo)
                         }
-                        InstagramConstants.MediaType.CAROUSEL_MEDIA.type ->{
+                        InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
                             val image = media.carouselMedia[0].imageVersions2
                             gone(dataBinding.layoutVideoView)
                             visible(dataBinding.imgMultipleItem)
                             dataBinding.layoutImageView.visibility = View.VISIBLE
                             mGlideRequestManager.load(image.candidates[0].url)
-                                .placeholder(R.drawable.placeholder_loading).into(dataBinding.imageView)
+                                .placeholder(R.drawable.placeholder_loading)
+                                .into(dataBinding.imageView)
                             dataBinding.layoutImageView.layoutParams.apply {
                                 val sizeArray = shareViewModel.getStandardWidthAndHeight(
                                     resources.dpToPx(image.candidates[0].width.toFloat()),
@@ -1306,7 +1331,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         override fun onSingleClick(view: View?) {
                             when (media.mediaType) {
                                 InstagramConstants.MediaType.IMAGE.type -> {
-                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_URL,media.imageVersions2.candidates[0].url)
+                                    val action =
+                                        FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
+                                            FullScreenFragment.TYPE_URL,
+                                            media.imageVersions2.candidates[0].url
+                                        )
                                     view!!.findNavController().navigate(action)
                                 }
                                 InstagramConstants.MediaType.VIDEO.type -> {
@@ -1316,7 +1345,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                     )
                                 }
                                 InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
-                                    val action = FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(FullScreenFragment.TYPE_POST,media.id)
+                                    val action =
+                                        FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
+                                            FullScreenFragment.TYPE_POST,
+                                            media.id
+                                        )
                                     view!!.findNavController().navigate(action)
                                 }
                             }

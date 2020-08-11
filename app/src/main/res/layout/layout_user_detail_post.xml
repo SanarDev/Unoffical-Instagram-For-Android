@@ -180,7 +180,6 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginEnd="10dp"
                 android:ellipsize="end"
-                android:maxLines="3"
                 android:textColor="@color/text_very_light"
                 tools:text="What do you like? Tell me..." />
 
@@ -206,8 +205,6 @@
                 android:layout_marginEnd="10dp"
                 android:orientation="vertical">
 
-                <!--                <include layout="@layout/layout_preview_comment"/>-->
-                <!--                <include layout="@layout/layout_preview_comment"/>-->
 
             </LinearLayout>
 

@@ -5,7 +5,6 @@ import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
@@ -27,9 +26,7 @@ import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.databinding.LayoutCarouselImageBinding
-import com.idirect.app.databinding.LayoutCarouselVideoBinding
-import com.idirect.app.databinding.LayoutUserDetailPostBinding
+import com.idirect.app.databinding.*
 import com.idirect.app.datasource.model.CarouselMedia
 import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.di.module.GlideApp
@@ -41,6 +38,7 @@ import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.posts.PostsFragmentDirections
 import com.idirect.app.utils.DisplayUtils
 import com.tylersuehr.chips.CircleImageView
+import java.lang.Exception
 
 class PostsAdapter(
     var context: Context,
@@ -112,10 +110,7 @@ class PostsAdapter(
     }
 
     override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
-        Log.i(InstagramConstants.DEBUG_TAG, "create layout for position $position")
         val item = items[position]
-        val dataBinding = holder.binding as LayoutUserDetailPostBinding
-        dataBinding.layoutLikersProfile.removeAllViews()
         val showLikersClickListener = View.OnClickListener {
 
         }
@@ -124,24 +119,112 @@ class PostsAdapter(
             it.findNavController().navigate(action)
         }
 
-        if (item.location == null) {
-            dataBinding.txtLocationName.visibility = View.GONE
-        } else {
-            dataBinding.txtLocationName.text = item.location.shortName
-            dataBinding.txtLocationName.visibility = View.VISIBLE
+        val txtLocationName:AppCompatTextView
+        val layoutLikersProfile:LinearLayout
+        val layoutLikes:LinearLayout
+        val layoutComment:LinearLayout
+        val txtLikesCount:AppCompatTextView
+        val btnViewComments:AppCompatTextView
+        val btnTopLikerUsername:AppCompatTextView
+        val btnOthers:AppCompatTextView
+        val txtUsername:AppCompatTextView
+        val txtCaption:AppCompatTextView
+        val btnComment:AppCompatImageView
+        val btnLike:AppCompatImageView
+        val imgProfile:CircleImageView
+
+
+        when(item.mediaType){
+            InstagramConstants.MediaType.IMAGE.type ->{
+                val dataBinding = (holder.binding as LayoutPostImageBinding)
+                txtLocationName = dataBinding.txtLocationName
+                layoutLikersProfile = dataBinding.layoutLikersProfile
+                layoutLikes = dataBinding.layoutLikes
+                txtLikesCount = dataBinding.txtLikesCount
+                btnTopLikerUsername = dataBinding.btnTopLikerUsername
+                btnOthers = dataBinding.btnOthers
+                txtUsername = dataBinding.txtUsername
+                txtCaption= dataBinding.txtCaption
+                imgProfile= dataBinding.imgProfile
+                btnComment = dataBinding.btnComment
+                layoutComment = dataBinding.layoutComment
+                btnViewComments = dataBinding.btnViewComments
+                btnLike = dataBinding.btnLike
+            }
+            InstagramConstants.MediaType.VIDEO.type ->{
+                val dataBinding = (holder.binding as LayoutPostVideoBinding)
+                txtLocationName = dataBinding.txtLocationName
+                layoutLikersProfile = dataBinding.layoutLikersProfile
+                layoutLikes = dataBinding.layoutLikes
+                txtLikesCount = dataBinding.txtLikesCount
+                btnTopLikerUsername = dataBinding.btnTopLikerUsername
+                btnOthers = dataBinding.btnOthers
+                txtUsername = dataBinding.txtUsername
+                txtCaption= dataBinding.txtCaption
+                imgProfile= dataBinding.imgProfile
+                btnComment = dataBinding.btnComment
+                layoutComment = dataBinding.layoutComment
+                btnViewComments = dataBinding.btnViewComments
+                btnLike = dataBinding.btnLike
+            }
+            InstagramConstants.MediaType.CAROUSEL_MEDIA.type ->{
+                val dataBinding = (holder.binding as LayoutPostCarouselMediaBinding)
+                txtLocationName = dataBinding.txtLocationName
+                layoutLikersProfile = dataBinding.layoutLikersProfile
+                layoutLikes = dataBinding.layoutLikes
+                txtLikesCount = dataBinding.txtLikesCount
+                btnTopLikerUsername = dataBinding.btnTopLikerUsername
+                btnOthers = dataBinding.btnOthers
+                txtUsername = dataBinding.txtUsername
+                txtCaption= dataBinding.txtCaption
+                imgProfile= dataBinding.imgProfile
+                btnComment = dataBinding.btnComment
+                layoutComment = dataBinding.layoutComment
+                btnViewComments = dataBinding.btnViewComments
+                btnLike = dataBinding.btnLike
+            }
+            else ->{
+                val dataBinding = (holder.binding as LayoutPostImageBinding)
+                txtLocationName = dataBinding.txtLocationName
+                layoutLikersProfile = dataBinding.layoutLikersProfile
+                layoutLikes = dataBinding.layoutLikes
+                txtLikesCount = dataBinding.txtLikesCount
+                btnTopLikerUsername = dataBinding.btnTopLikerUsername
+                btnOthers = dataBinding.btnOthers
+                txtUsername = dataBinding.txtUsername
+                txtCaption= dataBinding.txtCaption
+                imgProfile= dataBinding.imgProfile
+                btnComment = dataBinding.btnComment
+                layoutComment = dataBinding.layoutComment
+                btnViewComments = dataBinding.btnViewComments
+                btnLike = dataBinding.btnLike
+            }
         }
+
+        /* Location Start*/
+        if (item.location == null) {
+            txtLocationName.visibility = View.GONE
+        } else {
+            txtLocationName.text = item.location.shortName
+            txtLocationName.visibility = View.VISIBLE
+        }
+        /* Location End*/
+
+
+        /* Profile top likers Start*/
+        layoutLikersProfile.removeAllViews()
         if (item.facepileTopLikers != null && item.facepileTopLikers.isNotEmpty()) {
-            visible(dataBinding.layoutLikes)
-            gone(dataBinding.txtLikesCount)
-            dataBinding.btnTopLikerUsername.text = item.facepileTopLikers[0].username
-            dataBinding.btnTopLikerUsername.setOnClickListener {
+            visible(layoutLikes)
+            gone(txtLikesCount)
+            btnTopLikerUsername.text = item.facepileTopLikers[0].username
+            btnTopLikerUsername.setOnClickListener {
                 item.facepileTopLikers?.let {
                     item.facepileTopLikers[0].pk
                 }
             }
-            dataBinding.btnOthers.text =
+            btnOthers.text =
                 String.format(context.getString(R.string.others_liker_count), item.likeCount)
-            dataBinding.btnOthers.setOnClickListener(showLikersClickListener)
+            btnOthers.setOnClickListener(showLikersClickListener)
             for (liker in item.facepileTopLikers) {
                 val likerProfile = CircleImageView(context)
                 likerProfile.layoutParams = android.widget.LinearLayout.LayoutParams(
@@ -149,78 +232,68 @@ class PostsAdapter(
                     context.resources.dpToPx(20f)
                 )
                 mGlide.load(liker.profilePicUrl).into(likerProfile)
-                dataBinding.layoutLikersProfile.addView(likerProfile)
+                layoutLikersProfile.addView(likerProfile)
             }
         } else {
-            visible(dataBinding.txtLikesCount)
-            gone(dataBinding.layoutLikes)
-            dataBinding.txtLikesCount.text =
+            visible(txtLikesCount)
+            gone(layoutLikes)
+            txtLikesCount.text =
                 String.format(context.getString(R.string.liker_count), item.likeCount)
-            dataBinding.txtLikesCount.setOnClickListener(showLikersClickListener)
+            txtLikesCount.setOnClickListener(showLikersClickListener)
         }
-        dataBinding.txtUsername.text = item.user.username
+        /* Profile top likers End*/
+
+
+        txtUsername.text = item.user.username
         if (item.caption != null) {
-            dataBinding.txtCaption.setText(
+            txtCaption.setText(
                 item.caption.user.username,
                 item.caption.user.pk,
                 item.caption.text
             )
-            dataBinding.txtCaption.mHyperTextClick = mHyperTextClick
+            txtCaption.mHyperTextClick = mHyperTextClick
         }
-        mGlide.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
-        dataBinding.layoutMedia.removeAllViews()
+        mGlide.load(item.user.profilePicUrl).into(imgProfile)
         when (item.mediaType) {
             InstagramConstants.MediaType.IMAGE.type -> {
-                val photoView = AppCompatImageView(context)
-                photoView.layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                photoView.adjustViewBounds = true
+                val dataBinding = (holder.binding as LayoutPostImageBinding)
                 mGlide
                     .load(item.imageVersions2.candidates[0].url)
                     .placeholder(R.drawable.post_load_place_holder)
-                    .into(photoView)
-                dataBinding.layoutMedia.addView(photoView)
+                    .into(dataBinding.photoView)
             }
             InstagramConstants.MediaType.VIDEO.type -> {
+                val dataBinding = (holder.binding as LayoutPostVideoBinding)
                 val video = item.videoVersions[0]!!
                 val previewImage = item.imageVersions2.candidates[0]!!
-                val videoLayout: View =
-                    LayoutInflater.from(context).inflate(R.layout.layout_post_video, null, false)
-                val videoView: PlayerView = videoLayout.findViewById(R.id.video_view)
-                val layoutParent: FrameLayout = videoLayout.findViewById(R.id.layout_parent)
-                val photoView: AppCompatImageView =
-                    videoLayout.findViewById(R.id.photo_view)
-                val imgPlay: AppCompatImageView = videoLayout.findViewById(R.id.img_play)
                 val size = getStandardVideoSize(video.width, video.height)
-                layoutParent.layoutParams =
-                    ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, size[1])
+                dataBinding.layoutMedia.layoutParams =
+                    LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, size[1])
                 if (video.isPlay) {
                     val mediaSource: MediaSource =
                         ProgressiveMediaSource.Factory(dataSource)
                             .createMediaSource(Uri.parse(video.url))
-                    videoView.player = mPlayManager.player
-                    photoView.visibility = View.GONE
-                    imgPlay.visibility = View.GONE
+                    dataBinding.videoView.player = mPlayManager.player
+                    dataBinding.photoView.visibility = View.GONE
+                    dataBinding.imgPlay.visibility = View.GONE
                     mPlayManager.startPlay(mediaSource, item.id)
-                    videoView.showController()
+                    dataBinding.videoView.showController()
                     currentMediaPosition = position
                 } else {
                     if (mPlayManager.currentPlayerId == item.id) {
                         mPlayManager.stopPlay()
                     }
-                    videoView.player = null
-                    photoView.visibility = View.VISIBLE
-                    imgPlay.visibility = View.VISIBLE
+                    dataBinding.videoView.player = null
+                    dataBinding.photoView.visibility = View.VISIBLE
+                    dataBinding.imgPlay.visibility = View.VISIBLE
 
-                    mGlide.load(previewImage.url).centerCrop().into(photoView)
+                    mGlide.load(previewImage.url).centerCrop().into(dataBinding.photoView)
                 }
                 dataBinding.layoutMedia.setOnClickListener {
                     video.isPlay = true
                     notifyItemChanged(position)
                 }
-                videoView.setOnClickListener {
+                dataBinding.videoView.setOnClickListener {
                     if (mPlayManager.currentPlayerId == video.id) {
                         if (mPlayManager.isSoundEnable()) {
                             mPlayManager.disableSound()
@@ -229,62 +302,71 @@ class PostsAdapter(
                         }
                     }
                 }
-                dataBinding.layoutMedia.addView(videoLayout)
             }
             InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
-                val itemView =
-                    LayoutInflater.from(context)
-                        .inflate(R.layout.layout_post_carousel_media, null, false)
-                val pagePosition =
-                    itemView.findViewById<AppCompatTextView>(R.id.txt_page_position)
-                val recyclerview = itemView.findViewById<RecyclerView>(R.id.view_pager)
+                val dataBinding = (holder.binding as LayoutPostCarouselMediaBinding)
                 val carouselMedias = item.carouselMedias
-                pagePosition.text =
+                dataBinding.txtPagePosition.text =
                     String.format(context.getString(R.string.page_position), 1, carouselMedias.size)
-                recyclerview.layoutParams.apply {
-                    width = displayWidth
-                    height = displayWidth
-                }
-                val snapHelper = PagerSnapHelper()
-                snapHelper.attachToRecyclerView(recyclerview)
-                adapters.put(position, CollectionMediaAdapter(position, carouselMedias))
-                recyclerview.adapter = adapters[position]
-                recyclerview.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                    override fun onScrollStateChanged(
-                        recyclerView: RecyclerView,
-                        newState: Int
-                    ) {
-                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                            val visibleItem =
-                                (recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-                            pagePosition.text = String.format(
-                                context.getString(R.string.page_position),
-                                visibleItem + 1,
-                                carouselMedias.size
-                            )
-                            if (carouselMedias[visibleItem].mediaType == InstagramConstants.MediaType.VIDEO.type) {
-                                carouselMedias[visibleItem].videoVersions[0].isPlay = true
-                                recyclerView.adapter!!.notifyDataSetChanged()
-                            }
-                        }
+                var maxWidth = 0
+                var maxHeight = 0
+                for(media in carouselMedias){
+                    if(media.originalWidth > maxWidth){
+                        maxWidth = media.originalWidth
                     }
-                })
-                dataBinding.layoutMedia.addView(itemView)
+                    if(media.originalHeight > maxHeight){
+                        maxHeight = media.originalHeight
+                    }
+                }
+                val size = getStandardVideoSize(maxWidth,maxHeight)
+                dataBinding.recyclerviewMedias.layoutParams.apply {
+                    width = displayWidth
+                    height = size[1]
+                }
+                try{
+                    val snapHelper = PagerSnapHelper()
+                    snapHelper.attachToRecyclerView(dataBinding.recyclerviewMedias)
+                }catch (e:Exception){
+
+                }
+                adapters.put(position, CollectionMediaAdapter(position, carouselMedias))
+                dataBinding.recyclerviewMedias.adapter = adapters[position]
+//                dataBinding.recyclerviewMedias.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+//                    override fun onScrollStateChanged(
+//                        recyclerView: RecyclerView,
+//                        newState: Int
+//                    ) {
+//                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+//                            val visibleItem =
+//                                (recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+//                            dataBinding.txtPagePosition.text = String.format(
+//                                context.getString(R.string.page_position),
+//                                visibleItem + 1,
+//                                carouselMedias.size
+//                            )
+//                            if (carouselMedias[visibleItem].mediaType == InstagramConstants.MediaType.VIDEO.type &&
+//                                    mPlayManager.currentPlayerId != carouselMedias[visibleItem].id) {
+//                                carouselMedias[visibleItem].videoVersions[0].isPlay = true
+//                                recyclerView.adapter!!.notifyDataSetChanged()
+//                            }
+//                        }
+//                    }
+//                })
             }
         }
         if (!item.isCommentThreadingEnabled) {
-            dataBinding.btnComment.visibility = View.GONE
+            btnComment.visibility = View.GONE
         } else {
-            dataBinding.btnComment.visibility = View.VISIBLE
+            btnComment.visibility = View.VISIBLE
         }
-        dataBinding.layoutComment.removeAllViews()
+        layoutComment.removeAllViews()
         if (item.previewComments != null && item.previewComments.isNotEmpty()) {
-            visible(dataBinding.btnViewComments)
-            dataBinding.btnViewComments.text =
+            visible(btnViewComments)
+            btnViewComments.text =
                 String.format(context.getString(R.string.view_all_comments), item.commentCount)
-            dataBinding.btnViewComments.setOnClickListener(showCommentClickListener)
+            btnViewComments.setOnClickListener(showCommentClickListener)
             for (comment in item.previewComments) {
-                val layoutComment =
+                val layoutPreviewComment =
                     if (comment.type == InstagramConstants.CommentType.NORMAL.type) {
                         LayoutInflater.from(context).inflate(
                             R.layout.layout_preview_comment,
@@ -298,8 +380,8 @@ class PostsAdapter(
                             false
                         )
                     }
-                val txtComment: HyperTextView = layoutComment.findViewById(R.id.txt_comment)
-                val imgLike: AppCompatImageView = layoutComment.findViewById(R.id.img_like)
+                val txtComment: HyperTextView = layoutPreviewComment.findViewById(R.id.txt_comment)
+                val imgLike: AppCompatImageView = layoutPreviewComment.findViewById(R.id.img_like)
 
                 txtComment.setText(comment.user.username, comment.user.pk, comment.text)
                 txtComment.mHyperTextClick = mHyperTextClick
@@ -323,28 +405,28 @@ class PostsAdapter(
                     }
                     comment.hasLikedComment = !comment.hasLikedComment
                 }
-                dataBinding.layoutComment.addView(layoutComment)
+                layoutComment.addView(layoutPreviewComment)
             }
         } else {
-            gone(dataBinding.btnViewComments)
+            gone(btnViewComments)
         }
         if (item.isHasLiked) {
-            dataBinding.btnLike.setImageResource(R.drawable.instagram_heart_filled_24)
-            dataBinding.btnLike.setColorFilter(context.resources.color(R.color.red))
+            btnLike.setImageResource(R.drawable.instagram_heart_filled_24)
+            btnLike.setColorFilter(context.resources.color(R.color.red))
         } else {
-            dataBinding.btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
-            dataBinding.btnLike.setColorFilter(context.resources.color(R.color.white))
+            btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
+            btnLike.setColorFilter(context.resources.color(R.color.white))
         }
-        dataBinding.btnComment.setOnClickListener(showCommentClickListener)
-        dataBinding.btnLike.setOnClickListener {
+        btnComment.setOnClickListener(showCommentClickListener)
+        btnLike.setOnClickListener {
             if (item.isHasLiked) {
-                dataBinding.btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
-                dataBinding.btnLike.setColorFilter(context.resources.color(R.color.white))
+                btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
+                btnLike.setColorFilter(context.resources.color(R.color.white))
                 item.isHasLiked = false
 //                viewModel.unlikePost(item.id)
             } else {
-                dataBinding.btnLike.setImageResource(R.drawable.instagram_heart_filled_24)
-                dataBinding.btnLike.setColorFilter(context.resources.color(R.color.red))
+                btnLike.setImageResource(R.drawable.instagram_heart_filled_24)
+                btnLike.setColorFilter(context.resources.color(R.color.red))
                 item.isHasLiked = true
 //                viewModel.likePost(item.id)
             }
@@ -355,13 +437,30 @@ class PostsAdapter(
     fun getStandardVideoSize(width: Int, height: Int): Array<Int> {
         var standardHeight = (height * displayWidth) / width
         if (standardHeight > width && standardHeight > displayHeight / 3) {
-            standardHeight = (displayHeight.toFloat() / 1.7f).toInt()
+            standardHeight = (displayHeight.toFloat() / 2f).toInt()
+            Log.i(InstagramConstants.DEBUG_TAG,"line 358 height: $standardHeight")
+        }else{
+
         }
         return arrayOf(displayWidth, standardHeight)
     }
 
     override fun getLayoutIdForPosition(position: Int): Int {
-        return R.layout.layout_user_detail_post
+        val item = items[position]
+        return when(item.mediaType){
+            InstagramConstants.MediaType.IMAGE.type -> {
+                R.layout.layout_post_image
+            }
+            InstagramConstants.MediaType.VIDEO.type -> {
+                R.layout.layout_post_video
+            }
+            InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
+                R.layout.layout_post_carousel_media
+            }
+            else ->{
+                0
+            }
+        }
     }
 
     override fun getItemCount(): Int {

@@ -8,13 +8,13 @@ public class FeedItem {
 
     @SerializedName("media_or_ad")
     @Expose
-    private Media media;
+    private UserPost post;
 
-    public Media getMediaOrAd() {
-        return media;
+    public UserPost getMediaOrAd() {
+        return post;
     }
 
-    public void setMediaOrAd(Media media) {
-        this.media = media;
+    public void setMediaOrAd(UserPost media) {
+        this.post = media;
     }
 }

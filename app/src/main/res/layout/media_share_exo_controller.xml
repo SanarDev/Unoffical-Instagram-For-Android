@@ -76,6 +76,7 @@
                 android:layout_margin="-8dp"
                 android:layout_gravity="bottom"
                 app:bar_height="1dp"
+                android:background="@color/theme_item"
                 app:unplayed_color="@android:color/transparent"
                 app:buffered_color="@android:color/transparent"
                 app:scrubber_disabled_size="1dp"

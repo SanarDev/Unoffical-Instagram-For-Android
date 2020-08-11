@@ -1,6 +1,7 @@
 package com.idirect.app.ui.main
 
 import android.os.Bundle
+import android.view.View
 import androidx.lifecycle.Observer
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem
@@ -65,6 +66,13 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
         FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
     }
 
+    fun isEnableBottomNavigation(isEnable:Boolean){
+        if(isEnable){
+            binding.bottomNavigation.visibility = View.VISIBLE
+        }else{
+            binding.bottomNavigation.visibility = View.GONE
+        }
+    }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onConnectionStateEvent(connectionStateEvent: ConnectionStateEvent) {
