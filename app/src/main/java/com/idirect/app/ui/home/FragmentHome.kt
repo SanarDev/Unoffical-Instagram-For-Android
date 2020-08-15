@@ -1,58 +1,47 @@
 package com.idirect.app.ui.home
 
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import androidx.appcompat.widget.AppCompatImageView
-import androidx.appcompat.widget.AppCompatTextView
+import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.PagerSnapHelper
-import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
-import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.idirect.app.R
-import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.customview.postsrecyclerview.PostsAdapter
-import com.idirect.app.customview.postsrecyclerview.PostsRecyclerState
+import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
+import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
 import com.idirect.app.databinding.FragmentHomeBinding
-import com.idirect.app.databinding.LayoutCarouselImageBinding
-import com.idirect.app.databinding.LayoutCarouselVideoBinding
-import com.idirect.app.databinding.LayoutUserDetailPostBinding
-import com.idirect.app.datasource.model.CarouselMedia
-import com.idirect.app.datasource.model.FeedItem
+import com.idirect.app.databinding.LayoutStoryBinding
+import com.idirect.app.datasource.model.Story
+import com.idirect.app.datasource.model.Tray
 import com.idirect.app.datasource.model.UserPost
-import com.idirect.app.extensions.color
-import com.idirect.app.extensions.gone
-import com.idirect.app.extensions.visible
-import com.idirect.app.extentions.dpToPx
 import com.idirect.app.manager.PlayManager
-import com.idirect.app.ui.posts.PostsFragmentDirections
+import com.idirect.app.ui.postcomments.CommentsFragmentDirections
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
-import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
+import java.lang.Long
 import javax.inject.Inject
 
 class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     HyperTextView.OnHyperTextClick {
 
+
+    companion object {
+        const val NAME_TAG = "home"
+    }
+
+    private lateinit var mStoryAdapter: StoriesAdapter
 
     @Inject
     lateinit var mGlideRequestManager: RequestManager
@@ -61,13 +50,15 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     lateinit var mPlayManager: PlayManager
 
     private var currentMediaPosition: Int = PlayManager.NONE
-    private lateinit var mAdapter: PostsAdapter
+    private lateinit var mAdapter: PostsAdapter2
     private lateinit var dataSource: DataSource.Factory
     private lateinit var mLayoutManager: LinearLayoutManager
 
     val displayWidth = DisplayUtils.getScreenWidth()
     val displayHeight = DisplayUtils.getScreenHeight()
     private var isLoading = false
+    private var lastStoryClicked: kotlin.Long = 0
+    private var v: View? = null
 
     override fun getViewModelClass(): Class<HomeViewModel> {
         return HomeViewModel::class.java
@@ -91,19 +82,34 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mAdapter = PostsAdapter(requireContext(),
-        /* hyperListener */ this@FragmentHome,
-        mPlayManager,
-        viewLifecycleOwner,
-        emptyArray<UserPost>().toMutableList())
+        mAdapter = PostsAdapter2(
+            requireContext(),
+            /* hyperListener */ this@FragmentHome,
+            mPlayManager,
+            viewLifecycleOwner,
+            emptyArray<UserPost>().toMutableList()
+        )
 
         binding.recyclerviewPosts.adapter = mAdapter
-        binding.recyclerviewPosts.mPostsRecyclerState = object :PostsRecyclerState{
+        binding.recyclerviewPosts.mPostsRecyclerState = object : PostsRecyclerListener {
             override fun requestForLoadMore() {
-                if(!isLoading){
+                if (!isLoading) {
                     isLoading = true
                     viewModel.loadMorePosts()
                 }
+            }
+
+            override fun likeComment(id: kotlin.Long) {
+
+            }
+
+            override fun unlikeComment(id: kotlin.Long) {
+            }
+
+            override fun unlikePost(mediaId: String) {
+            }
+
+            override fun likePost(mediaId: String) {
             }
         }
         mLayoutManager = binding.recyclerviewPosts.layoutManager as LinearLayoutManager
@@ -114,6 +120,28 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
                 mAdapter.notifyDataSetChanged()
             }
         })
+
+        mStoryAdapter = StoriesAdapter(null)
+        binding.recyclerviewStories.adapter = mStoryAdapter
+        viewModel.storiesLiveData.observe(viewLifecycleOwner, Observer {
+            if (it.status == Resource.Status.SUCCESS) {
+                mStoryAdapter.items = it.data!!.tray
+                mStoryAdapter.notifyDataSetChanged()
+            }
+        })
+
+        viewModel.storyMediaLiveData.observe(viewLifecycleOwner, Observer {
+            if (it != null && it.status == Resource.Status.SUCCESS) {
+                val action =
+                    FragmentHomeDirections.actionFragmentHomeToFragmentStory(lastStoryClicked.toString())
+                v?.findNavController()?.navigate(action)
+                viewModel.storyMediaLiveData.value = null
+            }
+        })
+        binding.navigationBottom.btnInbox.setOnClickListener {
+            val action = FragmentHomeDirections.actionFragmentHomeToFragmentInbox()
+            it.findNavController().navigate(action)
+        }
     }
 
     override fun onStop() {
@@ -126,10 +154,55 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         mPlayManager.releasePlay()
     }
 
-    override fun onClick(v: View, data: String) {
-        if (data.startsWith("@")) {
-
+    inner class StoriesAdapter(var items: MutableList<Tray>?) : BaseAdapter() {
+        override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
+            val item = items!![position]
+            val dataBinding = holder.binding as LayoutStoryBinding
+            dataBinding.txtUsername.text = item.user.username
+            mGlideRequestManager.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
+            dataBinding.root.setOnClickListener {
+                v = it
+                viewModel.getStoryMedia(item.user.pk)
+                lastStoryClicked = item.user.pk
+            }
+            return item
         }
+
+        override fun getLayoutIdForPosition(position: Int): Int {
+            return R.layout.layout_story
+        }
+
+        override fun getItemCount(): Int {
+            return if (items == null) 0 else items!!.size
+        }
+    }
+
+    override fun onClick(v: View, data: String) {
+        if (data == "SeeAllLikers") {
+
+        } else if (data.startsWith("@")) {
+            val userData = UserBundle().apply {
+                username = data.replace("@", "")
+            }
+        } else if (data.startsWith("#")) {
+
+        } else {
+            try {
+                val num = Long.parseLong(data)
+                val userData = UserBundle().apply {
+                    userId = num.toString()
+                }
+                val action =
+                    CommentsFragmentDirections.actionCommentsFragmentToUserProfileFragment(userData)
+                v.findNavController().navigate(action)
+            } catch (e: Exception) {
+
+            }
+        }
+    }
+
+    override fun getNameTag(): String {
+        return NAME_TAG
     }
 
 }

@@ -811,4 +811,13 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
         connectionState.value = connectionStateEvent
     }
 
+    fun getThreadIdByUserId(pk: Long): String {
+        for(thread in instagramDirect!!.inbox.threads){
+            if(!thread.isGroup && thread.users[0].pk == pk){
+                return thread.threadId
+            }
+        }
+        return "[[$pk]]";
+    }
+
 }

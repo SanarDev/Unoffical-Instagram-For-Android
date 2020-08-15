@@ -116,6 +116,12 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         const val TAG = "TEST"
         const val PERMISSION_READ_EXTERNAL_STORAGE_CODE = 101
         const val PERMISSION_RECORD_AUDIO_CODE = 102
+
+        const val NAME_TAG = "direct"
+    }
+
+    override fun getNameTag(): String {
+        return NAME_TAG
     }
 
     override fun layoutRes(): Int {

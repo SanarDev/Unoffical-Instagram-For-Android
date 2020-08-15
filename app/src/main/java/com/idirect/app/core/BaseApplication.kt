@@ -21,7 +21,6 @@ import com.idirect.app.R
 import com.idirect.app.di.component.DaggerAppComponent
 import com.idirect.app.receiver.NetworkChangeReceiver
 import com.idirect.app.utils.StorageUtils
-import com.squareup.leakcanary.LeakCanary
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
@@ -70,12 +69,6 @@ class BaseApplication : Application() , HasActivityInjector, HasServiceInjector{
             createNotificationChannel(getString(R.string.packageName),getString(R.string.packageName))
         }
 
-        if (LeakCanary.isInAnalyzerProcess(this)) {
-            // This process is dedicated to LeakCanary for heap analysis.
-            // You should not init your app in this process.
-            return;
-        }
-        LeakCanary.install(this);
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

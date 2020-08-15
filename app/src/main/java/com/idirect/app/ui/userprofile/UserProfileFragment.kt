@@ -31,6 +31,9 @@ import javax.inject.Inject
 
 class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfileViewModel>() {
 
+    companion object{
+        const val NAME_TAG = "user_profile"
+    }
     @Inject
     lateinit var mGlideRequestManager: RequestManager
 
@@ -144,7 +147,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
                 super.onScrolled(recyclerView, dx, dy)
                 if (!isLoading && isMoreAvailable) {
                     val totalItemCount = mLayoutManager.itemCount
-                    if (mLayoutManager != null && mLayoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
+                    if (mLayoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
                         viewModel.loadMorePosts()
                         isLoading = true
                     }
@@ -204,5 +207,9 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
             return items.size
         }
 
+    }
+
+    override fun getNameTag(): String {
+        return NAME_TAG
     }
 }

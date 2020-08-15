@@ -7,6 +7,7 @@
     <color name="theme_background_dialog">#2e2e2e</color>
     <color name="theme_background_incoming_message">#2e2e2e</color>
     <color name="theme_item">#1B1B1B</color>
+<!--    1B1B1B-->
     <color name="theme_item_with_opacity">#aa1B1B1B</color>
     <color name="text_very_light">#eee</color>
     <color name="text_light">#aaa</color>

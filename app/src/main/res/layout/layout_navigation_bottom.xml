@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/theme_item"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btn_home"
+            style="@style/ButtonNavigation"
+            android:src="@drawable/instagram_home_outline_24" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btn_inbox"
+            style="@style/ButtonNavigation"
+            android:src="@drawable/instagram_direct_outline_24" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btn_search"
+            style="@style/ButtonNavigation"
+            android:src="@drawable/instagram_search_outline_24" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btn_profile"
+            style="@style/ButtonNavigation"
+            android:src="@drawable/profile_single" />
+
+    </LinearLayout>
+</layout>

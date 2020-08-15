@@ -96,7 +96,8 @@
 
                 <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="0dp"
+                    android:layout_weight="1">
 <!---->
 <!--                    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout-->
 <!--                        android:id="@+id/refreshContainer"-->
@@ -121,6 +122,11 @@
 
                 </RelativeLayout>
 
+                <include
+                    android:id="@+id/navigation_bottom"
+                    layout="@layout/layout_navigation_bottom"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"/>
 
             </LinearLayout>
 
@@ -141,6 +147,7 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 android:layout_centerInParent="true" />
+
 
         </RelativeLayout>
 

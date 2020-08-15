@@ -1,28 +1,31 @@
 package com.idirect.app.ui.main
 
 import android.os.Bundle
-import android.view.View
 import androidx.lifecycle.Observer
-import com.aurelhubert.ahbottomnavigation.AHBottomNavigation
-import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem
+import androidx.navigation.fragment.NavHostFragment
 import com.idirect.app.R
 import com.idirect.app.core.BaseActivity
+import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.ActivityMainBinding
 import com.idirect.app.datasource.model.event.*
-import com.idirect.app.extentions.color
-import com.idirect.app.fbns.service.FbnsIntent
-import com.idirect.app.fbns.service.FbnsService
 import com.idirect.app.realtime.commands.RealTime_ClearCache
-import com.idirect.app.realtime.commands.RealTime_StartService
 import com.idirect.app.realtime.commands.RealTime_StopService
 import com.idirect.app.realtime.service.RealTimeService
+import com.idirect.app.ui.forward.ForwardBundle
+import com.idirect.app.ui.forward.ForwardFragment
+import com.idirect.app.ui.forward.ForwardListener
 import com.idirect.app.utils.Resource
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
-
 class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
+
+    private var navHostFragment: NavHostFragment?=null
+
+    companion object {
+        const val DIRECT_POSITION = 1
+    }
 
     override fun layoutRes(): Int {
         return R.layout.activity_main
@@ -33,10 +36,14 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+//        val attributes = window.attributes
+//        attributes.flags =
+//            attributes.flags or (WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+//        window.attributes = attributes
         super.onCreate(savedInstanceState)
 
         viewModel.mutableLiveData.observe(this, Observer {
-            if(it.status == Resource.Status.SUCCESS){
+            if (it.status == Resource.Status.SUCCESS) {
 //                RealTimeService.run(
 //                    this,
 //                    RealTime_StartService(
@@ -46,32 +53,16 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 //                )
             }
         })
-
-        val itemHome = AHBottomNavigationItem(R.string.home, R.drawable.instagram_home_outline_24, R.color.white)
-        val itemDirect = AHBottomNavigationItem(R.string.direct, R.drawable.instagram_direct_outline_24, R.color.white)
-        val itemProfile = AHBottomNavigationItem(R.string.profile, R.drawable.profile_single, R.color.white)
-        val itemExplore = AHBottomNavigationItem(R.string.explore, R.drawable.instagram_search_outline_24, R.color.white)
-
-        binding.bottomNavigation.addItem(itemHome)
-        binding.bottomNavigation.addItem(itemDirect)
-        binding.bottomNavigation.addItem(itemExplore)
-        binding.bottomNavigation.addItem(itemProfile)
-
-        binding.bottomNavigation.defaultBackgroundColor = color(R.color.theme_item)
-        binding.bottomNavigation.inactiveColor = color(R.color.text_light)
-        binding.bottomNavigation.accentColor = color(R.color.text_very_light)
-
-        binding.bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_HIDE)
-        binding.bottomNavigation.isForceTint = true
-        FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
+        attachKeyboardListeners()
+        navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+//        FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
     }
 
-    fun isEnableBottomNavigation(isEnable:Boolean){
-        if(isEnable){
-            binding.bottomNavigation.visibility = View.VISIBLE
-        }else{
-            binding.bottomNavigation.visibility = View.GONE
-        }
+    fun showShareWindow(forwardBundle: ForwardBundle,forwardListener: ForwardListener?=null){
+        ForwardFragment()
+            .setBundle(forwardBundle)
+            .setListener(forwardListener)
+            .show(supportFragmentManager,ForwardFragment::class.java.name)
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
@@ -114,7 +105,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
-    fun onMessageResponseEvent(event:MessageResponse){
+    fun onMessageResponseEvent(event: MessageResponse) {
         viewModel.onMessageResponseEvent(event)
         EventBus.getDefault().removeStickyEvent(event)
     }
@@ -159,6 +150,22 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
     override fun onDestroy() {
         super.onDestroy()
         RealTimeService.run(this, RealTime_StopService())
+    }
+
+    override fun onShowKeyboard(keyboardHeight: Int) {
+        super.onShowKeyboard(keyboardHeight)
+        navHostFragment?.let {
+            val frg = it.childFragmentManager.fragments[0] as BaseFragment<*, *>
+            frg.onKeyboardOpen()
+        }
+    }
+
+    override fun onHideKeyboard() {
+        super.onHideKeyboard()
+        navHostFragment?.let {
+            val frg = it.childFragmentManager.fragments[0] as BaseFragment<*, *>
+            frg.onKeyboardHide()
+        }
     }
 
 }

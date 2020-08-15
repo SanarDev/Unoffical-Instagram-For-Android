@@ -4,8 +4,11 @@ import android.app.Application
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.idirect.app.core.BaseViewModel
+import com.idirect.app.datasource.model.Tray
 import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.datasource.model.response.InstagramFeedTimeLineResponse
+import com.idirect.app.datasource.model.response.InstagramStoriesResponse
+import com.idirect.app.manager.PlayManager
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
@@ -16,6 +19,8 @@ class HomeViewModel @Inject constructor(application: Application,var mUseCase: U
 
     private val _postsLiveData = MutableLiveData<Resource<InstagramFeedTimeLineResponse>>()
     private var instagramFeedTimeLineResponse:InstagramFeedTimeLineResponse?=null
+    private val _storiesLiveData = MutableLiveData<Resource<InstagramStoriesResponse>>()
+    val storyMediaLiveData = MutableLiveData<Resource<Tray>>()
 
     val postsLiveData = Transformations.map(_postsLiveData){
         if(it.status == Resource.Status.SUCCESS){
@@ -35,9 +40,16 @@ class HomeViewModel @Inject constructor(application: Application,var mUseCase: U
         }
         return@map it
     }
+    val storiesLiveData = Transformations.map(_storiesLiveData){
+        return@map it
+    }
 
     init {
         mUseCase.getTimelinePosts(_postsLiveData)
+        mUseCase.getTimelineStories(_storiesLiveData)
+    }
+    fun getStoryMedia(userId:Long){
+        mUseCase.getStoryMedia(storyMediaLiveData,userId)
     }
     fun unlikePost(id: String) {
         mUseCase.unlikePost(id)

@@ -79,7 +79,7 @@ class PlayManager constructor(context:Context){
     }
 
     fun stopPlay() {
-        player.playWhenReady = false
+        player.stop()
         playChangeLiveData.postValue(PlayProperties(player.playWhenReady,currentPlayerId,null))
         currentPlayerId = ""
     }
@@ -90,6 +90,9 @@ class PlayManager constructor(context:Context){
 
     fun disableSound(){
         player.volume = 0.0f
+    }
+    fun pausePlay(){
+        player.playWhenReady = false
     }
     fun enableSound(){
         player.volume = 1.0f

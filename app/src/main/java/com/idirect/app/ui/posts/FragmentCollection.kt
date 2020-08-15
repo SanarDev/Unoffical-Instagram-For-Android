@@ -129,4 +129,8 @@ class FragmentCollection constructor(var media: CarouselMedia) :
         super.onStop()
         stop()
     }
+
+    override fun getNameTag(): String {
+        return "fragment_collection"
+    }
 }

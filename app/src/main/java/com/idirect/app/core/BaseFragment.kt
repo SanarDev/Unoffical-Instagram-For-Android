@@ -14,7 +14,7 @@ import com.idirect.app.di.DaggerViewModelFactory
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-open abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragment(){
+abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragment(){
 
     lateinit var binding: B
     lateinit var viewModel: VM
@@ -40,6 +40,12 @@ open abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFr
         val view = binding.root
         return view
     }
+    open fun onKeyboardOpen(){
+    }
+    open fun onKeyboardHide(){
+    }
+
     abstract fun getViewModelClass(): Class<VM>
     abstract fun layoutRes():Int
+    abstract fun getNameTag():String
 }

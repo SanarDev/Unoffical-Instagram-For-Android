@@ -2,6 +2,7 @@ package com.idirect.app.extensions
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.Rect
@@ -14,6 +15,7 @@ import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.URLSpan
 import android.view.View
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.app.ActivityCompat.postponeEnterTransition
 import androidx.core.app.ActivityCompat.startPostponedEnterTransition
@@ -150,4 +152,9 @@ fun Fragment.waitForTransition(v:View){
         startPostponedEnterTransition()
         true
     }
+}
+
+fun ProgressBar.setProgressColor(color:Int){
+    indeterminateTintList = ColorStateList.valueOf(color)
+    progressTintList = ColorStateList.valueOf(color)
 }

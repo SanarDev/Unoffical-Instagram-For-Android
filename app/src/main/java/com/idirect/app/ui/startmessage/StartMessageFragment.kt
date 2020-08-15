@@ -41,6 +41,7 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
         }
 
         const val TAG = "TEST"
+        const val NAME_TAG = "explore"
     }
 
     override fun layoutRes(): Int {
@@ -149,5 +150,9 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
             return items.size
         }
 
+    }
+
+    override fun getNameTag(): String {
+        return NAME_TAG
     }
 }

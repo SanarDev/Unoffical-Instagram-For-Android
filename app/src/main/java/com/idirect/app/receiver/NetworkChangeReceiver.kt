@@ -18,7 +18,7 @@ class NetworkChangeReceiver : BroadcastReceiver() {
 
             context.getSharedPreferences(InstagramConstants.SharedPref.USER.name,Context.MODE_PRIVATE).getBoolean("is_logged",false).also {
                 if(it){
-                    FbnsService.run(context, FbnsIntent.ACTION_CONNECT_SESSION)
+//                    FbnsService.run(context, FbnsIntent.ACTION_CONNECT_SESSION)
                 }
             }
         }else{

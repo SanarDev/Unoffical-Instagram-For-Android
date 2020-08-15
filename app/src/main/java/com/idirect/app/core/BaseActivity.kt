@@ -32,12 +32,18 @@ abstract class BaseActivity<B:ViewDataBinding,VM: BaseViewModel> : AppCompatActi
         val broadcastManager =
             LocalBroadcastManager.getInstance(this@BaseActivity)
         if (heightDiff <= DisplayUtils.getScreenHeight() / 5) {
-            onHideKeyboard()
+            if(isKeyboardShow){
+                isKeyboardShow = false
+                onHideKeyboard()
+            }
             val intent = Intent("KeyboardWillHide")
             broadcastManager.sendBroadcast(intent)
         } else {
             val keyboardHeight = heightDiff - contentViewTop
-            onShowKeyboard(keyboardHeight)
+            if(!isKeyboardShow){
+                isKeyboardShow = true
+                onShowKeyboard(keyboardHeight)
+            }
             val intent = Intent("KeyboardWillShow")
             intent.putExtra("KeyboardHeight", keyboardHeight)
             broadcastManager.sendBroadcast(intent)
@@ -45,6 +51,7 @@ abstract class BaseActivity<B:ViewDataBinding,VM: BaseViewModel> : AppCompatActi
     }
 
     private var keyboardListenersAttached = false
+    private var isKeyboardShow = false
     private var rootLayout: ViewGroup? = null
     lateinit var binding: B
     lateinit var viewModel: VM
@@ -70,7 +77,7 @@ abstract class BaseActivity<B:ViewDataBinding,VM: BaseViewModel> : AppCompatActi
         if (keyboardListenersAttached) {
             return
         }
-        rootLayout = findViewById<View>(R.id.layout_parent) as ViewGroup
+        rootLayout = binding.root as ViewGroup
         rootLayout!!.viewTreeObserver.addOnGlobalLayoutListener(keyboardLayoutListener)
         keyboardListenersAttached = true
     }

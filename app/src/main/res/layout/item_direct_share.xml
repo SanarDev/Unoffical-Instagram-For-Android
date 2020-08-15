@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        tools:background="@color/theme_background"
+        android:padding="10dp">
+
+        <com.tylersuehr.chips.CircleImageView
+            android:id="@+id/img_profile"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:padding="05dp"
+            android:src="@mipmap/example"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/img_check"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_alignEnd="@id/img_profile"
+            android:layout_alignBottom="@id/img_profile"
+            android:src="@drawable/ic_circle_check"
+            android:tint="@color/white"
+            />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/txt_username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="70dp"
+            android:singleLine="true"
+            android:layout_below="@id/img_profile"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/text_very_light"
+            android:ellipsize="end"
+            tools:text="Username dsad"/>
+    </RelativeLayout>
+</layout>

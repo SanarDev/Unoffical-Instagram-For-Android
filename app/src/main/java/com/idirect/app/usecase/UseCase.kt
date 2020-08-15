@@ -561,16 +561,16 @@ class UseCase(
                 mInstagramRepository.uploadMedia(
                     liveDataUploadMedia,
                     uploadName,
-                        getUploadVideoHeader(
-                            byteLength,
-                            userId,
-                            mediaDuration,
-                            uploadId,
-                            uploadName,
-                            mediaWidth,
-                            mediaHeight,
-                            type
-                        )
+                    getUploadVideoHeader(
+                        byteLength,
+                        userId,
+                        mediaDuration,
+                        uploadId,
+                        uploadName,
+                        mediaWidth,
+                        mediaHeight,
+                        type
+                    )
                     ,
                     getMediaRequestBody(filePath)
                 )
@@ -665,14 +665,14 @@ class UseCase(
                 mInstagramRepository.uploadMedia(
                     liveDataUploadMedia,
                     uploadName,
-                        getUploadMediaHeader(
-                            byteLength,
-                            userId,
-                            mediaDuration,
-                            uploadId,
-                            uploadName,
-                            type
-                        )
+                    getUploadMediaHeader(
+                        byteLength,
+                        userId,
+                        mediaDuration,
+                        uploadId,
+                        uploadName,
+                        type
+                    )
                     ,
                     getMediaRequestBody(filePath)
                 )
@@ -761,7 +761,8 @@ class UseCase(
             result,
             getHeaders(),
             threadId,
-            getSignaturePayload(data))
+            getSignaturePayload(data)
+        )
         return result
     }
 
@@ -785,7 +786,8 @@ class UseCase(
             getHeaders(),
             threadId,
             itemId,
-            formUrlEncode(data))
+            formUrlEncode(data)
+        )
         return result
     }
 
@@ -1044,7 +1046,7 @@ class UseCase(
         threadId: String,
         seqID: Int
     ) {
-        mInstagramRepository.getChats(result, threadId, limit, seqID,getHeaders())
+        mInstagramRepository.getChats(result, threadId, limit, seqID, getHeaders())
     }
 
 
@@ -1080,7 +1082,8 @@ class UseCase(
             mInstagramRepository.sendPushRegister(
                 res,
                 formUrlEncode(map),
-                getHeaders())
+                getHeaders()
+            )
             res.observeForever {
                 if (it.status == Resource.Status.SUCCESS) {
                     saveFbnsRegisterToken(token)
@@ -1212,19 +1215,19 @@ class UseCase(
         seqId: Int
     ): MutableLiveData<Resource<InstagramChats>> {
         val result = MutableLiveData<Resource<InstagramChats>>()
-        mInstagramRepository.loadMoreChats(result, cursor, threadId, seqId,getHeaders())
+        mInstagramRepository.loadMoreChats(result, cursor, threadId, seqId, getHeaders())
         return result
     }
 
     fun searchUser(result: MediatorLiveData<Resource<ResponseBody>>, query: String) {
-        mInstagramRepository.searchUser(result, query,getHeaders())
+        mInstagramRepository.searchUser(result, query, getHeaders())
     }
 
     fun getRecipients(
         result: MediatorLiveData<Resource<InstagramRecipients>>,
         query: String? = null
     ) {
-        mInstagramRepository.getRecipients(result, query,getHeaders())
+        mInstagramRepository.getRecipients(result, query, getHeaders())
     }
 
     fun getUserByRecipients(
@@ -1232,7 +1235,7 @@ class UseCase(
         userId: Int,
         seqId: Int
     ) {
-        mInstagramRepository.getByParticipants(result,getHeaders(), "[[$userId]]", seqId)
+        mInstagramRepository.getByParticipants(result, getHeaders(), "[[$userId]]", seqId)
     }
 
     fun getLastFbnsRegisterToken() =
@@ -1275,7 +1278,7 @@ class UseCase(
             put("device_id", cookie.deviceID)
             put("_uuid", cookie.adid)
         }
-        mInstagramRepository.logout(result, getHeaders(),formUrlEncode(data))
+        mInstagramRepository.logout(result, getHeaders(), formUrlEncode(data))
         return Transformations.map(result) {
             if (it.status == Resource.Status.SUCCESS) {
                 clearAllData()
@@ -1324,13 +1327,14 @@ class UseCase(
             getHeaders(),
             threadId,
             itemId,
-            formUrlEncode(data))
+            formUrlEncode(data)
+        )
         return result
     }
 
     fun getUserPosts(userId: Long): LiveData<Resource<InstagramPostsResponse>> {
         val userPosts = MutableLiveData<Resource<InstagramPostsResponse>>()
-        mInstagramRepository.getUserPosts(userPosts, userId,getHeaders())
+        mInstagramRepository.getUserPosts(userPosts, userId, getHeaders())
         return Transformations.map(userPosts) {
             if (it.status == Resource.Status.ERROR && it.apiError != null) {
                 val error = gson.fromJson(
@@ -1348,7 +1352,7 @@ class UseCase(
         previousPostId: String,
         userPosts: MutableLiveData<Resource<InstagramPostsResponse>>
     ) {
-        mInstagramRepository.loadMoreUserPosts(userPosts, userId,getHeaders(), previousPostId)
+        mInstagramRepository.loadMoreUserPosts(userPosts, userId, getHeaders(), previousPostId)
     }
 
     fun likePost(
@@ -1373,7 +1377,8 @@ class UseCase(
             result,
             getHeaders(),
             mediaId,
-            getSignaturePayload(data))
+            getSignaturePayload(data)
+        )
         return result
     }
 
@@ -1399,7 +1404,8 @@ class UseCase(
             result,
             getHeaders(),
             mediaId,
-            getSignaturePayload(data))
+            getSignaturePayload(data)
+        )
         return result
     }
 
@@ -1422,7 +1428,8 @@ class UseCase(
             result,
             getHeaders(),
             mediaId,
-            getSignaturePayload(data))
+            getSignaturePayload(data)
+        )
         return result
     }
 
@@ -1445,13 +1452,14 @@ class UseCase(
             result,
             getHeaders(),
             mediaId,
-            getSignaturePayload(data))
+            getSignaturePayload(data)
+        )
         return result
     }
 
     fun getPostComments(mediaId: String): MutableLiveData<Resource<InstagramCommentResponse>> {
         val result = MutableLiveData<Resource<InstagramCommentResponse>>()
-        mInstagramRepository.getPostComments(result,getHeaders(), mediaId)
+        mInstagramRepository.getPostComments(result, getHeaders(), mediaId)
         return result
     }
 
@@ -1460,7 +1468,7 @@ class UseCase(
         username: String,
         fromModule: String = "feed_contextual_profile"
     ): MutableLiveData<Resource<InstagramUserInfo>> {
-        mInstagramRepository.getUserInfoFromUsername(result,getHeaders(), username, fromModule)
+        mInstagramRepository.getUserInfoFromUsername(result, getHeaders(), username, fromModule)
         return result
     }
 
@@ -1484,7 +1492,8 @@ class UseCase(
         mInstagramRepository.getTimelinePosts(
             result,
             getHeaders(),
-            formUrlEncode(data))
+            formUrlEncode(data)
+        )
     }
 
     fun loadMoreTimelinePosts(
@@ -1511,7 +1520,164 @@ class UseCase(
         mInstagramRepository.getTimelinePosts(
             result,
             getHeaders(),
-            formUrlEncode(data))
+            formUrlEncode(data)
+        )
+    }
+
+    fun getTimelineStories(result: MutableLiveData<Resource<InstagramStoriesResponse>>) {
+        val cookie = getCookie()
+        val data = HashMap<String, Any>().apply {
+            put("reason", "cold_start")
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uuid", cookie.adid)
+        }
+        mInstagramRepository.getTimelineStory(result, getHeaders(), formUrlEncode(data))
+    }
+
+    fun getStoryMedia(
+        result:MutableLiveData<Resource<Tray>>,
+        userId: Long,
+        source: String = "feed_timeline"
+    ){
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val data = HashMap<String, Any>().apply {
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uid", user.pk!!)
+            put("_uuid", cookie.adid)
+            put("user_ids", "[$userId]")
+            put("source", source)
+        }
+        mInstagramRepository.getStoryMedias(result, getHeaders(), userId, getSignaturePayload(data))
+    }
+
+    fun sendStoryReaction(threadId: String,mediaId: String,reaction:String,reelId:Long): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val clientContext = InstagramHashUtils.getClientContext()
+        val data = HashMap<String,Any>().apply {
+            put("action","send_item")
+            if(threadId.contains("[[")){
+                put("recipient_users",threadId)
+            }else{
+                put("thread_ids","[$threadId]")
+            }
+            put("client_context",clientContext)
+            put("media_id",mediaId)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("_uid",user.pk!!)
+            put("text",reaction)
+            put("device_id",cookie.deviceID)
+            put("mutation_token",clientContext)
+            put("_uuid",cookie.adid)
+            put("entry","reel")
+            put("reaction_emoji",reaction)
+            put("reel_id",reelId)
+            put("offline_threading_id",clientContext)
+        }
+        mInstagramRepository.sendStoryReaction(result,getHeaders(),getSignaturePayload(data))
+        return result
+    }
+
+    fun sendStoryReply(threadId: String,mediaId: String,reelId: Long,message:String): MutableLiveData<Resource<ResponseBody>> {
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val clientContext = InstagramHashUtils.getClientContext()
+        val data = HashMap<String,Any>().apply {
+            put("action","send_item")
+            if(threadId.contains("[[")){
+                put("recipient_users",threadId)
+            }else{
+                put("thread_ids","[$threadId]")
+            }
+            put("client_context",clientContext)
+            put("media_id",mediaId)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("text",message)
+            put("device_id",cookie.deviceID)
+            put("mutation_token",clientContext)
+            put("_uuid",cookie.adid)
+            put("entry","reel")
+            put("offline_threading_id",clientContext)
+            put("reel_id",reelId)
+            put("entry","reel")
+        }
+        mInstagramRepository.sendStoryReply(result,getHeaders(),formUrlEncode(data))
+        return result
+    }
+
+    fun shareMedia(mediaId: String,mediaType:Int, threadIds: MutableList<String>) {
+        for(threadId in threadIds){
+            shareMedia(mediaId,mediaType,threadId)
+        }
+    }
+
+    fun shareMedia(mediaId: String,mediaType:Int,threadId:String){
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val clientContext = InstagramHashUtils.getClientContext()
+        val data = HashMap<String,Any>().apply {
+            put("action","send_item")
+            if(threadId.contains("[[")){
+                put("recipient_users",threadId)
+            }else{
+                put("thread_ids","[$threadId]")
+            }
+            put("client_context",clientContext)
+            put("media_id",mediaId)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("device_id",cookie.deviceID)
+            put("mutation_token",clientContext)
+            put("_uuid",cookie.adid)
+            put("offline_threading_id",clientContext)
+        }
+        val strMediaType = if(mediaType == InstagramConstants.MediaType.VIDEO.type){
+            InstagramConstants.MediaType.VIDEO.strType
+        }else{
+            InstagramConstants.MediaType.IMAGE.strType
+        }
+        mInstagramRepository.shareMedia(result,getHeaders(),formUrlEncode(data),strMediaType)
+    }
+
+    fun shareStory(mediaId: String, mediaType: Int,reelId: Long, threadIds: MutableList<String>) {
+        for(threadId in threadIds){
+            shareStory(mediaId,mediaType,reelId,threadId)
+        }
+    }
+
+
+    fun shareStory(mediaId: String,mediaType:Int,reelId:Long,threadId:String){
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val clientContext = InstagramHashUtils.getClientContext()
+        val data = HashMap<String,Any>().apply {
+            put("action","send_item")
+            if(threadId.contains("[[")){
+                put("recipient_users",threadId)
+            }else{
+                put("thread_ids","[$threadId]")
+            }
+            put("client_context",clientContext)
+            put("_csrftoken",cookie.csrftoken!!)
+            put("_uid",user.pk!!)
+            put("device_id",cookie.deviceID)
+            put("mutation_token",clientContext)
+            put("_uuid",cookie.adid)
+            put("reel_id",reelId)
+            put("containermodule","reel_feed_timeline")
+            put("story_media_id",mediaId)
+            put("offline_threading_id",clientContext)
+        }
+        val strMediaType = if(mediaType == InstagramConstants.MediaType.VIDEO.type){
+            InstagramConstants.MediaType.VIDEO.strType
+        }else{
+            InstagramConstants.MediaType.IMAGE.strType
+        }
+        mInstagramRepository.shareStory(result,getHeaders(),formUrlEncode(data),strMediaType)
     }
 
 }

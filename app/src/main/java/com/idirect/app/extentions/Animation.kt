@@ -74,6 +74,10 @@ fun View.fadeIn(duration: Long = 400){
     fadeIn.interpolator = DecelerateInterpolator() //add this
     fadeIn.duration = duration
 
+    handler.postDelayed({
+        visibility = View.VISIBLE
+    },duration)
+
     val animation = AnimationSet(false) //change to false
     animation.addAnimation(fadeIn)
 //    this.animation = animation
@@ -85,7 +89,7 @@ fun View.fadeOut(duration: Long = 100){
     fadeOut.interpolator = AccelerateInterpolator() //and this
     fadeOut.duration = duration
     handler.postDelayed({
-        visibility = View.GONE
+        visibility = View.INVISIBLE
     },duration)
 
     val animation = AnimationSet(false) //change to false

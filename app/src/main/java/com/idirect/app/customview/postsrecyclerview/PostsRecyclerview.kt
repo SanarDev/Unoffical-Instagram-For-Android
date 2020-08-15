@@ -9,12 +9,12 @@ import java.lang.RuntimeException
 
 class PostsRecyclerview constructor(context: Context,attr:AttributeSet?=null) : RecyclerView(context,attr) {
 
-    var mPostsRecyclerState:PostsRecyclerState?=null
+    var mPostsRecyclerState:PostsRecyclerListener?=null
 
     override fun onScrolled(dx: Int, dy: Int) {
         super.onScrolled(dx, dy)
         val mLayoutManager = layoutManager as LinearLayoutManager
-        val mAdapter = adapter as PostsAdapter
+        val mAdapter = adapter as PostsAdapter2
 
         val positionFirstItem = mLayoutManager.findFirstCompletelyVisibleItemPosition()
         if (positionFirstItem != -1 &&
@@ -32,7 +32,7 @@ class PostsRecyclerview constructor(context: Context,attr:AttributeSet?=null) : 
     }
 
     override fun setAdapter(adapter: Adapter<*>?) {
-        if (adapter is PostsAdapter) {
+        if (adapter is PostsAdapter || adapter is PostsAdapter2) {
             super.setAdapter(adapter)
         } else {
             throw RuntimeException("Adapter must instance of PostsAdapter")

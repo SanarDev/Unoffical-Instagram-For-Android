@@ -1,26 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:gravity="center"
-        android:padding="10dp"
-        android:orientation="vertical">
+        android:padding="5dp">
 
         <com.tylersuehr.chips.CircleImageView
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@mipmap/example"/>
+            android:id="@+id/img_profile"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:background="@drawable/bg_new_story"
+            android:padding="2dp"
+            android:src="@drawable/bg_dark"
+            app:borderColor="@color/theme_background"
+            app:borderWidth="3dp" />
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/txt_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
             android:layout_marginTop="5dp"
+            android:ellipsize="end"
+            android:maxWidth="75dp"
+            android:singleLine="true"
+            android:text="@string/your_story"
             android:textColor="@color/text_very_light"
-            android:text="@string/your_story"/>
+            android:textSize="12sp" />
 
     </LinearLayout>
 </layout>

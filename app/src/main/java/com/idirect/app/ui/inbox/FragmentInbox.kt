@@ -47,6 +47,13 @@ import javax.inject.Inject
 
 
 class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
+
+    companion object{
+        const val NAME_TAG = "inbox"
+    }
+    override fun getNameTag(): String {
+        return NAME_TAG
+    }
     override fun layoutRes(): Int {
         return R.layout.fragment_inbox
     }

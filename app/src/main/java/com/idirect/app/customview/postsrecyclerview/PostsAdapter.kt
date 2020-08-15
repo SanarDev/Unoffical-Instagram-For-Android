@@ -5,7 +5,6 @@ import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
@@ -15,10 +14,8 @@ import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.RequestManager
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
@@ -242,7 +239,7 @@ class PostsAdapter(
             visible(txtLikesCount)
             gone(layoutLikes)
             txtLikesCount.text =
-                String.format(context.getString(R.string.liker_count), item.likeCount)
+                String.format(context.getString(R.string.likes_count), item.likeCount)
             txtLikesCount.setOnClickListener(showLikersClickListener)
         }
         /* Profile top likers End*/

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.idirect.app.di.DaggerViewModelFactory
 import com.idirect.app.di.ViewModelKey
 import com.idirect.app.ui.direct.DirectViewModel
+import com.idirect.app.ui.forward.ForwardViewModel
 import com.idirect.app.ui.posts.FragmentCollectionViewModel
 import com.idirect.app.ui.fullscreen.FullScreenViewModel
 import com.idirect.app.ui.home.HomeViewModel
@@ -16,6 +17,7 @@ import com.idirect.app.ui.postcomments.CommentsViewModel
 import com.idirect.app.ui.posts.PostsViewModel
 import com.idirect.app.ui.setting.SettingViewModel
 import com.idirect.app.ui.startmessage.StartMessageViewModel
+import com.idirect.app.ui.story.StoryViewModel
 import com.idirect.app.ui.twofactor.TwoFactorViewModel
 import com.idirect.app.ui.userprofile.UserProfileViewModel
 import dagger.Binds
@@ -99,6 +101,13 @@ abstract class ViewModelModule {
     @ViewModelKey(HomeViewModel::class)
     abstract fun homeViewModel(homeViewModel: HomeViewModel):ViewModel
 
+    @Binds
+    @IntoMap
+    @ViewModelKey(StoryViewModel::class)
+    abstract fun storyViewModel(storyViewModel: StoryViewModel):ViewModel
 
-
+    @Binds
+    @IntoMap
+    @ViewModelKey(ForwardViewModel::class)
+    abstract fun forwardViewModel(forwardViewModel: ForwardViewModel):ViewModel
 }

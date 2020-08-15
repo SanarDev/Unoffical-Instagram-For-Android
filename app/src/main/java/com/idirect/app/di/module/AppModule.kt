@@ -28,7 +28,7 @@ class AppModule {
         return application.applicationContext
     }
 
-//    @Provides
+//    @ProvidesL
 //    @Singleton
 //    fun provideDatabase(application: Application): AppDatabase =
 //        Room.databaseBuilder(application, AppDatabase::class.java, DB_NAME)

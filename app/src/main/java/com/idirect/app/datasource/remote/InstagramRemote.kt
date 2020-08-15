@@ -266,5 +266,20 @@ interface InstagramRemote {
     fun getFeedTimeline(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<InstagramFeedTimeLineResponse>
     
     @POST(InstagramConstants.API_VERSION + "feed/reels_tray/")
-    fun getStoryTimeline(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
+    fun getStoryTimeline(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<InstagramStoriesResponse>
+
+    @POST(InstagramConstants.API_VERSION + "feed/reels_media/")
+    fun getStoryMedia(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<InstagramStoryMediaResponse>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/reel_react/")
+    fun sendStoryReaction(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/reel_share/")
+    fun sendStoryReplyMessage(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/media_share/")
+    fun shareMedia(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody,@Query("media_type") mediaType:String):Call<ResponseBody>
+
+    @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/story_share/")
+    fun shareStory(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody,@Query("media_type") mediaType:String):Call<ResponseBody>
 }

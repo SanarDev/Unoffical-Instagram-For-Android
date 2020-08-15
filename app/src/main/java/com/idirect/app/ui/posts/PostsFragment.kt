@@ -31,6 +31,7 @@ import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter
+import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
 import com.idirect.app.databinding.FragmentPostsBinding
 import com.idirect.app.databinding.LayoutCarouselImageBinding
 import com.idirect.app.databinding.LayoutCarouselVideoBinding
@@ -55,6 +56,9 @@ import javax.inject.Inject
 class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
     HyperTextView.OnHyperTextClick {
 
+    companion object{
+        const val NAME_TAG = "posts"
+    }
     @Inject
     lateinit var mGlideRequestManager: RequestManager
 
@@ -64,7 +68,7 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
     private lateinit var mLayoutManager: LinearLayoutManager
     private var isMoreAvailable: Boolean = false
     private var isLoading: Boolean = false
-    private lateinit var mAdapter: PostsAdapter
+    private lateinit var mAdapter: PostsAdapter2
     private var scrollToItemId: String? = null
     private var currentMediaPosition: Int = -1
     private var currentVideoLayout: View? = null
@@ -98,7 +102,7 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
         bundle.remove("scroll_to_item_id")
         viewModel.init(userId)
 
-        mAdapter = PostsAdapter(requireContext(),
+        mAdapter = PostsAdapter2(requireContext(),
             this@PostsFragment,
             mPlayManager,
             viewLifecycleOwner,
@@ -157,5 +161,9 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
             val action = PostsFragmentDirections.actionPostsFragmentToUserProfileFragment(userData)
             v.findNavController().navigate(action)
         }
+    }
+
+    override fun getNameTag(): String {
+        return NAME_TAG
     }
 }

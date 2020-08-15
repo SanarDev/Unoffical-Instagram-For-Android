@@ -174,4 +174,8 @@ class FullScreenFragment : BaseFragment<ActivityFullScreenBinding, FullScreenVie
         super.onStop()
     }
 
+    override fun getNameTag(): String {
+        return "full_screen_fragment"
+    }
+
 }

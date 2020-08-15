@@ -29,6 +29,13 @@ import javax.inject.Inject
 
 class CommentsFragment : BaseFragment<FragmentCommentBinding,CommentsViewModel>() {
 
+    companion object{
+        const val NAME_TAG = "comment"
+    }
+
+    override fun getNameTag(): String {
+        return NAME_TAG
+    }
 
     @Inject
     lateinit var mGlideRequestManager: RequestManager

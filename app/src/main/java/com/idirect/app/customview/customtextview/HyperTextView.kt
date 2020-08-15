@@ -35,7 +35,7 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
     var mHyperTextClick: OnHyperTextClick? = null
 
     init {
-        setOnTouchListener(OnTouchListener { v, event ->
+        setOnTouchListener { v, event ->
             val tv = v as TextView
             if (event.action === MotionEvent.ACTION_UP) {
                 val x = event.x.toInt()
@@ -44,21 +44,21 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
                 val line = layout.getLineForVertical(y)
                 val off = layout.getOffsetForHorizontal(line, x.toFloat())
                 val charSequence = tv.text
-                if (charSequence is Spannable){
+                if (charSequence is Spannable) {
                     val link: Array<ClickableSpan> =
                         charSequence.getSpans(off, off, ClickableSpan::class.java)
                     if (link.size != 0) {
-                        mHyperTextClick?.onClick(tv,(link[0] as URLSpan).url)
+                        mHyperTextClick?.onClick(tv, (link[0] as URLSpan).url)
                     } else {
                         //do other click
                     }
                 }
             }
             true
-        })
+        }
     }
 
-    fun setText(username: String,userId:Long, text: String) {
+    fun setText(username: String, userId: Long, text: String) {
         val hyperUsername = "<a href=\"$userId\"><b>$username</b></a>"
         val usernameSequence = getHtmlSpannable(hyperUsername)
         val textSequence = getHtmlSpannable(getHyperText(text))
@@ -67,12 +67,10 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
             .append("  ")
             .append(textSequence)
 
-//        val usernameSpan = spannable.getSpans(0, usernameSequence!!.length, ClickableSpan::class.java).get(0)
-//        makeLinkClickable(strBuilder = spannable, span = usernameSpan,foregroundColor = Color.WHITE,onClickData = username)
         var urls =
             spannable.getSpans(0, spannable.length, URLSpan::class.java)
         for (span in urls) {
-            makeLinkClickable(strBuilder = spannable, span = span,onClickData = span.url)
+            makeLinkClickable(strBuilder = spannable, span = span, onClickData = span.url)
         }
         this.movementMethod = LinkMovementMethod.getInstance()
         super.setText(spannable, TextView.BufferType.SPANNABLE)
@@ -84,7 +82,7 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
         val urls =
             strBuilder.getSpans(0, sequence.length, URLSpan::class.java)
         for (span in urls) {
-            makeLinkClickable(strBuilder = strBuilder, span = span,onClickData = span.url)
+            makeLinkClickable(strBuilder = strBuilder, span = span, onClickData = span.url)
         }
         this.movementMethod = LinkMovementMethod.getInstance()
         super.setText(strBuilder, TextView.BufferType.SPANNABLE)
@@ -93,7 +91,7 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
     private fun makeLinkClickable(
         strBuilder: SpannableStringBuilder,
         span: ClickableSpan,
-        onClickData:String,
+        onClickData: String,
         haveUnderlineForLink: Boolean = false,
         foregroundColor: Int = -1
     ) {
@@ -103,22 +101,34 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
         if (!haveUnderlineForLink) {
             strBuilder.setSpan(URLSpanNoUnderline(onClickData), start, end, flags)
         }
-        if(foregroundColor != -1){
+        if (foregroundColor != -1) {
             strBuilder.setSpan(ForegroundColorSpan(foregroundColor), start, end, flags)
         }
         strBuilder.removeSpan(span)
     }
 
-    private fun getHtmlSpannable(text:String): Spanned? {
+    private fun getHtmlSpannable(text: String): Spanned? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             return Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY)
         } else {
             return Html.fromHtml(text)
         }
     }
+
     private fun getHyperText(text: String): String {
         return text.replace("(#[a-zA-z0-9_\\u0080-\\u9fff]+)".toRegex(), "<a href=\"$0\">$0</a>")
             .replace("(@[a-zA-z_.0-9]*)[a-zA-Z0-9_]".toRegex(), "<a href=\"$0\">$0</a>")
             .replace("\n", "<br/>")
     }
+
+    companion object {
+        fun getLikedByHyperText(username: String, userId: Long, likeCount: Int): String {
+            return "  Liked by <a href=\"$userId\"><b>$username</b></a> and <a href=\"SeeAllLikers\"><b>$likeCount others</b></a>"
+        }
+
+        fun getLikersCountHyperText(likeCount: Int): String {
+            return "<a href=\"SeeAllLikers\"><b>$likeCount Likes</b></a>"
+        }
+    }
+
 }
