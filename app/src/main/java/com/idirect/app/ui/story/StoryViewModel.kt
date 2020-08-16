@@ -23,4 +23,8 @@ class StoryViewModel @Inject constructor(application: Application,var mUseCase: 
             storyReactionResult.value = it
         }
     }
+
+    fun loadNextPageStory(userId: Long) {
+        mUseCase.getNextPageStory(storyMediaLiveData,userId)
+    }
 }

@@ -691,7 +691,7 @@ class InstagramRepository(
         isRefresh: Boolean = false
     ) {
         if (!isRefresh && stories != null) {
-            Resource.success(stories)
+            result.value = Resource.success(stories)
             return
         }
         NetworkCall<InstagramStoriesResponse>().makeCall(

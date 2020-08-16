@@ -177,6 +177,11 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding.unbind()
+    }
+
     override fun onClick(v: View, data: String) {
         if (data == "SeeAllLikers") {
 

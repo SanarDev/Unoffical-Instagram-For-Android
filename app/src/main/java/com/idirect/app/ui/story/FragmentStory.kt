@@ -56,6 +56,8 @@ import javax.inject.Inject
 
 class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>(), ForwardListener {
 
+    private lateinit var moduleSource: String
+
     @Inject
     lateinit var mGlide: RequestManager
 
@@ -109,6 +111,7 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>(), Forw
         requireActivity().window.decorView.systemUiVisibility = 0
 
         val userId = requireArguments().getString("user_id")!!.toLong()
+        moduleSource = requireArguments().getString("from_module")?:"feed_timeline"
         viewModel.getStoryData(userId)
 
         dataSource = DefaultHttpDataSourceFactory(Util.getUserAgent(requireContext(), "Instagram"))
@@ -292,6 +295,8 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>(), Forw
     }
 
     private fun initLayout(tray: Tray) {
+        progressBars.clear()
+        binding.layoutSeekbars.removeAllViews()
         binding.txtUsername.text = tray.user.username
         mGlide.load(tray.user.profilePicUrl).into(binding.imgProfile)
         for (item in tray.items) {
@@ -327,6 +332,11 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>(), Forw
         currentPosition += 1
         if (currentPosition >= progressBars.size) {
             currentPosition = progressBars.size - 1
+            if(moduleSource == "feed_timeline"){
+                viewModel.loadNextPageStory(currentTray.user.pk)
+            }else{
+                requireActivity().onBackPressed()
+            }
             return
         }
         loadItem(items[currentPosition])

@@ -1535,10 +1535,10 @@ class UseCase(
     }
 
     fun getStoryMedia(
-        result:MutableLiveData<Resource<Tray>>,
+        result: MutableLiveData<Resource<Tray>>,
         userId: Long,
         source: String = "feed_timeline"
-    ){
+    ) {
         val cookie = getCookie()
         val user = getUserData()!!
         val data = HashMap<String, Any>().apply {
@@ -1551,133 +1551,162 @@ class UseCase(
         mInstagramRepository.getStoryMedias(result, getHeaders(), userId, getSignaturePayload(data))
     }
 
-    fun sendStoryReaction(threadId: String,mediaId: String,reaction:String,reelId:Long): MutableLiveData<Resource<ResponseBody>> {
+    fun sendStoryReaction(
+        threadId: String,
+        mediaId: String,
+        reaction: String,
+        reelId: Long
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
         val clientContext = InstagramHashUtils.getClientContext()
-        val data = HashMap<String,Any>().apply {
-            put("action","send_item")
-            if(threadId.contains("[[")){
-                put("recipient_users",threadId)
-            }else{
-                put("thread_ids","[$threadId]")
+        val data = HashMap<String, Any>().apply {
+            put("action", "send_item")
+            if (threadId.contains("[[")) {
+                put("recipient_users", threadId)
+            } else {
+                put("thread_ids", "[$threadId]")
             }
-            put("client_context",clientContext)
-            put("media_id",mediaId)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("_uid",user.pk!!)
-            put("text",reaction)
-            put("device_id",cookie.deviceID)
-            put("mutation_token",clientContext)
-            put("_uuid",cookie.adid)
-            put("entry","reel")
-            put("reaction_emoji",reaction)
-            put("reel_id",reelId)
-            put("offline_threading_id",clientContext)
+            put("client_context", clientContext)
+            put("media_id", mediaId)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uid", user.pk!!)
+            put("text", reaction)
+            put("device_id", cookie.deviceID)
+            put("mutation_token", clientContext)
+            put("_uuid", cookie.adid)
+            put("entry", "reel")
+            put("reaction_emoji", reaction)
+            put("reel_id", reelId)
+            put("offline_threading_id", clientContext)
         }
-        mInstagramRepository.sendStoryReaction(result,getHeaders(),getSignaturePayload(data))
+        mInstagramRepository.sendStoryReaction(result, getHeaders(), getSignaturePayload(data))
         return result
     }
 
-    fun sendStoryReply(threadId: String,mediaId: String,reelId: Long,message:String): MutableLiveData<Resource<ResponseBody>> {
+    fun sendStoryReply(
+        threadId: String,
+        mediaId: String,
+        reelId: Long,
+        message: String
+    ): MutableLiveData<Resource<ResponseBody>> {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
         val clientContext = InstagramHashUtils.getClientContext()
-        val data = HashMap<String,Any>().apply {
-            put("action","send_item")
-            if(threadId.contains("[[")){
-                put("recipient_users",threadId)
-            }else{
-                put("thread_ids","[$threadId]")
+        val data = HashMap<String, Any>().apply {
+            put("action", "send_item")
+            if (threadId.contains("[[")) {
+                put("recipient_users", threadId)
+            } else {
+                put("thread_ids", "[$threadId]")
             }
-            put("client_context",clientContext)
-            put("media_id",mediaId)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("text",message)
-            put("device_id",cookie.deviceID)
-            put("mutation_token",clientContext)
-            put("_uuid",cookie.adid)
-            put("entry","reel")
-            put("offline_threading_id",clientContext)
-            put("reel_id",reelId)
-            put("entry","reel")
+            put("client_context", clientContext)
+            put("media_id", mediaId)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("text", message)
+            put("device_id", cookie.deviceID)
+            put("mutation_token", clientContext)
+            put("_uuid", cookie.adid)
+            put("entry", "reel")
+            put("offline_threading_id", clientContext)
+            put("reel_id", reelId)
+            put("entry", "reel")
         }
-        mInstagramRepository.sendStoryReply(result,getHeaders(),formUrlEncode(data))
+        mInstagramRepository.sendStoryReply(result, getHeaders(), formUrlEncode(data))
         return result
     }
 
-    fun shareMedia(mediaId: String,mediaType:Int, threadIds: MutableList<String>) {
-        for(threadId in threadIds){
-            shareMedia(mediaId,mediaType,threadId)
+    fun shareMedia(mediaId: String, mediaType: Int, threadIds: MutableList<String>) {
+        for (threadId in threadIds) {
+            shareMedia(mediaId, mediaType, threadId)
         }
     }
 
-    fun shareMedia(mediaId: String,mediaType:Int,threadId:String){
+    fun shareMedia(mediaId: String, mediaType: Int, threadId: String) {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
         val clientContext = InstagramHashUtils.getClientContext()
-        val data = HashMap<String,Any>().apply {
-            put("action","send_item")
-            if(threadId.contains("[[")){
-                put("recipient_users",threadId)
-            }else{
-                put("thread_ids","[$threadId]")
+        val data = HashMap<String, Any>().apply {
+            put("action", "send_item")
+            if (threadId.contains("[[")) {
+                put("recipient_users", threadId)
+            } else {
+                put("thread_ids", "[$threadId]")
             }
-            put("client_context",clientContext)
-            put("media_id",mediaId)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("device_id",cookie.deviceID)
-            put("mutation_token",clientContext)
-            put("_uuid",cookie.adid)
-            put("offline_threading_id",clientContext)
+            put("client_context", clientContext)
+            put("media_id", mediaId)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("device_id", cookie.deviceID)
+            put("mutation_token", clientContext)
+            put("_uuid", cookie.adid)
+            put("offline_threading_id", clientContext)
         }
-        val strMediaType = if(mediaType == InstagramConstants.MediaType.VIDEO.type){
+        val strMediaType = if (mediaType == InstagramConstants.MediaType.VIDEO.type) {
             InstagramConstants.MediaType.VIDEO.strType
-        }else{
+        } else {
             InstagramConstants.MediaType.IMAGE.strType
         }
-        mInstagramRepository.shareMedia(result,getHeaders(),formUrlEncode(data),strMediaType)
+        mInstagramRepository.shareMedia(result, getHeaders(), formUrlEncode(data), strMediaType)
     }
 
-    fun shareStory(mediaId: String, mediaType: Int,reelId: Long, threadIds: MutableList<String>) {
-        for(threadId in threadIds){
-            shareStory(mediaId,mediaType,reelId,threadId)
+    fun shareStory(mediaId: String, mediaType: Int, reelId: Long, threadIds: MutableList<String>) {
+        for (threadId in threadIds) {
+            shareStory(mediaId, mediaType, reelId, threadId)
         }
     }
 
 
-    fun shareStory(mediaId: String,mediaType:Int,reelId:Long,threadId:String){
+    fun shareStory(mediaId: String, mediaType: Int, reelId: Long, threadId: String) {
         val result = MutableLiveData<Resource<ResponseBody>>()
         val cookie = getCookie()
         val user = getUserData()!!
         val clientContext = InstagramHashUtils.getClientContext()
-        val data = HashMap<String,Any>().apply {
-            put("action","send_item")
-            if(threadId.contains("[[")){
-                put("recipient_users",threadId)
-            }else{
-                put("thread_ids","[$threadId]")
+        val data = HashMap<String, Any>().apply {
+            put("action", "send_item")
+            if (threadId.contains("[[")) {
+                put("recipient_users", threadId)
+            } else {
+                put("thread_ids", "[$threadId]")
             }
-            put("client_context",clientContext)
-            put("_csrftoken",cookie.csrftoken!!)
-            put("_uid",user.pk!!)
-            put("device_id",cookie.deviceID)
-            put("mutation_token",clientContext)
-            put("_uuid",cookie.adid)
-            put("reel_id",reelId)
-            put("containermodule","reel_feed_timeline")
-            put("story_media_id",mediaId)
-            put("offline_threading_id",clientContext)
+            put("client_context", clientContext)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uid", user.pk!!)
+            put("device_id", cookie.deviceID)
+            put("mutation_token", clientContext)
+            put("_uuid", cookie.adid)
+            put("reel_id", reelId)
+            put("containermodule", "reel_feed_timeline")
+            put("story_media_id", mediaId)
+            put("offline_threading_id", clientContext)
         }
-        val strMediaType = if(mediaType == InstagramConstants.MediaType.VIDEO.type){
+        val strMediaType = if (mediaType == InstagramConstants.MediaType.VIDEO.type) {
             InstagramConstants.MediaType.VIDEO.strType
-        }else{
+        } else {
             InstagramConstants.MediaType.IMAGE.strType
         }
-        mInstagramRepository.shareStory(result,getHeaders(),formUrlEncode(data),strMediaType)
+        mInstagramRepository.shareStory(result, getHeaders(), formUrlEncode(data), strMediaType)
+    }
+
+    fun getNextPageStory(result:MutableLiveData<Resource<Tray>>,userId: Long){
+        val liveData = MutableLiveData<Resource<InstagramStoriesResponse>>()
+        getTimelineStories(liveData)
+        liveData.observeForever {
+            for (index in it!!.data!!.tray.indices) {
+                val tray = it!!.data!!.tray[index]
+                if(tray.user.pk == userId ){
+                    try{
+                        result.value = Resource.success(it!!.data!!.tray[index + 1])
+                        return@observeForever
+                    }catch (e:Exception){
+                        result.value = Resource.error(null)
+                        return@observeForever
+                    }
+                }
+            }
+        }
     }
 
 }
