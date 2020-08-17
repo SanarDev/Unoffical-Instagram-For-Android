@@ -9,21 +9,6 @@
         android:background="@color/theme_background"
         android:orientation="vertical">
 
-        <androidx.appcompat.widget.Toolbar
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:background="@color/theme_item">
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="40dp"
-                android:text="@string/app_name"
-                android:textColor="@color/text_very_light"
-                android:textSize="18sp" />
-
-        </androidx.appcompat.widget.Toolbar>
-
         <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -37,21 +22,42 @@
                     android:layout_height="wrap_content"
                     app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recyclerview_stories"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:paddingStart="10dp"
-                        android:clipToPadding="false"
-                        android:orientation="horizontal"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        tools:listitem="@layout/layout_story" />
+                        android:orientation="vertical">
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/theme_item" />
+                        <androidx.appcompat.widget.Toolbar
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:background="@color/theme_item">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="40dp"
+                                android:text="@string/app_name"
+                                android:textColor="@color/text_very_light"
+                                android:textSize="18sp" />
+
+                        </androidx.appcompat.widget.Toolbar>
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerview_stories"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:clipToPadding="false"
+                            android:orientation="horizontal"
+                            android:paddingStart="10dp"
+                            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                            tools:listitem="@layout/layout_story" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/theme_item" />
+                    </LinearLayout>
 
                 </com.google.android.material.appbar.CollapsingToolbarLayout>
 
@@ -61,9 +67,9 @@
                 android:id="@+id/recyclerview_posts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:clipToPadding="false"
                 android:layout_marginStart="5dp"
                 android:layout_marginEnd="5dp"
+                android:clipToPadding="false"
                 android:paddingTop="10dp"
                 android:paddingBottom="100dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"

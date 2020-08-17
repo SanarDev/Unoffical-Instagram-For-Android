@@ -160,6 +160,15 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             val dataBinding = holder.binding as LayoutStoryBinding
             dataBinding.txtUsername.text = item.user.username
             mGlideRequestManager.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
+            if(item.seen == 0.toLong() || item.latestReelMedia > item.seen){
+                if(item.hasBestiesMedia){
+                    dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_close_friend_story)
+                }else{
+                    dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_new_story)
+                }
+            }else{
+                dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_story)
+            }
             dataBinding.root.setOnClickListener {
                 v = it
                 viewModel.getStoryMedia(item.user.pk)
@@ -175,11 +184,6 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         override fun getItemCount(): Int {
             return if (items == null) 0 else items!!.size
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        binding.unbind()
     }
 
     override fun onClick(v: View, data: String) {

@@ -45,6 +45,9 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
     open fun onKeyboardHide(){
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+    }
     abstract fun getViewModelClass(): Class<VM>
     abstract fun layoutRes():Int
     abstract fun getNameTag():String

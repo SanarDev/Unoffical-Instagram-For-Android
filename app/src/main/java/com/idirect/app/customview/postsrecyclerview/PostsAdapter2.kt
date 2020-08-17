@@ -366,7 +366,8 @@ class PostsAdapter2(
             txtCaption.setText(
                 item.caption.user.username,
                 item.caption.user.pk,
-                item.caption.text
+                item.caption.text,
+                50
             )
             txtCaption.mHyperTextClick = mHyperTextClick
         }

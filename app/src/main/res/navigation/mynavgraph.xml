@@ -30,10 +30,8 @@
         <action
             android:id="@+id/action_fragmentHome_to_fragmentStory"
             app:destination="@id/fragmentStory">
-
-            <argument android:name="user_id"
-                app:argType="string"/>
-
+            <argument app:argType="string"
+                android:name="user_id"/>
         </action>
 
     </fragment>
@@ -171,6 +169,15 @@
         android:id="@+id/fragmentStory"
         android:name="com.idirect.app.ui.story.FragmentStory"
         android:label="FragmentStory"
-        tools:layout="@layout/fragment_story"/>
+        tools:layout="@layout/fragment_story">
+        <action
+            android:id="@+id/action_fragmentStory_to_userProfileFragment"
+            app:destination="@id/userProfileFragment">
+
+            <argument android:name="user_data"
+                app:argType="com.idirect.app.ui.userprofile.UserBundle" />
+
+        </action>
+    </fragment>
 
 </navigation>

@@ -152,23 +152,7 @@ class FullScreenFragment : BaseFragment<ActivityFullScreenBinding, FullScreenVie
 //            )
 //        }
 //    }
-    inner class CollectionPagerAdapter(
-        var items: List<Fragment>,
-        fragmentManager: FragmentManager
-    ) :
-        FragmentStatePagerAdapter(fragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
-        // Returns total number of pages
-        override fun getCount(): Int {
-            return items.size
-        }
-
-        // Returns the fragment to display for that page
-        override fun getItem(position: Int): Fragment {
-            val item = items[position]
-            return item
-        }
-    }
 
     override fun onStop() {
         super.onStop()

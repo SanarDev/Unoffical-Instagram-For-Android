@@ -69,6 +69,9 @@ fun View.changeWidth(width:Int,duration:Long = 700){
 }
 
 fun View.fadeIn(duration: Long = 400){
+    if(handler == null){
+        return
+    }
     visibility = View.VISIBLE
     val fadeIn = AlphaAnimation(0f, 1f)
     fadeIn.interpolator = DecelerateInterpolator() //add this
@@ -85,6 +88,9 @@ fun View.fadeIn(duration: Long = 400){
 }
 
 fun View.fadeOut(duration: Long = 100){
+    if(handler == null){
+        return
+    }
     val fadeOut = AlphaAnimation(1f, 0f)
     fadeOut.interpolator = AccelerateInterpolator() //and this
     fadeOut.duration = duration

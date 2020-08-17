@@ -17,6 +17,7 @@ import com.idirect.app.ui.postcomments.CommentsViewModel
 import com.idirect.app.ui.posts.PostsViewModel
 import com.idirect.app.ui.setting.SettingViewModel
 import com.idirect.app.ui.startmessage.StartMessageViewModel
+import com.idirect.app.ui.story.StoryItemViewModel
 import com.idirect.app.ui.story.StoryViewModel
 import com.idirect.app.ui.twofactor.TwoFactorViewModel
 import com.idirect.app.ui.userprofile.UserProfileViewModel
@@ -100,6 +101,11 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(HomeViewModel::class)
     abstract fun homeViewModel(homeViewModel: HomeViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(StoryItemViewModel::class)
+    abstract fun storyItemViewModel(storyItemViewModel: StoryItemViewModel):ViewModel
 
     @Binds
     @IntoMap

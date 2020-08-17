@@ -2,10 +2,7 @@ package com.idirect.app.customview.customtextview
 
 import android.content.Context
 import android.os.Build
-import android.text.Html
-import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.Spanned
+import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
@@ -33,6 +30,9 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
     }
 
     var mHyperTextClick: OnHyperTextClick? = null
+    private var sourceText: String? = null
+    private var username: String? = null
+    private var userId: Long = 0
 
     init {
         setOnTouchListener { v, event ->
@@ -48,7 +48,11 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
                     val link: Array<ClickableSpan> =
                         charSequence.getSpans(off, off, ClickableSpan::class.java)
                     if (link.size != 0) {
-                        mHyperTextClick?.onClick(tv, (link[0] as URLSpan).url)
+                        if ((link[0] as URLSpan).url == MORE_BUTTON_ID) {
+                            setText(username!!, userId, sourceText!!, FLAG_NO_LIMIT)
+                        } else {
+                            mHyperTextClick?.onClick(tv, (link[0] as URLSpan).url)
+                        }
                     } else {
                         //do other click
                     }
@@ -58,14 +62,29 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
         }
     }
 
-    fun setText(username: String, userId: Long, text: String) {
+    fun setText(username: String, userId: Long, text: String, haveLimit: Int = FLAG_NO_LIMIT) {
+        this.sourceText = text
+        this.username = username
+        this.userId = userId
+
         val hyperUsername = "<a href=\"$userId\"><b>$username</b></a>"
         val usernameSequence = getHtmlSpannable(hyperUsername)
-        val textSequence = getHtmlSpannable(getHyperText(text))
+        val finalText: String
+        val moreSequence: Spanned?
+        if (haveLimit == FLAG_NO_LIMIT || text.length <= haveLimit) {
+            finalText = sourceText!!
+            moreSequence = null
+        } else {
+            finalText = text.substring(0, haveLimit)
+            moreSequence = getHtmlSpannable("<a href=\"$MORE_BUTTON_ID\">&nbsp;&nbsp;More...&nbsp;&nbsp;</a>")
+        }
+        val textSequence = getHtmlSpannable(getHyperText(finalText))
         val spannable = SpannableStringBuilder()
             .append(usernameSequence)
             .append("  ")
             .append(textSequence)
+        if (moreSequence != null)
+            spannable.append(moreSequence)
 
         var urls =
             spannable.getSpans(0, spannable.length, URLSpan::class.java)
@@ -122,6 +141,9 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
     }
 
     companion object {
+        const val FLAG_NO_LIMIT = -1
+        private const val MORE_BUTTON_ID = "-85755415"
+
         fun getLikedByHyperText(username: String, userId: Long, likeCount: Int): String {
             return "  Liked by <a href=\"$userId\"><b>$username</b></a> and <a href=\"SeeAllLikers\"><b>$likeCount others</b></a>"
         }

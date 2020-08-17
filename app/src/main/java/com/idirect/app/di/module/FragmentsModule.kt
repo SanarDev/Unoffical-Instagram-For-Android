@@ -9,6 +9,7 @@ import com.idirect.app.ui.postcomments.CommentsFragment
 import com.idirect.app.ui.posts.PostsFragment
 import com.idirect.app.ui.startmessage.StartMessageFragment
 import com.idirect.app.ui.story.FragmentStory
+import com.idirect.app.ui.story.FragmentStoryItem
 import com.idirect.app.ui.userprofile.UserProfileFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
@@ -41,8 +42,10 @@ abstract class FragmentsModule {
     abstract fun contributeFragmentHome(): FragmentHome
 
     @ContributesAndroidInjector
-    abstract fun contributeFragmentStory(): FragmentStory
+    abstract fun contributeFragmentStoryItem(): FragmentStoryItem
 
+    @ContributesAndroidInjector
+    abstract fun contributeFragmentStory(): FragmentStory
 
     @ContributesAndroidInjector
     abstract fun contributeForwardFragment(): ForwardFragment
