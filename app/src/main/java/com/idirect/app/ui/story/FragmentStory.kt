@@ -18,6 +18,7 @@ import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.FragmentStoryBinding
 import com.idirect.app.datasource.model.Tray
 import com.idirect.app.manager.PlayManager
+import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import javax.inject.Inject
@@ -50,6 +51,7 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
         userId = requireArguments().getString("user_id")!!.toLong()
         val isSingle = requireArguments().getBoolean("is_single")
         viewModel.getStoryData(userId,isSingle)
+        (requireActivity() as MainActivity).isHideNavigationBottom(true)
 
         val mAdapter = StoriesAdapter(null,requireActivity().supportFragmentManager)
         binding.viewPager.adapter = mAdapter
@@ -74,6 +76,8 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
                     }
                     fragments[position]?.showNextItem()
                     lastPosition = position
+                }else if (lastPosition == position && position == binding.viewPager.adapter!!.count -1){
+                    activity?.onBackPressed()
                 }
                 fragments[binding.viewPager.currentItem]?.isTouchEnable = positionOffsetPixels == 0
             }
@@ -123,7 +127,11 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
     }
 
     override fun loadNextPage() {
-        binding.viewPager.currentItem = binding.viewPager.currentItem + 1
+        if(binding.viewPager.currentItem < binding.viewPager.adapter!!.count - 1){
+            binding.viewPager.currentItem = binding.viewPager.currentItem + 1
+        }else{
+            activity?.onBackPressed()
+        }
     }
 
     override fun onProfileClick(v: View,userId: Long,username:String) {

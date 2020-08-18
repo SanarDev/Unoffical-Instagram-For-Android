@@ -6,7 +6,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="3dp"
+        android:layout_margin="1dp"
         android:orientation="vertical">
 
         <com.makeramen.roundedimageview.RoundedImageView
@@ -14,7 +14,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
-            app:riv_corner_radius="10dip"
             android:src="@mipmap/example"/>
 
         <androidx.appcompat.widget.AppCompatImageView

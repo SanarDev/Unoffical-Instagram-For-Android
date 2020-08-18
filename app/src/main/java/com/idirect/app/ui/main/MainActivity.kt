@@ -1,19 +1,27 @@
 package com.idirect.app.ui.main
 
+import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.NavHostFragment
+import com.aurelhubert.ahbottomnavigation.AHBottomNavigation
+import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem
 import com.idirect.app.R
 import com.idirect.app.core.BaseActivity
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.ActivityMainBinding
 import com.idirect.app.datasource.model.event.*
+import com.idirect.app.extentions.color
 import com.idirect.app.realtime.commands.RealTime_ClearCache
+import com.idirect.app.realtime.commands.RealTime_StartService
 import com.idirect.app.realtime.commands.RealTime_StopService
 import com.idirect.app.realtime.service.RealTimeService
 import com.idirect.app.ui.forward.ForwardBundle
 import com.idirect.app.ui.forward.ForwardFragment
 import com.idirect.app.ui.forward.ForwardListener
+import com.idirect.app.ui.home.FragmentHome
+import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.utils.Resource
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -21,10 +29,13 @@ import org.greenrobot.eventbus.ThreadMode
 
 class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
-    private var navHostFragment: NavHostFragment?=null
+    private lateinit var navHostFragment: NavHostFragment
 
     companion object {
-        const val DIRECT_POSITION = 1
+        const val HOME_POSITION = 0
+        const val INBOX_POSITION = 1
+        const val SEARCH_POSITION = 2
+        const val PROFILE_POSITION = 3
     }
 
     override fun layoutRes(): Int {
@@ -44,25 +55,96 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
         viewModel.mutableLiveData.observe(this, Observer {
             if (it.status == Resource.Status.SUCCESS) {
-//                RealTimeService.run(
-//                    this,
-//                    RealTime_StartService(
-//                        it.data!!.seqId.toLong(),
-//                        it.data!!.snapshotAtMs
-//                    )
-//                )
+                RealTimeService.run(
+                    this,
+                    RealTime_StartService(
+                        it.data!!.seqId.toLong(),
+                        it.data!!.snapshotAtMs
+                    )
+                )
             }
         })
         attachKeyboardListeners()
-        navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navHostFragment =
+            (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment)
+
+        navHostFragment.childFragmentManager.addOnBackStackChangedListener {
+            val lastFragment = getLastFragment()
+            when(lastFragment.getNameTag()){
+                FragmentHome.NAME_TAG ->{
+                    binding.ahbottomNavigation.currentItem = HOME_POSITION
+                }
+                FragmentInbox.NAME_TAG ->{
+                    binding.ahbottomNavigation.currentItem = INBOX_POSITION
+                }
+            }
+        }
+        val homeItem =
+            AHBottomNavigationItem(getString(R.string.home), R.drawable.instagram_home_outline_24)
+        val directItem = AHBottomNavigationItem(
+            getString(R.string.direct),
+            R.drawable.instagram_direct_outline_24
+        )
+        val searchItem = AHBottomNavigationItem(
+            getString(R.string.direct),
+            R.drawable.instagram_search_outline_24
+        )
+        val profileItem =
+            AHBottomNavigationItem(getString(R.string.direct), R.drawable.profile_single)
+
+        binding.ahbottomNavigation.addItem(homeItem)
+        binding.ahbottomNavigation.addItem(directItem)
+        binding.ahbottomNavigation.addItem(searchItem)
+        binding.ahbottomNavigation.addItem(profileItem)
+
+        binding.ahbottomNavigation.titleState = AHBottomNavigation.TitleState.ALWAYS_HIDE
+        binding.ahbottomNavigation.defaultBackgroundColor = color(R.color.theme_item)
+        binding.ahbottomNavigation.accentColor = Color.WHITE
+        binding.ahbottomNavigation.setOnTabSelectedListener(object :
+            AHBottomNavigation.OnTabSelectedListener {
+            override fun onTabSelected(position: Int, wasSelected: Boolean): Boolean {
+                if (wasSelected) {
+                    return false
+                }
+                val lastFragment = getLastFragment()
+                when (lastFragment.getNameTag()) {
+                    FragmentHome.NAME_TAG -> {
+                        when (position) {
+                            INBOX_POSITION -> {
+                                navHostFragment.navController.navigate(R.id.action_fragmentHome_to_fragmentInbox)
+                            }
+                        }
+                    }
+                    FragmentInbox.NAME_TAG -> {
+                        when (position) {
+                            HOME_POSITION -> {
+                                navHostFragment.navController.navigate(R.id.action_fragmentInbox_to_fragmentHome)
+                            }
+                        }
+                    }
+                }
+                return true
+            }
+        })
 //        FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
     }
 
-    fun showShareWindow(forwardBundle: ForwardBundle,forwardListener: ForwardListener?=null){
+    fun isHideNavigationBottom(isHide:Boolean){
+        if(isHide){
+            binding.ahbottomNavigation.visibility = View.GONE
+        }else{
+            binding.ahbottomNavigation.visibility = View.VISIBLE
+        }
+    }
+    fun showShareWindow(forwardBundle: ForwardBundle, forwardListener: ForwardListener? = null) {
         ForwardFragment()
             .setBundle(forwardBundle)
             .setListener(forwardListener)
-            .show(supportFragmentManager,ForwardFragment::class.java.name)
+            .show(supportFragmentManager, ForwardFragment::class.java.name)
+    }
+
+    private fun getLastFragment(): BaseFragment<*, *> {
+        return navHostFragment.childFragmentManager.fragments[0] as BaseFragment<*, *>
     }
 
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)

@@ -1,11 +1,16 @@
 package com.idirect.app.customview.postsrecyclerview
 
+import android.view.View
+import com.idirect.app.datasource.model.UserPost
+
 interface PostsRecyclerListener {
 
     fun requestForLoadMore()
-    fun likeComment(id:Long)
-    fun unlikeComment(id:Long)
-
-    fun unlikePost(mediaId:String)
-    fun likePost(mediaId:String)
+    fun likeComment(v: View, id:Long)
+    fun unlikeComment(v: View,id:Long)
+    fun unlikePost(v: View,mediaId:String)
+    fun likePost(v: View,mediaId:String)
+    fun shareMedia(v:View,mediaId: String,mediaType:Int)
+    fun showComments(v:View,post: UserPost)
+    fun userProfile(v:View,userId:Long,username:String)
 }

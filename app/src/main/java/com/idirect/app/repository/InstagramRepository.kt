@@ -652,6 +652,26 @@ class InstagramRepository(
         }
     }
 
+    fun loadMoreComments(result: MutableLiveData<Resource<InstagramCommentResponse>>,
+                         header: HashMap<String, String>,
+                         mediaId: String,
+                            minId:String){
+        NetworkCall<InstagramCommentResponse>().makeCall(
+            mInstagramRemote.loadMorePostComments(
+                header,
+                mediaId,
+                minId
+            )
+        ).observeForever {
+            if (it.status == Resource.Status.SUCCESS) {
+                userComments = it.data!!.apply {
+                    this.mediaId = mediaId
+                }
+            }
+            result.value = it
+        }
+    }
+
     fun getUserInfoFromUsername(
         result: MutableLiveData<Resource<InstagramUserInfo>>,
         header: HashMap<String, String>,
@@ -747,8 +767,8 @@ class InstagramRepository(
             }
     }
 
-    fun sendStoryReply(result: MutableLiveData<Resource<ResponseBody>>, header: HashMap<String, String>, data: RequestBody){
-        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.sendStoryReplyMessage(header,data)).observeForever {
+    fun sendStoryReply(result: MutableLiveData<Resource<ResponseBody>>, header: HashMap<String, String>, data: RequestBody,mediaType: String){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.sendStoryReplyMessage(header,data,mediaType)).observeForever {
             result.value = it
         }
     }
@@ -763,5 +783,6 @@ class InstagramRepository(
             result.value = it
         }
     }
+
 
 }

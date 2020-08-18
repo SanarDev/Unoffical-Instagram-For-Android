@@ -34,7 +34,9 @@ import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.setTextViewDrawableColor
 import com.idirect.app.extensions.visible
 import com.idirect.app.extentions.color
+import com.idirect.app.ui.direct.DirectBundle
 import com.idirect.app.ui.login.LoginActivity
+import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.startmessage.StartMessageFragment
 import com.idirect.app.utils.Resource
@@ -89,6 +91,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
         binding.recyclerviewDirects.adapter = adapter
         layoutManager = (binding.recyclerviewDirects.layoutManager as LinearLayoutManager)
         shareViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
+        (requireActivity() as MainActivity).isHideNavigationBottom(false)
 
         shareViewModel.mutableLiveData.observe(viewLifecycleOwner, InstagramDirectObserver())
 
@@ -475,10 +478,15 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 dataBinding.imgIsOnline.visibility = View.INVISIBLE
             }
             dataBinding.root.setOnClickListener {
-                shareViewModel.currentThread = shareViewModel.getThreadById(item.threadId)
-                shareViewModel.currentThreadId = shareViewModel.currentThread!!.threadId
-                Navigation.findNavController(it)
-                    .navigate(R.id.action_fragmentInbox_to_fragmentDirect)
+                val data = DirectBundle().apply {
+                    this.threadId = item.threadId
+                    this.threadTitle = item.threadTitle
+                    this.isGroup = item.isGroup
+                    this.isActive = item.active
+                    this.lastActivityAt = item.lastActivityAt
+                }
+                val action = FragmentInboxDirections.actionFragmentInboxToFragmentDirect(data)
+                Navigation.findNavController(it).navigate(action)
                 if (binding.edtSearch.text.toString().isNotEmpty()) {
                     binding.edtSearch.setText("")
                 }

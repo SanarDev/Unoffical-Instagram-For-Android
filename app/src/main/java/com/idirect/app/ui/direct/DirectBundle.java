@@ -13,7 +13,6 @@ public class DirectBundle implements Parcelable {
     private boolean isActive;
     private long lastActivityAt;
     private String username;
-    private int seqId;
     private long userId;
     private boolean isGroup;
 
@@ -30,7 +29,6 @@ public class DirectBundle implements Parcelable {
         isActive = in.readByte() != 0;
         lastActivityAt = in.readLong();
         username = in.readString();
-        seqId = in.readInt();
         userId = in.readLong();
         isGroup = in.readByte() != 0;
     }
@@ -115,14 +113,6 @@ public class DirectBundle implements Parcelable {
         this.username = username;
     }
 
-    public int getSeqId() {
-        return seqId;
-    }
-
-    public void setSeqId(int seqId) {
-        this.seqId = seqId;
-    }
-
     public long getUserId() {
         return userId;
     }
@@ -154,7 +144,6 @@ public class DirectBundle implements Parcelable {
         dest.writeByte((byte) (isActive ? 1 : 0));
         dest.writeLong(lastActivityAt);
         dest.writeString(username);
-        dest.writeInt(seqId);
         dest.writeLong(userId);
         dest.writeByte((byte) (isGroup ? 1 : 0));
     }

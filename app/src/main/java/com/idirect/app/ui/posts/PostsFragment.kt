@@ -32,6 +32,7 @@ import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
+import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
 import com.idirect.app.databinding.FragmentPostsBinding
 import com.idirect.app.databinding.LayoutCarouselImageBinding
 import com.idirect.app.databinding.LayoutCarouselVideoBinding
@@ -44,6 +45,8 @@ import com.idirect.app.extensions.visible
 import com.idirect.app.extentions.dpToPx
 import com.idirect.app.extentions.toast
 import com.idirect.app.manager.PlayManager
+import com.idirect.app.ui.forward.ForwardBundle
+import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
@@ -110,6 +113,49 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
 
         mLayoutManager = binding.recyclerviewPosts.layoutManager as LinearLayoutManager
         binding.recyclerviewPosts.adapter = mAdapter
+        binding.recyclerviewPosts.mPostsRecyclerState = object:PostsRecyclerListener{
+            override fun requestForLoadMore() {
+                if(!isLoading && isMoreAvailable){
+                    isLoading = true
+                    viewModel.loadMorePosts()
+                }
+            }
+
+            override fun likeComment(v: View, id: Long) {
+                viewModel.likeComment(id)
+            }
+
+            override fun unlikeComment(v: View, id: Long) {
+                viewModel.unlikeComment(id)
+            }
+
+            override fun unlikePost(v: View, mediaId: String) {
+                viewModel.unlikePost(mediaId)
+            }
+
+            override fun likePost(v: View, mediaId: String) {
+                viewModel.likePost(mediaId)
+            }
+
+            override fun shareMedia(v: View, mediaId: String, mediaType: Int) {
+                val forwardBundle =  ForwardBundle(mediaId,mediaType,false)
+                (requireActivity() as MainActivity).showShareWindow(forwardBundle)
+            }
+
+            override fun showComments(v: View, post: UserPost) {
+                val action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment(post)
+                v.findNavController().navigate(action)
+            }
+
+            override fun userProfile(v: View, userId: Long, username: String) {
+                val userData = UserBundle().apply {
+                    this.userId = userId.toString()
+                    this.username = username
+                }
+                val action = PostsFragmentDirections.actionPostsFragmentToUserProfileFragment(userData)
+                v.findNavController().navigate(action)
+            }
+        }
 
         viewModel.resultUsePosts.observe(viewLifecycleOwner, Observer {
             when (it.status) {

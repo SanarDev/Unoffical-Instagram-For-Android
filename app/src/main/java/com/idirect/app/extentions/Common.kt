@@ -27,10 +27,12 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.idirect.app.R
 import java.io.File
+import java.lang.StringBuilder
 
 
 fun Context.toast(message: CharSequence) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-fun Context.longToast(message: CharSequence) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+fun Context.longToast(message: CharSequence) =
+    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
 fun <T> Context.openActivity(it: Class<T>, extras: Bundle.() -> Unit = {}) {
     val intent = Intent(this, it)
@@ -38,13 +40,21 @@ fun <T> Context.openActivity(it: Class<T>, extras: Bundle.() -> Unit = {}) {
     startActivity(intent)
 }
 
-fun <T> Context.openActivityForResult(it: Class<T>, resultCode: Int, extras: Bundle.() -> Unit = {}) {
+fun <T> Context.openActivityForResult(
+    it: Class<T>,
+    resultCode: Int,
+    extras: Bundle.() -> Unit = {}
+) {
     val intent = Intent(this, it)
     intent.putExtras(Bundle().apply(extras))
     startActivity(intent)
 }
 
-fun AppCompatActivity.replaceFragment(fragment: Fragment, @IdRes container: Int, addToBackStack: Boolean = false) {
+fun AppCompatActivity.replaceFragment(
+    fragment: Fragment,
+    @IdRes container: Int,
+    addToBackStack: Boolean = false
+) {
     val backStateName: String = fragment.javaClass.getName()
 
     val manager: FragmentManager = supportFragmentManager
@@ -53,13 +63,22 @@ fun AppCompatActivity.replaceFragment(fragment: Fragment, @IdRes container: Int,
     if (!fragmentPopped && manager.findFragmentByTag(backStateName) == null) { //fragment not in back stack, create it.
         val ft: FragmentTransaction = manager.beginTransaction()
         ft.replace(container, fragment, backStateName)
-        ft.setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right);
+        ft.setCustomAnimations(
+            R.anim.enter_from_right,
+            R.anim.exit_to_left,
+            R.anim.enter_from_left,
+            R.anim.exit_to_right
+        );
         ft.addToBackStack(backStateName)
         ft.commit()
     }
 }
 
-fun Fragment.replaceFragment(fragment: Fragment, @IdRes container: Int, addToBackStack: Boolean = false) {
+fun Fragment.replaceFragment(
+    fragment: Fragment,
+    @IdRes container: Int,
+    addToBackStack: Boolean = false
+) {
     val backStateName: String = fragment.javaClass.getName()
 
     val manager: FragmentManager = activity!!.supportFragmentManager
@@ -67,7 +86,12 @@ fun Fragment.replaceFragment(fragment: Fragment, @IdRes container: Int, addToBac
 
     if (!fragmentPopped && manager.findFragmentByTag(backStateName) == null) { //fragment not in back stack, create it.
         val ft: FragmentTransaction = manager.beginTransaction()
-        ft.setCustomAnimations(R.anim.enter_from_right, R.anim.exit_to_left, R.anim.enter_from_left, R.anim.exit_to_right);
+        ft.setCustomAnimations(
+            R.anim.enter_from_right,
+            R.anim.exit_to_left,
+            R.anim.enter_from_left,
+            R.anim.exit_to_right
+        );
         ft.replace(container, fragment, backStateName)
         ft.addToBackStack(backStateName)
         ft.commit()
@@ -77,8 +101,8 @@ fun Fragment.replaceFragment(fragment: Fragment, @IdRes container: Int, addToBac
 val View.realHeight: Int
     get() {
         val widthSpec = View.MeasureSpec.makeMeasureSpec(
-                width,
-                View.MeasureSpec.EXACTLY
+            width,
+            View.MeasureSpec.EXACTLY
         );
         val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         measure(widthSpec, heightSpec)
@@ -94,19 +118,20 @@ fun Context.vibration(duration: Long = 500) {
         v.vibrate(duration)
     }
 }
+
 @SuppressLint("MissingPermission")
 fun Context.vibration(vararg duration: Long) {
     val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         v.vibrate(VibrationEffect.createWaveform(duration, -1))
     } else {
-        v.vibrate(duration,-1)
+        v.vibrate(duration, -1)
     }
 }
 
 fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }
 
-fun Dialog.openFromBottom(height:Int = ViewGroup.LayoutParams.MATCH_PARENT) {
+fun Dialog.openFromBottom(height: Int = ViewGroup.LayoutParams.MATCH_PARENT) {
     assert(window != null)
     window!!.setGravity(Gravity.BOTTOM)
     window!!.setBackgroundDrawableResource(android.R.color.transparent)
@@ -114,7 +139,7 @@ fun Dialog.openFromBottom(height:Int = ViewGroup.LayoutParams.MATCH_PARENT) {
 }
 
 fun Resources.dpToPx(dp: Float): Int {
-    return dpToPx(dp,this)
+    return dpToPx(dp, this)
 }
 
 private const val HTTPS = "https://"
@@ -148,7 +173,7 @@ fun List<Any>.toStringList(): String {
     return str
 }
 
-fun Activity.hideKeyboard(){
+fun Activity.hideKeyboard() {
     val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
     //Find the currently focused view, so we can grab the correct window token from it.
     var view = currentFocus
@@ -164,11 +189,11 @@ fun dpToPx(dp: Float, resources: Resources): Int {
     return px.toInt()
 }
 
-fun Application.openSharedPref(name:String): SharedPreferences? {
+fun Application.openSharedPref(name: String): SharedPreferences? {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
 
-fun Activity.shareText(shareBody:String){
+fun Activity.shareText(shareBody: String) {
     val sendIntent: Intent = Intent().apply {
         action = Intent.ACTION_SEND
         putExtra(Intent.EXTRA_TEXT, shareBody)
@@ -178,7 +203,15 @@ fun Activity.shareText(shareBody:String){
     val shareIntent = Intent.createChooser(sendIntent, null)
     startActivity(shareIntent)
 }
-
+fun String.getLinesOf(from:Int,to:Int): String {
+    val lines = lines()
+    val strBuilder = StringBuilder()
+    for(index in from..to){
+        strBuilder.append(lines[index])
+        strBuilder.append("\r\n")
+    }
+    return strBuilder.toString()
+}
 val File.size get() = if (!exists()) 0.0 else length().toDouble()
 val File.sizeInKb get() = size / 1024
 val File.sizeInMb get() = sizeInKb / 1024

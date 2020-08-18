@@ -26,13 +26,21 @@
 
         <action
             android:id="@+id/action_fragmentHome_to_commentsFragment"
-            app:destination="@id/commentsFragment" />
+            app:destination="@id/commentsFragment">
+
+            <argument android:name="data"
+                app:argType="com.idirect.app.datasource.model.UserPost"/>
+
+        </action>
         <action
             android:id="@+id/action_fragmentHome_to_fragmentStory"
             app:destination="@id/fragmentStory">
             <argument app:argType="string"
                 android:name="user_id"/>
         </action>
+        <action
+            android:id="@+id/action_fragmentHome_to_commentsFragment2"
+            app:destination="@id/commentsFragment" />
 
     </fragment>
 
@@ -47,7 +55,10 @@
             app:enterAnim="@anim/enter_from_right"
             app:exitAnim="@anim/exit_to_left"
             app:popEnterAnim="@anim/enter_from_left"
-            app:popExitAnim="@anim/exit_to_right"/>
+            app:popExitAnim="@anim/exit_to_right">
+            <argument android:name="data"
+                app:argType="com.idirect.app.ui.direct.DirectBundle"/>
+        </action>
         <action
             android:id="@+id/action_fragmentInbox_to_startMessageFragment"
             app:destination="@id/startMessageFragment"
@@ -55,6 +66,9 @@
             app:exitAnim="@anim/exit_to_left"
             app:popEnterAnim="@anim/enter_from_left"
             app:popExitAnim="@anim/exit_to_right"/>
+        <action
+            android:id="@+id/action_fragmentInbox_to_fragmentHome"
+            app:destination="@id/fragmentHome" />
 
     </fragment>
 
@@ -119,7 +133,11 @@
         tools:layout="@layout/fragment_user_profile">
         <action
             android:id="@+id/action_userProfileFragment_to_fragmentDirect"
-            app:destination="@id/fragmentDirect" />
+            app:destination="@id/fragmentDirect">
+            <argument android:name="data"
+                app:argType="com.idirect.app.ui.direct.DirectBundle"/>
+        </action>
+
         <action
             android:id="@+id/action_userProfileFragment_to_postsFragment"
             app:destination="@id/postsFragment">
@@ -147,8 +165,7 @@
             app:destination="@id/commentsFragment" >
 
             <argument android:name="data"
-                app:argType="string"/>
-
+                app:argType="com.idirect.app.datasource.model.UserPost"/>
         </action>
     </fragment>
     <fragment

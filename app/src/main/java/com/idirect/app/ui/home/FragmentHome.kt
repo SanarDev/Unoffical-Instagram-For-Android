@@ -1,6 +1,7 @@
 package com.idirect.app.ui.home
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,17 +14,21 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.idirect.app.R
+import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
 import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
+import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentHomeBinding
 import com.idirect.app.databinding.LayoutStoryBinding
 import com.idirect.app.datasource.model.Story
 import com.idirect.app.datasource.model.Tray
 import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.manager.PlayManager
+import com.idirect.app.ui.forward.ForwardBundle
+import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.postcomments.CommentsFragmentDirections
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.DisplayUtils
@@ -89,27 +94,49 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             viewLifecycleOwner,
             emptyArray<UserPost>().toMutableList()
         )
+        (requireActivity() as MainActivity).isHideNavigationBottom(false)
 
         binding.recyclerviewPosts.adapter = mAdapter
         binding.recyclerviewPosts.mPostsRecyclerState = object : PostsRecyclerListener {
             override fun requestForLoadMore() {
+                Log.i(InstagramConstants.DEBUG_TAG,"request for load more with isLoading $isLoading")
                 if (!isLoading) {
                     isLoading = true
                     viewModel.loadMorePosts()
                 }
             }
-
-            override fun likeComment(id: kotlin.Long) {
-
+            override fun likeComment(v: View,id: kotlin.Long) {
+                viewModel.likeComment(id)
             }
 
-            override fun unlikeComment(id: kotlin.Long) {
+            override fun unlikeComment(v: View,id: kotlin.Long) {
+                viewModel.unlikeComment(id)
             }
 
-            override fun unlikePost(mediaId: String) {
+            override fun unlikePost(v: View,mediaId: String) {
+                viewModel.unlikePost(mediaId)
             }
 
-            override fun likePost(mediaId: String) {
+            override fun likePost(v: View,mediaId: String) {
+                viewModel.likePost(mediaId)
+            }
+
+            override fun shareMedia(v: View, mediaId: String, mediaType: Int) {
+                val forwardBundle = ForwardBundle(mediaId,mediaType,false)
+                (requireActivity() as MainActivity).showShareWindow(forwardBundle)
+            }
+
+            override fun showComments(v: View, post: UserPost) {
+                val action = FragmentHomeDirections.actionFragmentHomeToCommentsFragment(post)
+                v.findNavController().navigate(action)
+            }
+
+            override fun userProfile(v: View, userId: kotlin.Long, username: String) {
+                val action = FragmentHomeDirections.actionFragmentHomeToUserProfileFragment(UserBundle().apply {
+                    this.username = username
+                    this.userId = userId.toString()
+                })
+                v.findNavController().navigate(action)
             }
         }
         mLayoutManager = binding.recyclerviewPosts.layoutManager as LinearLayoutManager
@@ -138,15 +165,16 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
                 viewModel.storyMediaLiveData.value = null
             }
         })
-        binding.navigationBottom.btnInbox.setOnClickListener {
-            val action = FragmentHomeDirections.actionFragmentHomeToFragmentInbox()
-            it.findNavController().navigate(action)
-        }
     }
 
-    override fun onStop() {
-        super.onStop()
-        mPlayManager.stopPlay()
+    override fun onPause() {
+        super.onPause()
+        mPlayManager.pausePlay()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mPlayManager.resumePlay()
     }
 
     override fun onDestroy() {
@@ -193,16 +221,17 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             val userData = UserBundle().apply {
                 username = data.replace("@", "")
             }
+            val action = FragmentHomeDirections.actionFragmentHomeToUserProfileFragment(userData)
+            v.findNavController().navigate(action)
         } else if (data.startsWith("#")) {
-
+            CustomToast.show(requireContext(),getString(R.string.hashtag_not_support),Toast.LENGTH_SHORT)
         } else {
             try {
                 val num = Long.parseLong(data)
                 val userData = UserBundle().apply {
                     userId = num.toString()
                 }
-                val action =
-                    CommentsFragmentDirections.actionCommentsFragmentToUserProfileFragment(userData)
+                val action = FragmentHomeDirections.actionFragmentHomeToUserProfileFragment(userData)
                 v.findNavController().navigate(action)
             } catch (e: Exception) {
 

@@ -74,4 +74,11 @@ class HomeViewModel @Inject constructor(application: Application,var mUseCase: U
             mUseCase.loadMoreTimelinePosts(_postsLiveData,it.nextMaxId)
         }
     }
+
+    fun likeComment(id: Long) {
+        mUseCase.likeComment(id.toString())
+    }
+    fun unlikeComment(id: Long) {
+        mUseCase.unlikeComment(id.toString())
+    }
 }

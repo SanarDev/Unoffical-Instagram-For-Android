@@ -194,19 +194,20 @@
                             android:orientation="horizontal"
                             app:layout_constraintTop_toBottomOf="@id/txt_bio">
 
-                            <androidx.appcompat.widget.AppCompatButton
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_margin="3dp"
-                                android:layout_weight="1"
-                                android:background="@drawable/bg_profile_option"
-                                android:padding="0dp"
-                                android:text="@string/following"
-                                android:textAllCaps="false"
-                                android:textColor="@color/text_very_light"
-                                android:textStyle="normal" />
+<!--                            <androidx.appcompat.widget.AppCompatButton-->
+<!--                                android:layout_width="0dp"-->
+<!--                                android:layout_height="match_parent"-->
+<!--                                android:layout_margin="3dp"-->
+<!--                                android:layout_weight="1"-->
+<!--                                android:background="@drawable/bg_profile_option"-->
+<!--                                android:padding="0dp"-->
+<!--                                android:text="@string/following"-->
+<!--                                android:textAllCaps="false"-->
+<!--                                android:textColor="@color/text_very_light"-->
+<!--                                android:textStyle="normal" />-->
 
                             <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/btn_message"
                                 android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_margin="3dp"
@@ -219,19 +220,19 @@
                                 android:textStyle="normal" />
 
 
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_margin="3dp"
-                                android:background="@drawable/bg_profile_option"
-                                android:padding="0dp"
-                                android:paddingStart="5dp"
-                                android:paddingEnd="5dp"
-                                android:src="@drawable/ic_arrow_bottom"
-                                android:textAllCaps="false"
-                                android:textColor="@color/text_very_light"
-                                android:textStyle="normal"
-                                android:tint="@color/text_very_light" />
+<!--                            <androidx.appcompat.widget.AppCompatImageView-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="match_parent"-->
+<!--                                android:layout_margin="3dp"-->
+<!--                                android:background="@drawable/bg_profile_option"-->
+<!--                                android:padding="0dp"-->
+<!--                                android:paddingStart="5dp"-->
+<!--                                android:paddingEnd="5dp"-->
+<!--                                android:src="@drawable/ic_arrow_bottom"-->
+<!--                                android:textAllCaps="false"-->
+<!--                                android:textColor="@color/text_very_light"-->
+<!--                                android:textStyle="normal"-->
+<!--                                android:tint="@color/text_very_light" />-->
 
                         </LinearLayout>
                     </LinearLayout>

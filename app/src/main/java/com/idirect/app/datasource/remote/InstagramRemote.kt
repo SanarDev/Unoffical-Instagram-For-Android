@@ -247,11 +247,11 @@ interface InstagramRemote {
         @HeaderMap header: Map<String, String>,
         @Path("media_id") mediaId: String,
         @Query("min_id") minId:String,
-        @Query("inventory_source") inventorySource:String = "media_or_ad",
+        @Query("inventory_source") inventorySource:String = "user_connected",
         @Query("analytics_module") analyticsModule:String = "comments_v2",
         @Query("can_support_threading") canSupportThreading:Boolean = true,
         @Query("is_carousel_bumped_post") isCarouselBumpedPost:Boolean = true
-    ):Call<ResponseBody>
+    ):Call<InstagramCommentResponse>
 
     @POST(InstagramConstants.API_VERSION  + "media/{media_id}/comment_like/")
     fun likeComment(@HeaderMap header: Map<String, String>, @Path("media_id")mediaId: String,@Body requestBody: RequestBody):Call<ResponseBody>
@@ -275,7 +275,7 @@ interface InstagramRemote {
     fun sendStoryReaction(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/reel_share/")
-    fun sendStoryReplyMessage(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Call<ResponseBody>
+    fun sendStoryReplyMessage(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody,@Query("media_type") mediaType:String):Call<ResponseBody>
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/media_share/")
     fun shareMedia(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody,@Query("media_type") mediaType:String):Call<ResponseBody>

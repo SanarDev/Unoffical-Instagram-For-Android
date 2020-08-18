@@ -20,9 +20,11 @@ import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.FragmentUserProfileBinding
 import com.idirect.app.databinding.LayoutUserPostBinding
+import com.idirect.app.datasource.model.User
 import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
+import com.idirect.app.ui.direct.DirectBundle
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
 import com.vanniktech.emoji.EmojiManager
@@ -34,6 +36,9 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
     companion object{
         const val NAME_TAG = "user_profile"
     }
+
+    private lateinit var user: User
+
     @Inject
     lateinit var mGlideRequestManager: RequestManager
 
@@ -93,7 +98,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
 
         viewModel.userLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
-                val user = it.data!!.user
+                user = it.data!!.user
                 userId = user.pk.toString()
                 binding.txtUsername.text = user.username
                 binding.txtBio.text = user.biography
@@ -140,6 +145,16 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
 
         binding.btnBack.setOnClickListener {
             requireActivity().onBackPressed()
+        }
+        binding.btnMessage.setOnClickListener {
+            val data = DirectBundle().apply {
+                this.userId = user.pk
+                this.profileImage = user.profilePicUrl
+                this.isGroup = false
+                this.username = user.username
+            }
+            val action = UserProfileFragmentDirections.actionUserProfileFragmentToFragmentDirect(data)
+            it.findNavController().navigate(action)
         }
 
         binding.recyclerviewPosts.addOnScrollListener(object: RecyclerView.OnScrollListener() {

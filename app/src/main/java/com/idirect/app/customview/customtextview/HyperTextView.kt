@@ -10,10 +10,11 @@ import android.text.style.URLSpan
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.OnTouchListener
 import android.widget.TextView
 import com.idirect.app.R
 import com.idirect.app.extentions.color
+import com.idirect.app.extentions.getLinesOf
+import com.idirect.app.utils.HtmlUtils
 import com.idirect.app.utils.URLSpanNoUnderline
 import com.vanniktech.emoji.EmojiTextView
 
@@ -62,7 +63,7 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
         }
     }
 
-    fun setText(username: String, userId: Long, text: String, haveLimit: Int = FLAG_NO_LIMIT) {
+    fun setText(username: String, userId: Long, text: String, haveLineLimit: Int = FLAG_NO_LIMIT) {
         this.sourceText = text
         this.username = username
         this.userId = userId
@@ -71,12 +72,13 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
         val usernameSequence = getHtmlSpannable(hyperUsername)
         val finalText: String
         val moreSequence: Spanned?
-        if (haveLimit == FLAG_NO_LIMIT || text.length <= haveLimit) {
+        if (haveLineLimit == FLAG_NO_LIMIT || text.lines().size <= haveLineLimit) {
             finalText = sourceText!!
             moreSequence = null
         } else {
-            finalText = text.substring(0, haveLimit)
-            moreSequence = getHtmlSpannable("<a href=\"$MORE_BUTTON_ID\">&nbsp;&nbsp;More...&nbsp;&nbsp;</a>")
+            val linesText = text.getLinesOf(0,haveLineLimit)
+            finalText =if(linesText.length > 200) linesText.substring(0,200) else linesText
+            moreSequence = getHtmlSpannable("<a href=\"$MORE_BUTTON_ID\">${HtmlUtils.SPACE}${HtmlUtils.SPACE}More...${HtmlUtils.SPACE}${HtmlUtils.SPACE}</a>")
         }
         val textSequence = getHtmlSpannable(getHyperText(finalText))
         val spannable = SpannableStringBuilder()

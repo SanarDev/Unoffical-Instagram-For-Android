@@ -76,14 +76,6 @@
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 tools:listitem="@layout/layout_user_detail_post" />
 
-
-            <include
-                android:id="@+id/navigation_bottom"
-                layout="@layout/layout_navigation_bottom"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:layout_gravity="bottom" />
-
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
     </LinearLayout>
 </layout>

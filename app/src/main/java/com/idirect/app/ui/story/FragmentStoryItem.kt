@@ -35,6 +35,7 @@ import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
+import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentStoryItemBinding
 import com.idirect.app.databinding.LayoutEmojiBinding
 import com.idirect.app.datasource.model.EmojiModel
@@ -146,17 +147,10 @@ class FragmentStoryItem(var userId: Long,var mStoryActionListener: StoryActionLi
         })
         viewModel.storyReactionResult.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
-                val toast: Toast = Toast.makeText(
-                    requireContext(),
+                CustomToast.show(requireContext(),
                     getString(R.string.reaction_send),
                     Toast.LENGTH_LONG
                 )
-                val view = toast.view
-                view.setBackgroundResource(R.drawable.bg_toast)
-                val text: TextView = view.findViewById(android.R.id.message)
-                text.setTextColor(Color.WHITE)
-                toast.setGravity(Gravity.CENTER, 0, 0)
-                toast.show()
             }
         })
 

@@ -48,7 +48,6 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
     val connectionState = MutableLiveData<ConnectionStateEvent>()
 
     // current thread
-    var currentThreadId: String? = null
     var currentThread: Thread? = null
 
     //messages
@@ -173,7 +172,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
                 currentVoiceFileName!!
             )
             currentThread!!.messages.add(0, message)
-            threadNewMessageLiveData.value = Pair(currentThreadId!!, message)
+            threadNewMessageLiveData.value = Pair(currentThread!!.threadId!!, message)
             val users = currentThread!!.users
             mUseCase.sendMediaVoice(
                 currentThread!!.threadId,
@@ -354,7 +353,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
         return resources.dpToPx(standardWidth) + plus
     }
 
-    fun uploadMedias(threadId: String = currentThreadId!!, items: List<String>) {
+    fun uploadMedias(threadId: String = currentThread!!.threadId, items: List<String>) {
         if (items.isEmpty()) {
             return
         }
@@ -450,7 +449,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
         return arrayOf(standardWidth, standardHeight)
     }
 
-    fun getThreadProfilePic(threadId: String = currentThreadId!!): String {
+    fun getThreadProfilePic(threadId: String = currentThread!!.threadId!!): String {
         return getThreadById(threadId)!!.users[0].profilePicUrl
     }
 
@@ -461,7 +460,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
     }
 
 
-    fun getUserProfilePic(userId: Long, threadId: String = currentThreadId!!): String? {
+    fun getUserProfilePic(userId: Long, threadId: String = currentThread!!.threadId!!): String? {
         val thread = getThreadById(threadId)
         for (user in thread.users) {
             if (user.pk!! == userId) {
@@ -471,7 +470,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
         return null
     }
 
-    fun getUsername(userId: Long, threadId: String = currentThreadId!!): String? {
+    fun getUsername(userId: Long, threadId: String = currentThread!!.threadId!!): String? {
         val thread = getThreadById(threadId)
         for (user in thread.users) {
             if (user.pk!! == userId) {
@@ -591,7 +590,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
     }
 
 
-    fun getThreadById(threadId: String = currentThreadId!!): Thread {
+    fun getThreadById(threadId: String = currentThread!!.threadId!!): Thread {
         for (thread in instagramDirect!!.inbox.threads) {
             if (thread.threadId == threadId) {
                 return thread
@@ -764,7 +763,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
     }
 
 
-    fun deleteMessage(threadId: String = currentThreadId!!, itemId: String) {
+    fun deleteMessage(threadId: String = currentThread!!.threadId!!, itemId: String) {
         val thread = getThreadById(threadId)!!
         val iterator = thread.messages.iterator()
         while (iterator.hasNext()) {
@@ -818,6 +817,14 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
             }
         }
         return "[[$pk]]";
+    }
+    fun getThreadByUserId(pk: Long): Thread {
+        for(thread in instagramDirect!!.inbox.threads){
+            if(!thread.isGroup && thread.users[0].pk == pk){
+                return thread
+            }
+        }
+        return Thread();
     }
 
 }

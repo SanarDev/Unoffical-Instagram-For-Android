@@ -12,16 +12,17 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 
-class PlayManager constructor(context:Context){
+class PlayManager constructor(context: Context) {
 
-    companion object{
+    companion object {
         const val NONE = -1
     }
 
-    interface OnPlayChangeListener{
+    interface OnPlayChangeListener {
         fun onStart()
         fun onStop()
     }
+
     var player: SimpleExoPlayer = SimpleExoPlayer.Builder(context).build()
     var playChangeLiveData = MutableLiveData<PlayProperties>()
 
@@ -36,20 +37,20 @@ class PlayManager constructor(context:Context){
 
     init {
 
-        player.addListener(object : Player.EventListener{
+        player.addListener(object : Player.EventListener {
             override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                when(playbackState){
-                    Player.STATE_ENDED ->{
+                when (playbackState) {
+                    Player.STATE_ENDED -> {
                         seekbarPlay?.progress = 0
                         btnPlay?.setImageResource(R.drawable.ic_play_circle)
                         currentPlayerId = ""
                         isFinishMedia = true
                         player.seekTo(0)
                     }
-                    Player.STATE_READY ->{
+                    Player.STATE_READY -> {
                         isFinishMedia = false
                     }
-                    else ->{
+                    else -> {
 
                     }
                 }
@@ -57,21 +58,30 @@ class PlayManager constructor(context:Context){
         })
         val handler = Handler()
         runnable = Runnable {
-            if(!isFinishMedia){
+            if (!isFinishMedia) {
                 seekbarPlay?.progress = (player.currentPosition * 100 / player.duration).toInt()
             }
             handler.postDelayed(runnable, 100)
         }
         handler.postDelayed(runnable, 0)
     }
-    fun startPlay(mediaSource: MediaSource,playerId:String,seekTo:Long=0) {
+
+    fun startPlay(mediaSource: MediaSource, playerId: String, seekTo: Long = 0) {
         seekbarPlay?.progress = 0
         btnPlay?.setImageResource(R.drawable.ic_play_circle)
         player.prepare(mediaSource)
         player.playWhenReady = true
         player.seekTo(seekTo)
-        playChangeLiveData.postValue(PlayProperties(player.playWhenReady,playerId,currentPlayerId))
-        currentPlayerId = playerId
+        if(currentPlayerId != playerId){
+            playChangeLiveData.postValue(
+                PlayProperties(
+                    player.playWhenReady,
+                    playerId,
+                    currentPlayerId
+                )
+            )
+            currentPlayerId = playerId
+        }
     }
 
     fun releasePlay() {
@@ -79,8 +89,9 @@ class PlayManager constructor(context:Context){
     }
 
     fun stopPlay() {
+        pausePlay()
         player.stop()
-        playChangeLiveData.postValue(PlayProperties(player.playWhenReady,currentPlayerId,null))
+        playChangeLiveData.postValue(PlayProperties(player.playWhenReady, currentPlayerId, null))
         currentPlayerId = ""
     }
 
@@ -88,15 +99,18 @@ class PlayManager constructor(context:Context){
         player.playWhenReady = true
     }
 
-    fun disableSound(){
+    fun disableSound() {
         player.volume = 0.0f
     }
-    fun pausePlay(){
+
+    fun pausePlay() {
         player.playWhenReady = false
     }
-    fun enableSound(){
+
+    fun enableSound() {
         player.volume = 1.0f
     }
+
     fun isSoundEnable(): Boolean {
         return player.volume == 1.0f
     }

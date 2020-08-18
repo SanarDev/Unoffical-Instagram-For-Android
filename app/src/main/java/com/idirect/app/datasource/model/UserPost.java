@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class UserPost {
+public class UserPost implements Parcelable {
 
     @SerializedName("taken_at")
     @Expose
@@ -163,6 +163,67 @@ public class UserPost {
     @SerializedName("is_eof")
     @Expose
     private boolean isEof;
+
+    protected UserPost(Parcel in) {
+        takenAt = in.readLong();
+        pk = in.readLong();
+        id = in.readString();
+        deviceTimestamp = in.readLong();
+        mediaType = in.readInt();
+        code = in.readString();
+        clientCacheKey = in.readString();
+        filterType = in.readInt();
+        carouselMediaCount = in.readInt();
+        originalWidth = in.readInt();
+        originalHeight = in.readInt();
+        lat = in.readDouble();
+        lng = in.readDouble();
+        canViewerReshare = in.readByte() != 0;
+        captionIsEdited = in.readByte() != 0;
+        commentLikesEnabled = in.readByte() != 0;
+        commentThreadingEnabled = in.readByte() != 0;
+        hashMoreComments = in.readByte() != 0;
+        maxNumVisiblePreviewComments = in.readInt();
+        canViewMorePreviewComments = in.readByte() != 0;
+        commentCount = in.readInt();
+        likeCount = in.readInt();
+        inlineComposerDisplayCondition = in.readString();
+        inlineComposerImpTriggerTime = in.readInt();
+        hasLiked = in.readByte() != 0;
+        topLikers = in.createStringArrayList();
+        photoOfYou = in.readByte() != 0;
+        canViewerSave = in.readByte() != 0;
+        organicTrackingToken = in.readString();
+        isInProfileGrid = in.readByte() != 0;
+        profileGridControlEnabled = in.readByte() != 0;
+        parentCommentId = in.readLong();
+        canSeeInsightsAsBrand = in.readByte() != 0;
+        shouldRequestAds = in.readByte() != 0;
+        hasMoreComments = in.readByte() != 0;
+        if (in.readByte() == 0) {
+            deletedReason = null;
+        } else {
+            deletedReason = in.readLong();
+        }
+        mainFeedCarouselStartingMediaId = in.readString();
+        mainFeedCarouselHasUnseenCoverMedia = in.readByte() != 0;
+        inventorySource = in.readString();
+        isSeen = in.readByte() != 0;
+        isEof = in.readByte() != 0;
+        productType = in.readString();
+    }
+
+    public static final Creator<UserPost> CREATOR = new Creator<UserPost>() {
+        @Override
+        public UserPost createFromParcel(Parcel in) {
+            return new UserPost(in);
+        }
+
+        @Override
+        public UserPost[] newArray(int size) {
+            return new UserPost[size];
+        }
+    };
 
     public long getParentCommentId() {
         return parentCommentId;
@@ -502,5 +563,61 @@ public class UserPost {
 
     public void setCarouselMedias(List<CarouselMedia> carouselMedias) {
         this.carouselMedias = carouselMedias;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(takenAt);
+        dest.writeLong(pk);
+        dest.writeString(id);
+        dest.writeLong(deviceTimestamp);
+        dest.writeInt(mediaType);
+        dest.writeString(code);
+        dest.writeString(clientCacheKey);
+        dest.writeInt(filterType);
+        dest.writeInt(carouselMediaCount);
+        dest.writeInt(originalWidth);
+        dest.writeInt(originalHeight);
+        dest.writeDouble(lat);
+        dest.writeDouble(lng);
+        dest.writeByte((byte) (canViewerReshare ? 1 : 0));
+        dest.writeByte((byte) (captionIsEdited ? 1 : 0));
+        dest.writeByte((byte) (commentLikesEnabled ? 1 : 0));
+        dest.writeByte((byte) (commentThreadingEnabled ? 1 : 0));
+        dest.writeByte((byte) (hashMoreComments ? 1 : 0));
+        dest.writeInt(maxNumVisiblePreviewComments);
+        dest.writeByte((byte) (canViewMorePreviewComments ? 1 : 0));
+        dest.writeInt(commentCount);
+        dest.writeInt(likeCount);
+        dest.writeString(inlineComposerDisplayCondition);
+        dest.writeInt(inlineComposerImpTriggerTime);
+        dest.writeByte((byte) (hasLiked ? 1 : 0));
+        dest.writeStringList(topLikers);
+        dest.writeByte((byte) (photoOfYou ? 1 : 0));
+        dest.writeByte((byte) (canViewerSave ? 1 : 0));
+        dest.writeString(organicTrackingToken);
+        dest.writeByte((byte) (isInProfileGrid ? 1 : 0));
+        dest.writeByte((byte) (profileGridControlEnabled ? 1 : 0));
+        dest.writeLong(parentCommentId);
+        dest.writeByte((byte) (canSeeInsightsAsBrand ? 1 : 0));
+        dest.writeByte((byte) (shouldRequestAds ? 1 : 0));
+        dest.writeByte((byte) (hasMoreComments ? 1 : 0));
+        if (deletedReason == null) {
+            dest.writeByte((byte) 0);
+        } else {
+            dest.writeByte((byte) 1);
+            dest.writeLong(deletedReason);
+        }
+        dest.writeString(mainFeedCarouselStartingMediaId);
+        dest.writeByte((byte) (mainFeedCarouselHasUnseenCoverMedia ? 1 : 0));
+        dest.writeString(inventorySource);
+        dest.writeByte((byte) (isSeen ? 1 : 0));
+        dest.writeByte((byte) (isEof ? 1 : 0));
+        dest.writeString(productType);
     }
 }

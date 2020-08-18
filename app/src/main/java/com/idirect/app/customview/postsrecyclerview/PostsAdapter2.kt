@@ -54,7 +54,7 @@ class PostsAdapter2(
     var context: Context,
     var mHyperTextClick: HyperTextView.OnHyperTextClick,
     var mPlayManager: PlayManager,
-    viewLifecycleOwner:LifecycleOwner,
+    viewLifecycleOwner: LifecycleOwner,
     var items: List<UserPost>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -66,8 +66,8 @@ class PostsAdapter2(
     var currentMediaPosition: Int = PlayManager.NONE
     private var displayWidth = DisplayUtils.getScreenWidth()
     private var displayHeight = DisplayUtils.getScreenHeight()
-    private var adapters = HashMap<Int,CollectionMediaAdapter>()
-    var mListener:PostsRecyclerListener?=null
+    private var adapters = HashMap<Int, CollectionMediaAdapter>()
+    var mListener: PostsRecyclerListener? = null
 
     init {
         mPlayManager.playChangeLiveData.observe(viewLifecycleOwner, Observer {
@@ -86,7 +86,8 @@ class PostsAdapter2(
                             val carousel = item.carouselMedias[indexCarousel]
                             if (carousel.id == it.currentPlayId) {
                                 carousel.videoVersions[0].isPlay = false
-                                carousel.videoVersions[0].playPosition = mPlayManager.player.currentPosition
+                                carousel.videoVersions[0].playPosition =
+                                    mPlayManager.player.currentPosition
                                 adapters[index]?.notifyItemChanged(indexCarousel)
                                 return@Observer
                             }
@@ -116,6 +117,7 @@ class PostsAdapter2(
             }
         })
     }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val cardView = CardView(parent.context).apply {
             layoutParams = RecyclerView.LayoutParams(
@@ -154,19 +156,20 @@ class PostsAdapter2(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
 
-        val txtLocationName:AppCompatTextView
-        val layoutLikersProfile:LinearLayout
-        val layoutLikes:LinearLayout
-        val layoutComment:LinearLayout
-        val txtLikesCount:HyperTextView
-        val btnViewComments:AppCompatTextView
-        val btnTopLikerUsername:AppCompatTextView
-        val btnOthers:AppCompatTextView
-        val txtUsername:AppCompatTextView
-        val txtCaption:AppCompatTextView
-        val btnComment:AppCompatImageView
-        val btnLike:AppCompatImageView
-        val imgProfile:CircleImageView
+        val txtLocationName: AppCompatTextView
+        val layoutLikersProfile: LinearLayout
+        val layoutLikes: LinearLayout
+        val layoutComment: LinearLayout
+        val txtLikesCount: HyperTextView
+        val btnViewComments: AppCompatTextView
+        val btnTopLikerUsername: AppCompatTextView
+        val btnOthers: AppCompatTextView
+        val txtUsername: AppCompatTextView
+        val txtCaption: AppCompatTextView
+        val btnComment: AppCompatImageView
+        val btnLike: AppCompatImageView
+        val btnShare: AppCompatImageView
+        val imgProfile: CircleImageView
 
         when (item.mediaType) {
             InstagramConstants.MediaType.IMAGE.type -> {
@@ -179,15 +182,16 @@ class PostsAdapter2(
 //                btnTopLikerUsername = mHolder.btnTopLikerUsername
 //                btnOthers = mHolder.btnOthers
                 txtUsername = mHolder.txtUsername
-                txtCaption= mHolder.txtCaption
-                imgProfile= mHolder.imgProfile
+                txtCaption = mHolder.txtCaption
+                imgProfile = mHolder.imgProfile
                 btnComment = mHolder.btnComment
                 layoutComment = mHolder.layoutComment
                 btnViewComments = mHolder.btnViewComment
+                btnShare = mHolder.btnShare
                 btnLike = mHolder.btnLike
 
                 val candidate = item.imageVersions2.candidates[0]
-                loadImage(candidate.width,candidate.height,candidate.url,mHolder.imgPhoto)
+                loadImage(candidate.width, candidate.height, candidate.url, mHolder.imgPhoto)
             }
             InstagramConstants.MediaType.VIDEO.type -> {
                 val mHolder = holder as PostVideoHolder
@@ -199,8 +203,9 @@ class PostsAdapter2(
 //                btnTopLikerUsername = mHolder.btnTopLikerUsername
 //                btnOthers = mHolder.btnOthers
                 txtUsername = mHolder.txtUsername
-                txtCaption= mHolder.txtCaption
-                imgProfile= mHolder.imgProfile
+                txtCaption = mHolder.txtCaption
+                imgProfile = mHolder.imgProfile
+                btnShare = mHolder.btnShare
                 btnComment = mHolder.btnComment
                 layoutComment = mHolder.layoutComment
                 btnViewComments = mHolder.btnViewComment
@@ -214,7 +219,12 @@ class PostsAdapter2(
                     height = size[1]
                 }
 
-                loadImage(previewImage.width,previewImage.height,previewImage.url,mHolder.photoView)
+                loadImage(
+                    previewImage.width,
+                    previewImage.height,
+                    previewImage.url,
+                    mHolder.photoView
+                )
                 /* comment icon start*/
                 if (!item.isCommentThreadingEnabled) {
                     mHolder.btnComment.visibility = View.GONE
@@ -224,17 +234,17 @@ class PostsAdapter2(
                 /* comment icon end*/
 
                 if (video.isPlay) {
-                    val mediaSource:MediaSource =
+                    val mediaSource: MediaSource =
                         ProgressiveMediaSource.Factory(dataSource)
                             .createMediaSource(Uri.parse(video.url))
                     mHolder.videoView.player = mPlayManager.player
                     mHolder.photoView.visibility = View.GONE
                     mHolder.imgPlay.visibility = View.GONE
-                    mPlayManager.startPlay(mediaSource,item.id)
+                    mPlayManager.startPlay(mediaSource, item.id)
                     mHolder.videoView.showController()
                     currentMediaPosition = position
                     mGlide.clear(mHolder.photoView)
-                }else{
+                } else {
                     if (mPlayManager.currentPlayerId == item.id) {
                         mPlayManager.stopPlay()
                     }
@@ -259,26 +269,31 @@ class PostsAdapter2(
 //                btnTopLikerUsername = mHolder.btnTopLikerUsername
 //                btnOthers = mHolder.btnOthers
                 txtUsername = mHolder.txtUsername
-                txtCaption= mHolder.txtCaption
-                imgProfile= mHolder.imgProfile
+                txtCaption = mHolder.txtCaption
+                imgProfile = mHolder.imgProfile
                 btnComment = mHolder.btnComment
+                btnShare = mHolder.btnShare
                 layoutComment = mHolder.layoutComment
                 btnViewComments = mHolder.btnViewComment
                 btnLike = mHolder.btnLike
 
                 mHolder.txtPagePosition.text =
-                    String.format(context.getString(R.string.page_position), 1, item.carouselMedias.size)
+                    String.format(
+                        context.getString(R.string.page_position),
+                        1,
+                        item.carouselMedias.size
+                    )
                 var maxWidth = 0
                 var maxHeight = 0
-                for(media in item.carouselMedias){
-                    if(media.originalWidth > maxWidth){
+                for (media in item.carouselMedias) {
+                    if (media.originalWidth > maxWidth) {
                         maxWidth = media.originalWidth
                     }
-                    if(media.originalHeight > maxHeight){
+                    if (media.originalHeight > maxHeight) {
                         maxHeight = media.originalHeight
                     }
                 }
-                val size = getStandardVideoSize(maxWidth,maxHeight)
+                val size = getStandardVideoSize(maxWidth, maxHeight)
                 mHolder.recyclerviewMedia.layoutParams.apply {
                     width = displayWidth
                     height = size[1]
@@ -287,7 +302,8 @@ class PostsAdapter2(
                 adapters.put(position, CollectionMediaAdapter(position, item.carouselMedias))
                 mHolder.recyclerviewMedia.adapter = adapters[position]
 
-                mHolder.recyclerviewMedia.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                mHolder.recyclerviewMedia.addOnScrollListener(object :
+                    RecyclerView.OnScrollListener() {
                     override fun onScrollStateChanged(
                         recyclerView: RecyclerView,
                         newState: Int
@@ -301,7 +317,8 @@ class PostsAdapter2(
                                 item.carouselMedias.size
                             )
                             if (item.carouselMedias[visibleItem].mediaType == InstagramConstants.MediaType.VIDEO.type &&
-                                mPlayManager.currentPlayerId != item.carouselMedias[visibleItem].id) {
+                                mPlayManager.currentPlayerId != item.carouselMedias[visibleItem].id
+                            ) {
                                 item.carouselMedias[visibleItem].videoVersions[0].isPlay = true
                                 recyclerView.adapter!!.notifyDataSetChanged()
                             }
@@ -309,7 +326,7 @@ class PostsAdapter2(
                     }
                 })
             }
-            else ->{
+            else -> {
                 val mHolder = holder as PostImageHolder
 
                 txtLocationName = mHolder.txtLocation
@@ -319,15 +336,48 @@ class PostsAdapter2(
 //                btnTopLikerUsername = mHolder.btnTopLikerUsername
 //                btnOthers = mHolder.btnOthers
                 txtUsername = mHolder.txtUsername
-                txtCaption= mHolder.txtCaption
-                imgProfile= mHolder.imgProfile
+                txtCaption = mHolder.txtCaption
+                imgProfile = mHolder.imgProfile
                 btnComment = mHolder.btnComment
+                btnShare = mHolder.btnShare
                 layoutComment = mHolder.layoutComment
                 btnViewComments = mHolder.btnViewComment
                 btnLike = mHolder.btnLike
             }
         }
 
+        val onClickListener = object : View.OnClickListener {
+            override fun onClick(v: View?) {
+                when(v!!.id){
+                    txtUsername.id ->{
+                        mListener?.userProfile(v, item.user.pk, item.user.username)
+                    }
+                    btnComment.id ->{
+                        mListener?.showComments(v!!, item)
+                    }
+                    btnViewComments.id ->{
+                        mListener?.showComments(v!!, item)
+                    }
+                    btnShare.id ->{
+                        mListener?.shareMedia(v, item.id, item.mediaType)
+                    }
+                    btnLike.id ->{
+                        if (item.isHasLiked) {
+                            btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
+                            btnLike.setColorFilter(context.resources.color(R.color.white))
+                            item.likeCount -= 1
+                            mListener?.unlikePost(v, item.id)
+                        } else {
+                            btnLike.setImageResource(R.drawable.instagram_heart_filled_24)
+                            btnLike.setColorFilter(context.resources.color(R.color.red))
+                            item.likeCount += 1
+                            mListener?.likePost(v, item.id)
+                        }
+                        item.isHasLiked = !item.isHasLiked
+                    }
+                }
+            }
+        }
 
         /* Location Start*/
         if (item.location == null) {
@@ -343,7 +393,13 @@ class PostsAdapter2(
         layoutLikersProfile.removeAllViews()
         if (item.facepileTopLikers != null && item.facepileTopLikers.isNotEmpty()) {
             layoutLikersProfile.visibility = View.VISIBLE
-            txtLikesCount.setText(HyperTextView.getLikedByHyperText(item.facepileTopLikers[0].username,item.facepileTopLikers[0].pk,item.likeCount))
+            txtLikesCount.setText(
+                HyperTextView.getLikedByHyperText(
+                    item.facepileTopLikers[0].username,
+                    item.facepileTopLikers[0].pk,
+                    item.likeCount
+                )
+            )
             for (liker in item.facepileTopLikers) {
                 val likerProfile = CircleImageView(context)
                 likerProfile.layoutParams = android.widget.LinearLayout.LayoutParams(
@@ -362,12 +418,14 @@ class PostsAdapter2(
 
 
         txtUsername.text = item.user.username
+        txtUsername.setOnClickListener(onClickListener)
+
         if (item.caption != null) {
             txtCaption.setText(
                 item.caption.user.username,
                 item.caption.user.pk,
                 item.caption.text,
-                50
+                3
             )
             txtCaption.mHyperTextClick = mHyperTextClick
         }
@@ -382,7 +440,7 @@ class PostsAdapter2(
             visible(btnViewComments)
             btnViewComments.text =
                 String.format(context.getString(R.string.view_all_comments), item.commentCount)
-//            btnViewComments.setOnClickListener(showCommentClickListener)
+            btnViewComments.setOnClickListener(onClickListener)
             for (comment in item.previewComments) {
                 val layoutPreviewComment =
                     if (comment.type == InstagramConstants.CommentType.NORMAL.type) {
@@ -415,11 +473,11 @@ class PostsAdapter2(
                     if (!comment.hasLikedComment) {
                         imgLike.setImageResource(R.drawable.instagram_heart_filled_24)
                         imgLike.setColorFilter(context.resources.color(R.color.red))
-                        mListener?.likeComment(comment.pk)
+                        mListener?.likeComment(it, comment.pk)
                     } else {
                         imgLike.setImageResource(R.drawable.instagram_heart_outline_24)
                         imgLike.setColorFilter(context.resources.color(R.color.text_light))
-                        mListener?.unlikeComment(comment.pk)
+                        mListener?.unlikeComment(it, comment.pk)
                     }
                     comment.hasLikedComment = !comment.hasLikedComment
                 }
@@ -428,6 +486,7 @@ class PostsAdapter2(
         } else {
             gone(btnViewComments)
         }
+
         if (item.isHasLiked) {
             btnLike.setImageResource(R.drawable.instagram_heart_filled_24)
             btnLike.setColorFilter(context.resources.color(R.color.red))
@@ -435,20 +494,9 @@ class PostsAdapter2(
             btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
             btnLike.setColorFilter(context.resources.color(R.color.white))
         }
-//        btnComment.setOnClickListener(showCommentClickListener)
-        btnLike.setOnClickListener {
-            if (item.isHasLiked) {
-                btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
-                btnLike.setColorFilter(context.resources.color(R.color.white))
-                item.isHasLiked = false
-                mListener?.unlikePost(item.id)
-            } else {
-                btnLike.setImageResource(R.drawable.instagram_heart_filled_24)
-                btnLike.setColorFilter(context.resources.color(R.color.red))
-                item.isHasLiked = true
-                mListener?.likePost(item.id)
-            }
-        }
+        btnComment.setOnClickListener(onClickListener)
+        btnShare.setOnClickListener(onClickListener)
+        btnLike.setOnClickListener(onClickListener)
     }
 
     private fun loadImage(width: Int, height: Int, url: String, imgPhoto: AppCompatImageView) {
@@ -483,8 +531,8 @@ class PostsAdapter2(
         val btnComment: AppCompatImageView
         val btnShare: AppCompatImageView
         val frameLayoutMedia: FrameLayout
-        val layoutComment:LinearLayout
-        val layoutLikersProfile:LinearLayout
+        val layoutComment: LinearLayout
+        val layoutLikersProfile: LinearLayout
 
 
         init {
@@ -515,6 +563,7 @@ class PostsAdapter2(
                 ).apply {
                     this.marginStart = context.resources.dpToPx(10f)
                 }
+                id = View.generateViewId()
             }
             linearLayoutHeader.addView(imgProfile)
 
@@ -538,6 +587,7 @@ class PostsAdapter2(
                 setTextColor(context.color(R.color.text_very_light))
                 typeface = Typeface.DEFAULT_BOLD;
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
+                id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtUsername)
 
@@ -548,7 +598,8 @@ class PostsAdapter2(
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtLocation)
 
@@ -559,6 +610,7 @@ class PostsAdapter2(
                 ).apply {
                     this.topMargin = resources.dpToPx(10f)
                 }
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(frameLayoutMedia)
 
@@ -576,6 +628,7 @@ class PostsAdapter2(
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
                 scaleType = ImageView.ScaleType.CENTER_CROP
+                id = View.generateViewId()
             }
             frameLayoutMedia.addView(photoView)
 
@@ -587,6 +640,7 @@ class PostsAdapter2(
                 scaleType = ImageView.ScaleType.CENTER_CROP
                 setImageResource(R.drawable.ic_play_circle)
                 setColorFilter(context.color(R.color.white))
+                id = View.generateViewId()
             }
             frameLayoutMedia.addView(imgPlay)
 
@@ -622,6 +676,7 @@ class PostsAdapter2(
                     setColorFilter(context.color(R.color.white))
                     setImageResource(R.drawable.instagram_heart_outline_24)
                 }
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnLike)
 
@@ -642,6 +697,7 @@ class PostsAdapter2(
                     setColorFilter(context.color(R.color.white))
                     setImageResource(R.drawable.instagram_comment_outline_24)
                 }
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnComment)
 
@@ -651,16 +707,17 @@ class PostsAdapter2(
                     RelativeLayout.LayoutParams.WRAP_CONTENT,
                     RelativeLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    addRule(RelativeLayout.END_OF, btnComment.id)
-                    setPadding(
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f)
-                    )
-                    setColorFilter(context.color(R.color.white))
-                    setImageResource(R.drawable.instagram_direct_outline_24)
+                    this.addRule(RelativeLayout.END_OF, btnComment.id)
                 }
+                setPadding(
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f)
+                )
+                setColorFilter(context.color(R.color.white))
+                setImageResource(R.drawable.instagram_direct_outline_24)
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnShare)
 
@@ -677,7 +734,10 @@ class PostsAdapter2(
             linearLayoutParent.addView(linearLayoutLikes)
 
             val linearLayoutContainerLike = LinearLayout(itemView.context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.marginStart = resources.dpToPx(10f)
                 }
                 orientation = LinearLayout.HORIZONTAL
@@ -685,9 +745,13 @@ class PostsAdapter2(
             linearLayoutParent.addView(linearLayoutContainerLike)
 
             layoutLikersProfile = LinearLayout(itemView.context).apply {
-                layoutParams =  LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     marginEnd = resources.dpToPx(5f)
                 }
+                id = View.generateViewId()
                 orientation = LinearLayout.HORIZONTAL
             }
             linearLayoutContainerLike.addView(layoutLikersProfile)
@@ -698,6 +762,7 @@ class PostsAdapter2(
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
+                id = View.generateViewId()
             }
             linearLayoutContainerLike.addView(txtLikeCount)
 
@@ -711,6 +776,7 @@ class PostsAdapter2(
                     this.topMargin = resources.dpToPx(5f)
                 }
                 setTextColor(context.color(R.color.text_very_light))
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(txtCaption)
 
@@ -724,21 +790,27 @@ class PostsAdapter2(
                     this.topMargin = resources.dpToPx(5f)
                 }
                 setTextColor(context.color(R.color.text_light))
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(btnViewComment)
 
 
             layoutComment = LinearLayout(itemView.context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.marginStart = resources.dpToPx(10f)
                     this.marginEnd = resources.dpToPx(10f)
                     this.topMargin = resources.dpToPx(5f)
                 }
                 orientation = LinearLayout.VERTICAL
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(layoutComment)
         }
     }
+
     inner class PostImageHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
@@ -752,7 +824,7 @@ class PostsAdapter2(
         val btnComment: AppCompatImageView
         val btnShare: AppCompatImageView
         val layoutComment: LinearLayout
-        val layoutLikersProfile:LinearLayout
+        val layoutLikersProfile: LinearLayout
 
         init {
             val linearLayoutParent = LinearLayout(itemView.context).apply {
@@ -782,6 +854,7 @@ class PostsAdapter2(
                 ).apply {
                     this.marginStart = context.resources.dpToPx(10f)
                 }
+                id = View.generateViewId()
             }
             linearLayoutHeader.addView(imgProfile)
 
@@ -805,6 +878,7 @@ class PostsAdapter2(
                 )
                 setTextColor(context.color(R.color.text_very_light))
                 typeface = Typeface.DEFAULT_BOLD;
+                id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtUsername)
 
@@ -816,6 +890,7 @@ class PostsAdapter2(
                 )
                 setTextColor(context.color(R.color.text_very_light))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+                id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtLocation)
 
@@ -826,6 +901,7 @@ class PostsAdapter2(
                 ).apply {
                     this.topMargin = context.resources.dpToPx(10f)
                 }
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(imgPhoto)
 
@@ -860,6 +936,7 @@ class PostsAdapter2(
                     setColorFilter(context.color(R.color.white))
                     setImageResource(R.drawable.instagram_heart_outline_24)
                 }
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnLike)
 
@@ -870,16 +947,17 @@ class PostsAdapter2(
                     RelativeLayout.LayoutParams.WRAP_CONTENT,
                     RelativeLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    addRule(RelativeLayout.END_OF, btnLike.id)
-                    setPadding(
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f)
-                    )
-                    setColorFilter(context.color(R.color.white))
-                    setImageResource(R.drawable.instagram_comment_outline_24)
+                    this.addRule(RelativeLayout.END_OF, btnLike.id)
                 }
+                setPadding(
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f)
+                )
+                setColorFilter(context.color(R.color.white))
+                setImageResource(R.drawable.instagram_comment_outline_24)
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnComment)
 
@@ -889,16 +967,17 @@ class PostsAdapter2(
                     RelativeLayout.LayoutParams.WRAP_CONTENT,
                     RelativeLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    addRule(RelativeLayout.END_OF, btnComment.id)
-                    setPadding(
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f),
-                        resources.dpToPx(5f)
-                    )
-                    setColorFilter(context.color(R.color.white))
-                    setImageResource(R.drawable.instagram_direct_outline_24)
+                    this.addRule(RelativeLayout.END_OF, btnComment.id)
                 }
+                setPadding(
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f),
+                    resources.dpToPx(5f)
+                )
+                setColorFilter(context.color(R.color.white))
+                setImageResource(R.drawable.instagram_direct_outline_24)
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnShare)
 
@@ -915,7 +994,10 @@ class PostsAdapter2(
             linearLayoutParent.addView(linearLayoutLikes)
 
             val linearLayoutContainerLike = LinearLayout(itemView.context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.marginStart = resources.dpToPx(10f)
                 }
                 orientation = LinearLayout.HORIZONTAL
@@ -923,10 +1005,14 @@ class PostsAdapter2(
             linearLayoutParent.addView(linearLayoutContainerLike)
 
             layoutLikersProfile = LinearLayout(itemView.context).apply {
-                layoutParams =  LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     marginEnd = resources.dpToPx(5f)
                 }
                 orientation = LinearLayout.HORIZONTAL
+                id = View.generateViewId()
             }
             linearLayoutContainerLike.addView(layoutLikersProfile)
 
@@ -936,6 +1022,7 @@ class PostsAdapter2(
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
+                id = View.generateViewId()
             }
             linearLayoutContainerLike.addView(txtLikeCount)
 
@@ -949,6 +1036,7 @@ class PostsAdapter2(
                     this.topMargin = resources.dpToPx(5f)
                 }
                 setTextColor(context.color(R.color.text_very_light))
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(txtCaption)
 
@@ -962,21 +1050,27 @@ class PostsAdapter2(
                     this.topMargin = resources.dpToPx(5f)
                 }
                 setTextColor(context.color(R.color.text_light))
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(btnViewComment)
 
 
             layoutComment = LinearLayout(itemView.context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.marginStart = resources.dpToPx(10f)
                     this.marginEnd = resources.dpToPx(10f)
                     this.topMargin = resources.dpToPx(5f)
                 }
                 orientation = LinearLayout.VERTICAL
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(layoutComment)
         }
     }
+
     inner class PostCarouselMediaHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
@@ -986,12 +1080,12 @@ class PostsAdapter2(
         val txtPagePosition: AppCompatTextView
         val btnViewComment: AppCompatTextView
         val txtCaption: HyperTextView
-        val recyclerviewMedia :RecyclerView
+        val recyclerviewMedia: RecyclerView
         val btnLike: AppCompatImageView
         val btnComment: AppCompatImageView
         val btnShare: AppCompatImageView
-        val layoutComment:LinearLayout
-        val layoutLikersProfile:LinearLayout
+        val layoutComment: LinearLayout
+        val layoutLikersProfile: LinearLayout
 
         init {
             val linearLayoutParent = LinearLayout(itemView.context).apply {
@@ -1021,6 +1115,7 @@ class PostsAdapter2(
                 ).apply {
                     this.marginStart = context.resources.dpToPx(10f)
                 }
+                id = View.generateViewId()
             }
             linearLayoutHeader.addView(imgProfile)
 
@@ -1044,6 +1139,7 @@ class PostsAdapter2(
                 )
                 setTextColor(context.color(R.color.text_very_light))
                 typeface = Typeface.DEFAULT_BOLD;
+                id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtUsername)
 
@@ -1055,38 +1151,55 @@ class PostsAdapter2(
                 )
                 setTextColor(context.color(R.color.text_very_light))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+                id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtLocation)
 
             val layoutMedia = RelativeLayout(itemView.context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.topMargin = resources.dpToPx(10f)
                 }
             }
             linearLayoutParent.addView(layoutMedia)
 
             recyclerviewMedia = RecyclerView(itemView.context).apply {
-                layoutParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,RelativeLayout.LayoutParams.WRAP_CONTENT)
-                layoutManager = LinearLayoutManager(context,LinearLayoutManager.HORIZONTAL,false)
+                layoutParams = RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.MATCH_PARENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT
+                )
+                id = View.generateViewId()
+                layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             }
 
-            try{
+            try {
                 val snapHelper = PagerSnapHelper()
                 snapHelper.attachToRecyclerView(recyclerviewMedia)
-            }catch (e: Exception){
+            } catch (e: Exception) {
             }
             layoutMedia.addView(recyclerviewMedia)
 
             txtPagePosition = AppCompatTextView(itemView.context).apply {
-                layoutParams = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT,RelativeLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.addRule(RelativeLayout.ALIGN_PARENT_END)
                     this.addRule(RelativeLayout.ALIGN_PARENT_TOP)
                     this.topMargin = resources.dpToPx(10f)
                     this.marginEnd = resources.dpToPx(10f)
                 }
                 setBackgroundResource(R.drawable.bg_circluar)
-                setPadding(resources.dpToPx(10f),resources.dpToPx(5f),resources.dpToPx(10f),resources.dpToPx(5f))
+                setPadding(
+                    resources.dpToPx(10f),
+                    resources.dpToPx(5f),
+                    resources.dpToPx(10f),
+                    resources.dpToPx(5f)
+                )
                 setTextColor(context.color(R.color.text_very_light))
+                id = View.generateViewId()
             }
             layoutMedia.addView(txtPagePosition)
 
@@ -1121,6 +1234,7 @@ class PostsAdapter2(
                     setColorFilter(context.color(R.color.white))
                     setImageResource(R.drawable.instagram_heart_outline_24)
                 }
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnLike)
 
@@ -1141,6 +1255,7 @@ class PostsAdapter2(
                     setColorFilter(context.color(R.color.white))
                     setImageResource(R.drawable.instagram_comment_outline_24)
                 }
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnComment)
 
@@ -1160,6 +1275,7 @@ class PostsAdapter2(
                     setColorFilter(context.color(R.color.white))
                     setImageResource(R.drawable.instagram_direct_outline_24)
                 }
+                id = View.generateViewId()
             }
             relativeLayoutPostOptions.addView(btnShare)
 
@@ -1176,7 +1292,10 @@ class PostsAdapter2(
             linearLayoutParent.addView(linearLayoutLikes)
 
             val linearLayoutContainerLike = LinearLayout(itemView.context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.marginStart = resources.dpToPx(10f)
                 }
                 orientation = LinearLayout.HORIZONTAL
@@ -1184,10 +1303,14 @@ class PostsAdapter2(
             linearLayoutParent.addView(linearLayoutContainerLike)
 
             layoutLikersProfile = LinearLayout(itemView.context).apply {
-                layoutParams =  LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     marginEnd = resources.dpToPx(5f)
                 }
                 orientation = LinearLayout.HORIZONTAL
+                id = View.generateViewId()
             }
             linearLayoutContainerLike.addView(layoutLikersProfile)
 
@@ -1197,6 +1320,7 @@ class PostsAdapter2(
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
+                id = View.generateViewId()
             }
             linearLayoutContainerLike.addView(txtLikeCount)
 
@@ -1210,6 +1334,7 @@ class PostsAdapter2(
                     this.topMargin = resources.dpToPx(5f)
                 }
                 setTextColor(context.color(R.color.text_very_light))
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(txtCaption)
 
@@ -1223,29 +1348,37 @@ class PostsAdapter2(
                     this.topMargin = resources.dpToPx(5f)
                 }
                 setTextColor(context.color(R.color.text_light))
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(btnViewComment)
 
             layoutComment = LinearLayout(itemView.context).apply {
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     this.marginStart = resources.dpToPx(10f)
                     this.marginEnd = resources.dpToPx(10f)
                     this.topMargin = resources.dpToPx(5f)
                 }
                 orientation = LinearLayout.VERTICAL
+                id = View.generateViewId()
             }
             linearLayoutParent.addView(layoutComment)
         }
     }
 
-    inner class CollectionMediaAdapter constructor(var positionOfAdapter:Int,var items: List<CarouselMedia>) : BaseAdapter() {
+    inner class CollectionMediaAdapter constructor(
+        var positionOfAdapter: Int,
+        var items: List<CarouselMedia>
+    ) : BaseAdapter() {
         override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]
             if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
                 val dataBinding = holder.binding as LayoutCarouselImageBinding
 
                 val condidate = item.imageVersions2.candidates[0]
-                loadImage(condidate.width,condidate.height,condidate.url,dataBinding.imgPhoto)
+                loadImage(condidate.width, condidate.height, condidate.url, dataBinding.imgPhoto)
 //                mPicasso.load(item.imageVersions2.candidates[1].url)
 //                    .into(dataBinding.imgPhoto)
             } else {
@@ -1254,7 +1387,7 @@ class PostsAdapter2(
                 val video = item.videoVersions[1]
                 val image = item.imageVersions2.candidates[0]
 
-                loadImage(image.width,image.height,image.url,dataBinding.photoView)
+                loadImage(image.width, image.height, image.url, dataBinding.photoView)
 //
 //                mPicasso
 //                    .load(image.url)

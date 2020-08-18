@@ -55,6 +55,9 @@ public class InstagramCommentResponse extends StatusResult {
     @SerializedName("next_max_id")
     @Expose
     private String nextMaxId;
+    @SerializedName("next_min_id")
+    @Expose
+    private String nextMinId;
     @JsonIgnore
     private String mediaId;
 
@@ -176,5 +179,13 @@ public class InstagramCommentResponse extends StatusResult {
 
     public void setNextMaxId(String nextMaxId) {
         this.nextMaxId = nextMaxId;
+    }
+
+    public String getNextMinId() {
+        return nextMinId;
+    }
+
+    public void setNextMinId(String nextMinId) {
+        this.nextMinId = nextMinId;
     }
 }

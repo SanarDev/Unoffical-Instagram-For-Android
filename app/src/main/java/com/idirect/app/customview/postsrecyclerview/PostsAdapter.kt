@@ -115,8 +115,8 @@ class PostsAdapter(
 
         }
         val showCommentClickListener = View.OnClickListener {
-            val action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment("")
-            it.findNavController().navigate(action)
+//            val action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment("")
+//            it.findNavController().navigate(action)
         }
 
         val txtLocationName:AppCompatTextView

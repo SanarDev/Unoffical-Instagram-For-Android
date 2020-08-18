@@ -1457,8 +1457,7 @@ class UseCase(
         return result
     }
 
-    fun getPostComments(mediaId: String): MutableLiveData<Resource<InstagramCommentResponse>> {
-        val result = MutableLiveData<Resource<InstagramCommentResponse>>()
+    fun getPostComments(result:MutableLiveData<Resource<InstagramCommentResponse>>,mediaId: String): MutableLiveData<Resource<InstagramCommentResponse>> {
         mInstagramRepository.getPostComments(result, getHeaders(), mediaId)
         return result
     }
@@ -1588,6 +1587,7 @@ class UseCase(
     fun sendStoryReply(
         threadId: String,
         mediaId: String,
+        mediaType: Int,
         reelId: Long,
         message: String
     ): MutableLiveData<Resource<ResponseBody>> {
@@ -1614,7 +1614,12 @@ class UseCase(
             put("reel_id", reelId)
             put("entry", "reel")
         }
-        mInstagramRepository.sendStoryReply(result, getHeaders(), formUrlEncode(data))
+        val strMediaType = if (mediaType == InstagramConstants.MediaType.VIDEO.type) {
+            InstagramConstants.MediaType.VIDEO.strType
+        } else {
+            InstagramConstants.MediaType.IMAGE.strType
+        }
+        mInstagramRepository.sendStoryReply(result, getHeaders(), formUrlEncode(data),strMediaType)
         return result
     }
 
@@ -1707,6 +1712,14 @@ class UseCase(
                 }
             }
         }
+    }
+
+    fun loadMoreComment(
+        result: MutableLiveData<Resource<InstagramCommentResponse>>,
+        mediaId: String,
+        nextMinId: String
+    ) {
+        mInstagramRepository.loadMoreComments(result,getHeaders(),mediaId,nextMinId)
     }
 
 }

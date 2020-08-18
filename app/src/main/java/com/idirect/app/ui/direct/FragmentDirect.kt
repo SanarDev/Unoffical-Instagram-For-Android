@@ -61,6 +61,7 @@ import com.idirect.app.manager.PlayManager
 import com.idirect.app.realtime.commands.*
 import com.idirect.app.realtime.service.RealTimeService
 import com.idirect.app.ui.fullscreen.FullScreenFragment
+import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.playvideo.PlayVideoActivity
 import com.idirect.app.ui.selectimage.SelectImageDialog
@@ -99,19 +100,6 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 //    private var lastSeenAt: Long = 0
 
     companion object {
-        fun open(context: Context, directBundle: DirectBundle) {
-            context.startActivity(Intent(context, FragmentDirect::class.java).apply {
-                putExtra("data", directBundle)
-            })
-        }
-
-        fun getInstance(threadId: String): FragmentDirect {
-            val fragmentDirect = FragmentDirect()
-            fragmentDirect.arguments = Bundle().apply {
-                putString("thread_id", threadId)
-            }
-            return fragmentDirect
-        }
 
         const val TAG = "TEST"
         const val PERMISSION_READ_EXTERNAL_STORAGE_CODE = 101
@@ -148,8 +136,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         super.onViewCreated(view, savedInstanceState)
         mAudioManager = requireContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
+        val directBundle = requireArguments().getParcelable<DirectBundle>("data")!!
         shareViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
-        thread = shareViewModel.getThreadById(shareViewModel.currentThreadId!!)
+        (requireActivity() as MainActivity).isHideNavigationBottom(true)
+
+        initThreadWithBundle(directBundle)
 
         // profile
         binding.txtProfileName.text = thread.threadTitle
@@ -162,9 +153,9 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         } else {
             visible(binding.layoutProfileImageGroup)
             gone(binding.imgProfileImage)
-            mGlideRequestManager.load(thread.users[1].profilePicUrl)
-                .into(binding.profileImageG1)
             mGlideRequestManager.load(thread.users[0].profilePicUrl)
+                .into(binding.profileImageG1)
+            mGlideRequestManager.load(thread.users[1].profilePicUrl)
                 .into(binding.profileImageG2)
         }
 
@@ -198,13 +189,13 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             binding.btnVoice.isListenForRecord = true
         }
 
-        val messages = shareViewModel.getThreadById()!!.messages
+        val messages = shareViewModel.currentThread!!.messages
         mAdapter.items = viewModel.releaseMessages(messages).toMutableList()
 
         shareViewModel.mutableLiveData.observe(viewLifecycleOwner, Observer {
             when (it.status) {
                 Resource.Status.SUCCESS -> {
-                    val thread = shareViewModel.getThreadById(shareViewModel.currentThreadId!!)
+                    val thread = shareViewModel.getThreadById(shareViewModel.currentThread!!.threadId!!)
                     gone(binding.includeLayoutNetwork.root, binding.progressbar)
                     olderMessageExist = thread.oldestCursor != null
                     if (thread.messages.size > mAdapter.items.size) {
@@ -221,7 +212,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             if (it == null) {
                 return@Observer
             }
-            if (it.first == shareViewModel.currentThreadId!!) {
+            if (it.first == shareViewModel.currentThread!!.threadId!!) {
                 mAdapter.items.add(0, it.second)
                 mAdapter.notifyItemInserted(0)
                 binding.recyclerviewChats.scrollToPosition(0)
@@ -233,7 +224,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             if (it == null) {
                 return@Observer
             }
-            if (it.first == shareViewModel.currentThreadId!!) {
+            if (it.first == shareViewModel.currentThread!!.threadId!!) {
                 for (i in mAdapter.items.indices) {
                     val message = mAdapter.items[i]
                     if (message is Message) {
@@ -368,6 +359,15 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 
     }
 
+    private fun initThreadWithBundle(directBundle: DirectBundle) {
+        if(directBundle.threadId != null){
+            shareViewModel.currentThread = shareViewModel.getThreadById(directBundle.threadId)
+        }else{
+            shareViewModel.currentThread = shareViewModel.getThreadByUserId(directBundle.userId)
+        }
+        thread = shareViewModel.currentThread!!
+    }
+
 
     override fun onClick(v: View?) {
         when (v!!.id) {
@@ -429,7 +429,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     return
                 }
                 binding.edtTextChat.setText("")
-                shareViewModel.sendTextMessage(shareViewModel.currentThreadId!!, text)
+                shareViewModel.sendTextMessage(shareViewModel.currentThread!!.threadId!!, text)
             }
             binding.btnLike.id -> {
                 shareViewModel.sendLike(shareViewModel.currentThread!!.threadId)
@@ -1243,7 +1243,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         dataBinding.txtMessage.text = getString(R.string.view_photo)
                         dataBinding.layoutMedia.setOnClickListener {
                             shareViewModel.markAsSeenRavenMedia(
-                                shareViewModel.currentThreadId!!,
+                                shareViewModel.currentThread!!.threadId!!,
                                 item.itemId,
                                 item.clientContext
                             )
@@ -1258,7 +1258,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         dataBinding.txtMessage.text = getString(R.string.view_video)
                         dataBinding.layoutMedia.setOnClickListener {
                             shareViewModel.markAsSeenRavenMedia(
-                                shareViewModel.currentThreadId!!,
+                                shareViewModel.currentThread!!.threadId!!,
                                 item.itemId,
                                 item.clientContext
                             )
@@ -1457,7 +1457,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         RealTime_ClearItemCache(thread.threadId, item.itemId)
                     )
                     shareViewModel.unsendMessage(
-                        shareViewModel.currentThreadId!!,
+                        shareViewModel.currentThread!!.threadId!!,
                         item.itemId,
                         item.clientContext
                     )
