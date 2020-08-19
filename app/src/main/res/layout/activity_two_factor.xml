@@ -3,12 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:bind="http://schemas.android.com/tools">
 
-    <data>
-        <variable
-            name="viewModel"
-            type="com.idirect.app.ui.twofactor.TwoFactorViewModel" />
-    </data>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_parent"
         android:layout_width="match_parent"
@@ -44,7 +38,6 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-light"
                 android:layout_marginTop="10dp"
-                android:text="@{String.format(@string/codeSendedToNumber,viewModel.endOfPhoneNumber)}"
                 android:textColor="@color/text_light"
                 android:textSize="16sp" />
 
@@ -73,9 +66,6 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="5dp"
-                    android:text="@={viewModel.textCodeOne}"
-                    android:onTextChanged="@{viewModel::edtOneTextChange}"
-                    bind:requestFocus="@{viewModel.edtCodeOneRequestFocus}"
                     android:layout_weight="1"
                     android:background="@drawable/edt_code_style"
                     android:imeOptions="actionNext"
@@ -88,9 +78,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="5dp"
-                    android:text="@={viewModel.textCodeTwo}"
-                    bind:requestFocus="@{viewModel.edtCodeTwoRequestFocus}"
-                    android:onTextChanged="@{viewModel::edtTwoTextChange}"
                     android:layout_weight="1"
                     android:background="@drawable/edt_code_style"
                     android:imeOptions="actionNext"
@@ -104,9 +91,6 @@
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="15dp"
                     android:layout_weight="1"
-                    android:text="@={viewModel.textCodeThree}"
-                    bind:requestFocus="@{viewModel.edtCodeThreeRequestFocus}"
-                    android:onTextChanged="@{viewModel::edtThreeTextChange}"
                     android:background="@drawable/edt_code_style"
                     android:imeOptions="actionNext"
                     android:nextFocusForward="@id/edt_code_four" />
@@ -117,9 +101,6 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="15dp"
-                    android:text="@={viewModel.textCodeFour}"
-                    bind:requestFocus="@{viewModel.edtCodeFourRequestFocus}"
-                    android:onTextChanged="@{viewModel::edtFourTextChange}"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="1"
                     android:background="@drawable/edt_code_style"
@@ -133,9 +114,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="5dp"
-                    android:text="@={viewModel.textCodeFive}"
-                    bind:requestFocus="@{viewModel.edtCodeFiveRequestFocus}"
-                    android:onTextChanged="@{viewModel::edtFiveTextChange}"
                     android:layout_weight="1"
                     android:background="@drawable/edt_code_style"
                     android:imeOptions="actionNext"
@@ -147,9 +125,6 @@
                     style="@style/edtCodeStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@={viewModel.textCodeSix}"
-                    bind:requestFocus="@{viewModel.edtCodeSixRequestFocus}"
-                    android:onTextChanged="@{viewModel::edtSixTextChange}"
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="1"
@@ -164,7 +139,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
                 android:background="@drawable/bg_button"
-                android:onClick="@{viewModel::onVerifyButtonClick}"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -187,8 +161,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:progressColor="@{@color/text_light}"/>
+                    app:layout_constraintTop_toTopOf="parent"/>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -198,9 +171,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="35dp"
                 android:gravity="center"
-                android:enabled="@{viewModel.isEnableResendButton == true}"
-                android:text="@{viewModel.textResendButton}"
-                android:onClick="@{viewModel::onResendCodeClick}"
                 android:textColor="@color/text_light" />
 
             <RelativeLayout

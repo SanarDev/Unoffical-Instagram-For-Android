@@ -47,6 +47,7 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.unbind()
     }
     abstract fun getViewModelClass(): Class<VM>
     abstract fun layoutRes():Int

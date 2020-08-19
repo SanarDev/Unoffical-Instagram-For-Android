@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.idirect.app.BR
 import com.idirect.app.R
+import com.idirect.app.databinding.ActivityMainBinding
 import com.idirect.app.di.DaggerViewModelFactory
 import com.idirect.app.utils.DisplayUtils
 import dagger.android.AndroidInjection

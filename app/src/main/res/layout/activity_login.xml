@@ -2,13 +2,6 @@
 <layout xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <data>
-
-        <variable
-            name="viewModel"
-            type="com.idirect.app.ui.login.LoginViewModel" />
-    </data>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_parent"
         android:layout_width="match_parent"
@@ -51,7 +44,6 @@
                 android:hint="@string/phone_number_or_username_or_email_address"
                 android:padding="15dp"
                 android:singleLine="true"
-                android:text="@={viewModel.username}"
                 android:textColor="@color/text_light"
                 android:textColorHint="@color/hint_light"
                 android:textSize="16sp" />
@@ -66,7 +58,6 @@
                 android:singleLine="true"
                 android:inputType="textPassword"
                 android:padding="15dp"
-                android:text="@={viewModel.password}"
                 android:textColor="@color/text_light"
                 android:textColorHint="@color/hint_light"
                 android:textSize="16sp" />
@@ -78,7 +69,6 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:background="@drawable/bg_button"
-                android:onClick="@{viewModel::onBtnLoginClick}"
                 android:layout_marginTop="15dp">
 
                 <androidx.appcompat.widget.AppCompatButton
@@ -98,7 +88,6 @@
                     android:layout_width="30dp"
                     android:layout_height="30dp"
                     android:visibility="invisible"
-                    app:progressColor="@{@color/text_light}"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"

@@ -26,6 +26,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.idirect.app.R
+import com.vanniktech.emoji.EmojiPopup
 import java.io.File
 import java.lang.StringBuilder
 

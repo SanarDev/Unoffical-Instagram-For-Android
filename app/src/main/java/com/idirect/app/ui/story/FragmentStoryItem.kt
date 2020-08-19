@@ -5,17 +5,16 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ProgressBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
@@ -38,7 +37,6 @@ import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentStoryItemBinding
 import com.idirect.app.databinding.LayoutEmojiBinding
-import com.idirect.app.datasource.model.EmojiModel
 import com.idirect.app.datasource.model.Story
 import com.idirect.app.datasource.model.Tray
 import com.idirect.app.extensions.fadeIn
@@ -55,9 +53,14 @@ import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
 import com.vanniktech.emoji.EmojiPopup
+import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener
+import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener
 import javax.inject.Inject
 
-class FragmentStoryItem(var userId: Long,var mStoryActionListener: StoryActionListener,var playItemAfterLoad:Boolean=false,var isTouchEnable:Boolean = true) : BaseFragment<FragmentStoryItemBinding, StoryItemViewModel>(), ForwardListener {
+class FragmentStoryItem(var userId: Long,
+                        var mStoryActionListener: StoryActionListener,
+                        var playItemAfterLoad:Boolean=false,
+                        var isTouchEnable:Boolean = true) : BaseFragment<FragmentStoryItemBinding, StoryItemViewModel>(), ForwardListener,OnEmojiPopupDismissListener,OnEmojiPopupShownListener {
 
     private var moduleSource: String = "feed_timeline"
 
@@ -88,7 +91,7 @@ class FragmentStoryItem(var userId: Long,var mStoryActionListener: StoryActionLi
     private var isForwardWindowShow: Boolean = false
     private lateinit var dataSource: DataSource.Factory
     private lateinit var mGlideRequestListener: RequestListener<Bitmap>
-    private lateinit var emojiPopup: EmojiPopup
+    private var emojiPopup: EmojiPopup?=null
     private lateinit var sharedViewModel: ShareViewModel
     private var currentTray: Tray?=null
     val valueAnimator = ValueAnimator.ofInt(0, 100).apply {
@@ -111,6 +114,13 @@ class FragmentStoryItem(var userId: Long,var mStoryActionListener: StoryActionLi
         super.onDestroyView()
     }
 
+//    fun releaseMemory() {
+//        if (Build.VERSION.SDK_INT < 16) {
+//            binding.layoutParent.getViewTreeObserver().removeGlobalOnLayoutListener(emojiPopup.onGlobalLayoutListener)
+//        } else {
+//            binding.layoutParent.getViewTreeObserver().removeOnGlobalLayoutListener(onGlobalLayoutListener)
+//        }
+//    }
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -120,12 +130,11 @@ class FragmentStoryItem(var userId: Long,var mStoryActionListener: StoryActionLi
         dataSource = DefaultHttpDataSourceFactory(Util.getUserAgent(requireContext(), "Instagram"))
         sharedViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
         emojiPopup =
-            EmojiPopup.Builder.fromRootView(binding.layoutParent)
-                .setOnEmojiPopupDismissListener {
-                    binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
-                }.setOnEmojiPopupShownListener {
-                    binding.btnEmoji.setImageResource(R.drawable.ic_keyboard_outline)
-                }.build(binding.edtMessage);
+            EmojiPopup.Builder
+                .fromRootView(binding.root)
+                .setOnEmojiPopupDismissListener(this@FragmentStoryItem)
+                .setOnEmojiPopupShownListener(this@FragmentStoryItem)
+                .build(binding.edtMessage);
 
         binding.recyclerviewEmoji.adapter = EmojiAdapter(initEmoji())
 
@@ -256,14 +265,14 @@ class FragmentStoryItem(var userId: Long,var mStoryActionListener: StoryActionLi
             }
         }
         binding.btnEmoji.setOnClickListener {
-            if (emojiPopup.isShowing) {
-                emojiPopup.dismiss()
+            if (emojiPopup!!.isShowing) {
+                emojiPopup!!.dismiss()
             } else {
-                emojiPopup.toggle()
+                emojiPopup!!.toggle()
             }
         }
         binding.edtMessage.setOnClickListener {
-            emojiPopup.dismiss()
+            emojiPopup!!.dismiss()
         }
         binding.edtMessage.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -498,5 +507,13 @@ class FragmentStoryItem(var userId: Long,var mStoryActionListener: StoryActionLi
     override fun onDestroy() {
         super.onDestroy()
         mPlayManager.releasePlay()
+    }
+
+    override fun onEmojiPopupDismiss() {
+        binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
+    }
+
+    override fun onEmojiPopupShown() {
+        binding.btnEmoji.setImageResource(R.drawable.ic_keyboard_outline)
     }
 }
