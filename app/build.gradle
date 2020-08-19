@@ -102,6 +102,8 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.2.0'
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
     implementation files('libs/jaad-0.8.4.jar')
+    implementation project(':emoji-ios')
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
@@ -160,8 +162,6 @@ dependencies {
 
 
     // emoji
-    implementation 'com.vanniktech:emoji-ios:0.7.0-SNAPSHOT'
-
     implementation 'com.github.bumptech.glide:glide:4.11.0'
     kapt 'com.github.bumptech.glide:compiler:4.11.0'
     implementation 'com.github.chrisbanes:PhotoView:+'

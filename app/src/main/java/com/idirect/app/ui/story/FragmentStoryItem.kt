@@ -112,6 +112,7 @@ class FragmentStoryItem(var userId: Long,
 
     override fun onDestroyView() {
         super.onDestroyView()
+        emojiPopup?.releaseMemory()
     }
 
 //    fun releaseMemory() {

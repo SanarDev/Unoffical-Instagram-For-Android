@@ -16,10 +16,7 @@ import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.LinearLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -97,6 +94,12 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     private var isLoading = false
     private var olderMessageExist = true
     private lateinit var mAudioManager: AudioManager
+    val onPreDrawListener = object: ViewTreeObserver.OnPreDrawListener{
+        override fun onPreDraw(): Boolean {
+            startPostponedEnterTransition()
+            return true
+        }
+    }
 //    private var lastSeenAt: Long = 0
 
     companion object {
@@ -120,6 +123,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         return DirectViewModel::class.java
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        removeWaitForTransition(binding.recyclerviewChats,onPreDrawListener)
+        emojiPopup.releaseMemory()
+    }
 
     private val mHandler = Handler()
     private var endTypeAtMs: Long = 0
@@ -161,8 +169,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 
         mAdapter = ChatsAdapter(ArrayList<Any>(), shareViewModel.getUser())
         binding.recyclerviewChats.adapter = mAdapter
-        waitForTransition(binding.recyclerviewChats)
-        waitForTransition(binding.toolbar)
+        waitForTransition(binding.recyclerviewChats,onPreDrawListener)
         layoutManager = (binding.recyclerviewChats.layoutManager as LinearLayoutManager)
 
         emojiPopup =

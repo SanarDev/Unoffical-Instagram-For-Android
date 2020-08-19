@@ -81,7 +81,7 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
         mAdapter = ThreadsAdapter(emptyArray<Recipients>().toMutableList())
         binding.recyclerviewThreads.adapter = mAdapter
         binding.recyclerviewThreads.adapter = mAdapter
-        waitForTransition(binding.recyclerviewThreads)
+//        waitForTransition(binding.recyclerviewThreads)
     }
 
 

@@ -12,6 +12,9 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/emoji" />
+            <option value="$PROJECT_DIR$/emoji-ios" />
+            <option value="$PROJECT_DIR$/emoji-kotlin" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

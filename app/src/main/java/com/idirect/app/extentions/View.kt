@@ -15,6 +15,7 @@ import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.URLSpan
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.app.ActivityCompat.postponeEnterTransition
@@ -146,12 +147,12 @@ fun View.locateViewInScreen(): Rect? {
     return location
 }
 
-fun Fragment.waitForTransition(v:View){
+fun Fragment.waitForTransition(v:View,onPreDrawListener:ViewTreeObserver.OnPreDrawListener){
     postponeEnterTransition()
-    v.viewTreeObserver.addOnPreDrawListener {
-        startPostponedEnterTransition()
-        true
-    }
+    v.viewTreeObserver.addOnPreDrawListener(onPreDrawListener)
+}
+fun Fragment.removeWaitForTransition(v:View,onPreDrawListener:ViewTreeObserver.OnPreDrawListener){
+    v.viewTreeObserver.removeOnPreDrawListener(onPreDrawListener)
 }
 
 fun ProgressBar.setProgressColor(color:Int){

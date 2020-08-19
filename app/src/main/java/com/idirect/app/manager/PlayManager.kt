@@ -34,28 +34,29 @@ class PlayManager constructor(context: Context) {
     private lateinit var runnable: Runnable
 
     private var isFinishMedia = false
+    private var listener = object : Player.EventListener {
+        override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+            when (playbackState) {
+                Player.STATE_ENDED -> {
+                    seekbarPlay?.progress = 0
+                    btnPlay?.setImageResource(R.drawable.ic_play_circle)
+                    currentPlayerId = ""
+                    isFinishMedia = true
+                    player.seekTo(0)
+                }
+                Player.STATE_READY -> {
+                    isFinishMedia = false
+                }
+                else -> {
+
+                }
+            }
+        }
+    }
 
     init {
 
-        player.addListener(object : Player.EventListener {
-            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                when (playbackState) {
-                    Player.STATE_ENDED -> {
-                        seekbarPlay?.progress = 0
-                        btnPlay?.setImageResource(R.drawable.ic_play_circle)
-                        currentPlayerId = ""
-                        isFinishMedia = true
-                        player.seekTo(0)
-                    }
-                    Player.STATE_READY -> {
-                        isFinishMedia = false
-                    }
-                    else -> {
-
-                    }
-                }
-            }
-        })
+        player.addListener(listener)
         val handler = Handler()
         runnable = Runnable {
             if (!isFinishMedia) {
@@ -85,6 +86,7 @@ class PlayManager constructor(context: Context) {
     }
 
     fun releasePlay() {
+        player.removeListener(listener)
         player.release()
     }
 
