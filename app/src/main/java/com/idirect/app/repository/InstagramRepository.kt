@@ -429,13 +429,13 @@ class InstagramRepository(
     }
 
     fun getByParticipants(
-        result: MutableLiveData<Resource<ResponseBody>>,
+        result: MutableLiveData<Resource<InstagramParticipantsResponse>>,
         header: HashMap<String, String>,
         userId: String,
         seqId: Int,
         limit: Int = 20
     ) {
-        NetworkCall<ResponseBody>().makeCall(
+        NetworkCall<InstagramParticipantsResponse>().makeCall(
             mInstagramRemote.getByParticipants(
                 header,
                 userId,

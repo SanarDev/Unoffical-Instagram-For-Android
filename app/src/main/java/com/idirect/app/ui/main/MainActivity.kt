@@ -70,11 +70,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
         navHostFragment.childFragmentManager.addOnBackStackChangedListener {
             val lastFragment = getLastFragment()
-            when(lastFragment.getNameTag()){
-                FragmentHome.NAME_TAG ->{
+            when (lastFragment.getNameTag()) {
+                FragmentHome.NAME_TAG -> {
                     binding.ahbottomNavigation.currentItem = HOME_POSITION
                 }
-                FragmentInbox.NAME_TAG ->{
+                FragmentInbox.NAME_TAG -> {
                     binding.ahbottomNavigation.currentItem = INBOX_POSITION
                 }
             }
@@ -106,21 +106,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
                 if (wasSelected) {
                     return false
                 }
-                val lastFragment = getLastFragment()
-                when (lastFragment.getNameTag()) {
-                    FragmentHome.NAME_TAG -> {
-                        when (position) {
-                            INBOX_POSITION -> {
-                                navHostFragment.navController.navigate(R.id.action_fragmentHome_to_fragmentInbox)
-                            }
-                        }
+                when (position) {
+                    INBOX_POSITION -> {
+                        navHostFragment.navController.navigate(R.id.action_global_inboxFragment)
                     }
-                    FragmentInbox.NAME_TAG -> {
-                        when (position) {
-                            HOME_POSITION -> {
-                                navHostFragment.navController.navigate(R.id.action_fragmentInbox_to_fragmentHome)
-                            }
-                        }
+                    HOME_POSITION -> {
+                        navHostFragment.navController.navigate(R.id.action_global_homeFragment)
                     }
                 }
                 return true
@@ -129,13 +120,14 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 //        FbnsService.run(this, FbnsIntent.ACTION_CONNECT_SESSION)
     }
 
-    fun isHideNavigationBottom(isHide:Boolean){
-        if(isHide){
+    fun isHideNavigationBottom(isHide: Boolean) {
+        if (isHide) {
             binding.ahbottomNavigation.visibility = View.GONE
-        }else{
+        } else {
             binding.ahbottomNavigation.visibility = View.VISIBLE
         }
     }
+
     fun showShareWindow(forwardBundle: ForwardBundle, forwardListener: ForwardListener? = null) {
         ForwardFragment()
             .setBundle(forwardBundle)

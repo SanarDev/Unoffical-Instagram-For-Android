@@ -4,20 +4,24 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.TransitionInflater
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
+import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentUserProfileBinding
 import com.idirect.app.databinding.LayoutUserPostBinding
 import com.idirect.app.datasource.model.User
@@ -25,10 +29,12 @@ import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
 import com.idirect.app.ui.direct.DirectBundle
+import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
+import kotlinx.android.synthetic.main.fragment_direct.*
 import javax.inject.Inject
 
 class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfileViewModel>() {
@@ -37,13 +43,13 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
         const val NAME_TAG = "user_profile"
     }
 
-    private lateinit var user: User
+    private var _user: User?=null
+    private val user: User get() = _user!!
 
     @Inject
     lateinit var mGlideRequestManager: RequestManager
 
     private var userId: String?=null
-    private lateinit var mLayoutManager: GridLayoutManager
     private var isMoreAvailable: Boolean = false
     private var isLoading: Boolean = false
 
@@ -67,6 +73,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
         savedInstanceState: Bundle?
     ): View? {
         EmojiManager.install(IosEmojiProvider())
+        (activity as MainActivity).isHideNavigationBottom(false)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -94,18 +101,24 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
 
         val mAdapter = PostsAdapter(emptyArray<UserPost>().toMutableList())
         binding.recyclerviewPosts.adapter = mAdapter
-        mLayoutManager = binding.recyclerviewPosts.layoutManager as GridLayoutManager
 
         viewModel.userLiveData.observe(viewLifecycleOwner, Observer {
+            if(it.status == Resource.Status.LOADING){
+                binding.headerProgress.visibility = View.VISIBLE
+                binding.layoutHeader.visibility = View.INVISIBLE
+            }
             if (it.status == Resource.Status.SUCCESS) {
-                user = it.data!!.user
+                binding.headerProgress.visibility = View.INVISIBLE
+                binding.layoutHeader.visibility = View.VISIBLE
+
+                _user = it.data!!.user
                 userId = user.pk.toString()
                 binding.txtUsername.text = user.username
                 binding.txtBio.text = user.biography
                 binding.txtFullname.text = user.fullName
-                binding.txtFollowersCount.text = user.followerCount.toString()
-                binding.txtFollowingCount.text = user.followingCount.toString()
-                binding.txtPostCount.text = user.mediaCount.toString()
+                binding.txtFollowersCount.text = viewModel.getStringNumber(user.followerCount)
+                binding.txtFollowingCount.text = viewModel.getStringNumber(user.followingCount)
+                binding.txtPostCount.text = viewModel.getStringNumber(user.mediaCount)
                 if(user.hdProfilePicVersions != null && user.hdProfilePicVersions.isNotEmpty()){
                     mGlideRequestManager.load(user.hdProfilePicVersions[0].url)
                         .into(binding.imgProfile)
@@ -147,20 +160,26 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
             requireActivity().onBackPressed()
         }
         binding.btnMessage.setOnClickListener {
+            if(_user == null){
+                CustomToast.show(requireContext(), "Error user null", Toast.LENGTH_SHORT)
+                return@setOnClickListener
+            }
             val data = DirectBundle().apply {
                 this.userId = user.pk
                 this.profileImage = user.profilePicUrl
+                this.threadTitle = user.username
                 this.isGroup = false
                 this.username = user.username
             }
-            val action = UserProfileFragmentDirections.actionUserProfileFragmentToFragmentDirect(data)
-            it.findNavController().navigate(action)
+            val action = NavigationMainGraphDirections.actionGlobalDirectFragment(data)
+            findNavController().navigate(action)
         }
 
         binding.recyclerviewPosts.addOnScrollListener(object: RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (!isLoading && isMoreAvailable) {
+                    val mLayoutManager = recyclerView.layoutManager as GridLayoutManager
                     val totalItemCount = mLayoutManager.itemCount
                     if (mLayoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
                         viewModel.loadMorePosts()
@@ -205,7 +224,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
                 }
             }
             dataBinding.root.setOnClickListener {
-                val action = UserProfileFragmentDirections.actionUserProfileFragmentToPostsFragment(
+                val action = NavigationMainGraphDirections.actionGlobalPostsFragment(
                     userId = userId!!,
                     scrollToItemId = item.id
                 )

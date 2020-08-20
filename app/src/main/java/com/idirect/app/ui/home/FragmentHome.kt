@@ -8,11 +8,13 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.RequestManager
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
@@ -46,8 +48,6 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         const val NAME_TAG = "home"
     }
 
-    private lateinit var mStoryAdapter: StoriesAdapter
-
     @Inject
     lateinit var mGlideRequestManager: RequestManager
 
@@ -55,15 +55,16 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     lateinit var mPlayManager: PlayManager
 
     private var currentMediaPosition: Int = PlayManager.NONE
-    private lateinit var mAdapter: PostsAdapter2
+    private var _mStoryAdapter: StoriesAdapter?=null
+    private val mStoryAdapter: StoriesAdapter get() = _mStoryAdapter!!
+    private var _mAdapter: PostsAdapter2?=null
+    private val mAdapter: PostsAdapter2 get() = _mAdapter!!
     private lateinit var dataSource: DataSource.Factory
-    private lateinit var mLayoutManager: LinearLayoutManager
 
     val displayWidth = DisplayUtils.getScreenWidth()
     val displayHeight = DisplayUtils.getScreenHeight()
     private var isLoading = false
     private var lastStoryClicked: kotlin.Long = 0
-    private var v: View? = null
 
     override fun getViewModelClass(): Class<HomeViewModel> {
         return HomeViewModel::class.java
@@ -71,6 +72,12 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
 
     override fun layoutRes(): Int {
         return R.layout.fragment_home
+    }
+
+    override fun onDestroyView() {
+        _mAdapter = null
+        _mStoryAdapter = null
+        super.onDestroyView()
     }
 
     override fun onCreateView(
@@ -87,7 +94,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mAdapter = PostsAdapter2(
+        _mAdapter = PostsAdapter2(
             requireContext(),
             /* hyperListener */ this@FragmentHome,
             mPlayManager,
@@ -127,19 +134,18 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             }
 
             override fun showComments(v: View, post: UserPost) {
-                val action = FragmentHomeDirections.actionFragmentHomeToCommentsFragment(post)
-                v.findNavController().navigate(action)
+                val action = NavigationMainGraphDirections.actionGlobalCommentFragment(post)
+                findNavController().navigate(action)
             }
 
             override fun userProfile(v: View, userId: kotlin.Long, username: String) {
-                val action = FragmentHomeDirections.actionFragmentHomeToUserProfileFragment(UserBundle().apply {
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(UserBundle().apply {
                     this.username = username
                     this.userId = userId.toString()
                 })
-                v.findNavController().navigate(action)
+                findNavController().navigate(action)
             }
         }
-        mLayoutManager = binding.recyclerviewPosts.layoutManager as LinearLayoutManager
         viewModel.postsLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
                 isLoading = false
@@ -148,7 +154,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             }
         })
 
-        mStoryAdapter = StoriesAdapter(null)
+        _mStoryAdapter = StoriesAdapter(null)
         binding.recyclerviewStories.adapter = mStoryAdapter
         viewModel.storiesLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
@@ -160,8 +166,8 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         viewModel.storyMediaLiveData.observe(viewLifecycleOwner, Observer {
             if (it != null && it.status == Resource.Status.SUCCESS) {
                 val action =
-                    FragmentHomeDirections.actionFragmentHomeToFragmentStory(lastStoryClicked.toString())
-                v?.findNavController()?.navigate(action)
+                    NavigationMainGraphDirections.actionGlobalStoryFragment(lastStoryClicked.toString(),false)
+                findNavController().navigate(action)
                 viewModel.storyMediaLiveData.value = null
             }
         })
@@ -198,7 +204,6 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
                 dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_story)
             }
             dataBinding.root.setOnClickListener {
-                v = it
                 viewModel.getStoryMedia(item.user.pk)
                 lastStoryClicked = item.user.pk
             }
@@ -221,8 +226,8 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             val userData = UserBundle().apply {
                 username = data.replace("@", "")
             }
-            val action = FragmentHomeDirections.actionFragmentHomeToUserProfileFragment(userData)
-            v.findNavController().navigate(action)
+            val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+            findNavController().navigate(action)
         } else if (data.startsWith("#")) {
             CustomToast.show(requireContext(),getString(R.string.hashtag_not_support),Toast.LENGTH_SHORT)
         } else {
@@ -231,8 +236,8 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
                 val userData = UserBundle().apply {
                     userId = num.toString()
                 }
-                val action = FragmentHomeDirections.actionFragmentHomeToUserProfileFragment(userData)
-                v.findNavController().navigate(action)
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                findNavController().navigate(action)
             } catch (e: Exception) {
 
             }

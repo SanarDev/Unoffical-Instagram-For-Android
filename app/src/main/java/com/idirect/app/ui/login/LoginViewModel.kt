@@ -3,11 +3,14 @@ package com.idirect.app.ui.login
 import android.app.Application
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.ObservableField
 import androidx.lifecycle.MutableLiveData
+import com.idirect.app.R
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.core.BaseApplication
+import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.datasource.model.response.InstagramLoginResult
 import com.idirect.app.utils.Resource
 import com.idirect.app.ui.inbox.FragmentInbox
@@ -21,9 +24,6 @@ import kotlin.reflect.KClass
 class LoginViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
     BaseViewModel(application) {
 
-    val username = ObservableField<String>()
-    val password = ObservableField<String>()
-    val isLoading = ObservableField<Boolean>(false)
     val intentEvent = MutableLiveData<Pair<KClass<out AppCompatActivity>, Bundle?>>()
 
     val result =  MutableLiveData<Resource<InstagramLoginResult>>()
@@ -34,22 +34,16 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
         }
     }
 
-    fun onBtnLoginClick(v: View) {
-        val _username = username.get()
-        val _password = password.get()
-
-        if (_username.isNullOrBlank()) {
-            getApplication<BaseApplication>().toast("enter username")
-            return
+    fun login(username:String,password:String) {
+        val context = getApplication() as BaseApplication
+        if (username.isEmpty()) {
+            CustomToast.show(context,context.getString(R.string.enter_username), Toast.LENGTH_LONG)
         }
 
-        if (_password.isNullOrBlank()) {
-            getApplication<BaseApplication>().toast("enter password")
-            return
+        if (password.isEmpty()) {
+            CustomToast.show(context,context.getString(R.string.enter_password), Toast.LENGTH_LONG)
         }
-
-        isLoading.set(true)
-        mUseCase.instagramLogin(_username, _password).observeForever {
+        mUseCase.instagramLogin(username,password).observeForever {
             result.value = it
         }
     }

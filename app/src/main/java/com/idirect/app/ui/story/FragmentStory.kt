@@ -23,8 +23,10 @@ import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import javax.inject.Inject
 
-class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryActionListener {
+class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>() {
 
+    private var _mAdapter: StoriesAdapter?=null
+    private val mAdapter: StoriesAdapter get() = _mAdapter!!
     private var userId: Long = 0
 
     @Inject
@@ -43,6 +45,8 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
     }
 
     private var lastPosition = 0
+    private var _mStoryActionListener:StoryActionListener?=null
+    private val mStoryActionListener:StoryActionListener get() = _mStoryActionListener!!
     private val fragments = HashMap<Int,FragmentStoryItem>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -53,7 +57,20 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
         viewModel.getStoryData(userId,isSingle)
         (requireActivity() as MainActivity).isHideNavigationBottom(true)
 
-        val mAdapter = StoriesAdapter(null,requireActivity().supportFragmentManager)
+        _mStoryActionListener = object :StoryActionListener{
+            override fun loadNextPage() {
+                if(binding.viewPager.currentItem < binding.viewPager.adapter!!.count - 1){
+                    binding.viewPager.currentItem = binding.viewPager.currentItem + 1
+                }else{
+                    activity?.onBackPressed()
+                }
+            }
+
+            override fun onProfileClick(v: View, userId: Long, username: String) {
+
+            }
+        }
+        _mAdapter = StoriesAdapter(null,requireActivity().supportFragmentManager)
         binding.viewPager.adapter = mAdapter
         binding.viewPager.currentItem = lastPosition
         binding.viewPager.setPageTransformer(true, RotateUpTransformer())
@@ -114,7 +131,7 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
         // Returns the fragment to display for that page
         override fun getItem(position: Int): Fragment {
             val item = items!![position]
-            val fragment = FragmentStoryItem(item.user.pk,this@FragmentStory,item.user.pk == userId)
+            val fragment = FragmentStoryItem(item.user.pk,mStoryActionListener,item.user.pk == userId)
             fragments.put(position,fragment)
             return fragment
         }
@@ -122,27 +139,18 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
         override fun destroyItem(container: ViewGroup, position: Int, `object`: Any) {
             super.destroyItem(container, position, `object`)
             fragments[position]?.mPlayManager?.releasePlay()
+            fragments[position]?.mStoryActionListener = null
             fragments.remove(position)
         }
     }
 
-    override fun loadNextPage() {
-        if(binding.viewPager.currentItem < binding.viewPager.adapter!!.count - 1){
-            binding.viewPager.currentItem = binding.viewPager.currentItem + 1
-        }else{
-            activity?.onBackPressed()
-        }
-    }
-
-    override fun onProfileClick(v: View,userId: Long,username:String) {
-        val data = UserBundle().apply {
-            this.userId = userId.toString()
-            this.username = username
-        }
-        val action = FragmentStoryDirections.actionFragmentStoryToUserProfileFragment(data)
-        v.findNavController().navigate(action)
-        fragments[binding.viewPager.currentItem]?.mPlayManager?.stopPlay()
-    }
+//        val data = UserBundle().apply {
+//            this.userId = userId.toString()
+//            this.username = username
+//        }
+//        val action = FragmentStoryDirections.actionFragmentStoryToUserProfileFragment(data)
+//        v.findNavController().navigate(action)
+//        fragments[binding.viewPager.currentItem]?.mPlayManager?.stopPlay()
 
     override fun onKeyboardHide() {
         super.onKeyboardHide()
@@ -155,11 +163,14 @@ class FragmentStory : BaseFragment<FragmentStoryBinding,StoryViewModel>(),StoryA
     }
 
     override fun onDestroyView() {
+        _mAdapter = null
+        _mStoryActionListener = null
         super.onDestroyView()
     }
     override fun onDestroy() {
         super.onDestroy()
         for(item in fragments.entries){
+            item.value.mStoryActionListener = null
             item.value.mPlayManager.releasePlay()
         }
     }

@@ -1231,11 +1231,24 @@ class UseCase(
     }
 
     fun getUserByRecipients(
-        result: MutableLiveData<Resource<ResponseBody>>,
-        userId: Int,
+        userId: Long,
         seqId: Int
-    ) {
-        mInstagramRepository.getByParticipants(result, getHeaders(), "[[$userId]]", seqId)
+    ): LiveData<Resource<Thread>> {
+        val liveData =  MutableLiveData<Resource<InstagramParticipantsResponse>>()
+        mInstagramRepository.getByParticipants(liveData, getHeaders(), "[[$userId]]", seqId)
+        val threadData = MutableLiveData<Resource<Thread>>()
+        return Transformations.switchMap(liveData){
+            if(it.status == Resource.Status.SUCCESS){
+                threadData.value = Resource.success(it!!.data!!.thread)
+            }
+            if(it.status == Resource.Status.LOADING){
+                threadData.value = Resource.loading()
+            }
+            if(it.status == Resource.Status.ERROR){
+                threadData.value = Resource.error(APIErrors(it.apiError!!.code,it.apiError.message,it.apiError.data))
+            }
+            return@switchMap threadData
+        }
     }
 
     fun getLastFbnsRegisterToken() =

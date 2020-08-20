@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.res.Resources
 import android.media.MediaRecorder
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
@@ -23,8 +24,10 @@ import com.idirect.app.manager.PlayManager
 import com.idirect.app.realtime.commands.RealTime_SendLike
 import com.idirect.app.realtime.commands.RealTime_SendMessage
 import com.idirect.app.realtime.service.RealTimeService
+import com.idirect.app.ui.direct.DirectBundle
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.*
+import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
 import java.io.File
 import java.io.IOException
@@ -34,7 +37,11 @@ import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
-class ShareViewModel @Inject constructor(application: Application, var mUseCase: UseCase,var mPlayManager: PlayManager) :
+class ShareViewModel @Inject constructor(
+    application: Application,
+    var mUseCase: UseCase,
+    var mPlayManager: PlayManager
+) :
     BaseViewModel(application) {
 
     //audio
@@ -400,7 +407,7 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
                     }
                 }
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
 
         }
     }
@@ -591,6 +598,9 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
 
 
     fun getThreadById(threadId: String = currentThread!!.threadId!!): Thread {
+        if(currentThread != null && threadId == currentThread!!.threadId){
+            return currentThread!!
+        }
         for (thread in instagramDirect!!.inbox.threads) {
             if (thread.threadId == threadId) {
                 return thread
@@ -811,20 +821,25 @@ class ShareViewModel @Inject constructor(application: Application, var mUseCase:
     }
 
     fun getThreadIdByUserId(pk: Long): String {
-        for(thread in instagramDirect!!.inbox.threads){
-            if(!thread.isGroup && thread.users[0].pk == pk){
+        for (thread in instagramDirect!!.inbox.threads) {
+            if (!thread.isGroup && thread.users[0].pk == pk) {
                 return thread.threadId
             }
         }
         return "[[$pk]]";
     }
-    fun getThreadByUserId(pk: Long): Thread {
-        for(thread in instagramDirect!!.inbox.threads){
-            if(!thread.isGroup && thread.users[0].pk == pk){
-                return thread
+
+    fun getThreadByUserId(directBundle: DirectBundle): LiveData<Resource<Thread>> {
+        val result = MutableLiveData<Resource<Thread>>()
+        for (thread in instagramDirect!!.inbox.threads) {
+            if (!thread.isGroup && thread.users[0].pk == directBundle.userId) {
+                result.value = Resource.success(thread)
             }
         }
-        return Thread();
+        mUseCase.getUserByRecipients(directBundle.userId, instagramDirect!!.seqId).observeForever {
+            result.value = it
+        }
+        return result
     }
 
 }

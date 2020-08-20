@@ -16,7 +16,8 @@ import javax.inject.Inject
 
 abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragment(){
 
-    lateinit var binding: B
+    private var _binding: B?=null
+    val binding: B get() = _binding!!
     lateinit var viewModel: VM
 
     @Inject
@@ -32,7 +33,7 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = DataBindingUtil.inflate(
+        _binding = DataBindingUtil.inflate(
             inflater, layoutRes(), container, false
         )
         viewModel = ViewModelProvider(this, viewModelFactory).get(getViewModelClass())
@@ -47,7 +48,8 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
 
     override fun onDestroyView() {
         super.onDestroyView()
-        binding.unbind()
+        _binding!!.unbind()
+        _binding = null
     }
     abstract fun getViewModelClass(): Class<VM>
     abstract fun layoutRes():Int

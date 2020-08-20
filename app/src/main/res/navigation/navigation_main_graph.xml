@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation_main_graph"
+    app:startDestination="@id/fragmentHome">
+
+
+    <fragment
+        android:id="@+id/fragmentHome"
+        android:name="com.idirect.app.ui.home.FragmentHome"
+        android:label="FragmentHome"
+        tools:layout="@layout/fragment_home"/>
+
+    <fragment
+        android:id="@+id/fragmentInbox"
+        android:name="com.idirect.app.ui.inbox.FragmentInbox"
+        android:label="FragmentInbox"
+        tools:layout="@layout/fragment_inbox"/>
+
+    <fragment
+        android:id="@+id/startMessageFragment"
+        android:name="com.idirect.app.ui.startmessage.StartMessageFragment"
+        android:label="StartMessageFragment"
+        tools:layout="@layout/activity_start_message"/>
+
+    <fragment
+        android:id="@+id/fragmentDirect"
+        android:name="com.idirect.app.ui.direct.FragmentDirect"
+        android:label="FragmentDirect"
+        tools:layout="@layout/fragment_direct"/>
+
+    <fragment
+        android:id="@+id/fullScreenFragment"
+        android:name="com.idirect.app.ui.fullscreen.FullScreenFragment"
+        android:label="FullScreenFragment"
+        tools:layout="@layout/activity_full_screen"/>
+
+    <fragment
+        android:id="@+id/userProfileFragment"
+        android:name="com.idirect.app.ui.userprofile.UserProfileFragment"
+        android:label="UserProfileFragment"
+        tools:layout="@layout/fragment_user_profile"/>
+
+    <fragment
+        android:id="@+id/postsFragment"
+        android:name="com.idirect.app.ui.posts.PostsFragment"
+        android:label="PostsFragment"
+        tools:layout="@layout/fragment_posts"/>
+
+    <fragment
+        android:id="@+id/commentsFragment"
+        android:name="com.idirect.app.ui.postcomments.CommentsFragment"
+        android:label="CommentsFragment"
+        tools:layout="@layout/fragment_comment"/>
+
+    <fragment
+        android:id="@+id/fragmentStory"
+        android:name="com.idirect.app.ui.story.FragmentStory"
+        android:label="FragmentStory"
+        tools:layout="@layout/fragment_story"/>
+
+    <action android:id="@+id/action_global_homeFragment"
+        app:destination="@id/fragmentHome"/>
+
+    <action android:id="@+id/action_global_inboxFragment"
+        app:destination="@id/fragmentInbox"/>
+
+    <action
+        android:id="@+id/action_global_directFragment"
+        app:destination="@id/fragmentDirect"
+        app:enterAnim="@anim/enter_from_right"
+        app:exitAnim="@anim/exit_to_left"
+        app:popEnterAnim="@anim/enter_from_left"
+        app:popExitAnim="@anim/exit_to_right">
+        <argument android:name="data"
+            app:argType="com.idirect.app.ui.direct.DirectBundle"/>
+    </action>
+
+    <action
+        android:id="@+id/action_global_userProfileFragment"
+        app:destination="@id/userProfileFragment">
+        <argument android:name="user_data"
+            app:argType="com.idirect.app.ui.userprofile.UserBundle" />
+    </action>
+
+    <action
+        android:id="@+id/action_global_commentFragment"
+        app:destination="@id/commentsFragment">
+        <argument android:name="data"
+            app:argType="com.idirect.app.datasource.model.UserPost" />
+    </action>
+
+    <action
+        android:id="@+id/action_global_postsFragment"
+        app:destination="@id/postsFragment">
+        <argument android:name="user_id"
+            app:argType="string"/>
+        <argument android:name="scroll_to_item_id"
+            app:argType="string"
+            app:nullable="true"/>
+    </action>
+
+    <action
+        android:id="@+id/action_global_storyFragment"
+        app:destination="@id/fragmentStory">
+        <argument android:name="user_id"
+            app:argType="string"/>
+        <argument android:name="is_single"
+            app:argType="boolean"
+            android:defaultValue="true"/>
+    </action>
+
+    <action
+        android:id="@+id/action_global_fullScreenFragment"
+        app:destination="@id/fullScreenFragment">
+        <argument
+            android:name="type"
+            app:argType="integer"
+            android:defaultValue="1" />
+        <argument
+            android:name="data"
+            app:argType="string" />
+        <argument
+            android:name="id"
+            app:argType="string"
+            android:defaultValue="0"/>
+
+    </action>
+
+</navigation>

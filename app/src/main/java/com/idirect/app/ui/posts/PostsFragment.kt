@@ -13,6 +13,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -25,6 +26,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
@@ -143,8 +145,8 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
             }
 
             override fun showComments(v: View, post: UserPost) {
-                val action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment(post)
-                v.findNavController().navigate(action)
+                val action = NavigationMainGraphDirections.actionGlobalCommentFragment(post)
+                findNavController().navigate(action)
             }
 
             override fun userProfile(v: View, userId: Long, username: String) {
@@ -152,8 +154,8 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
                     this.userId = userId.toString()
                     this.username = username
                 }
-                val action = PostsFragmentDirections.actionPostsFragmentToUserProfileFragment(userData)
-                v.findNavController().navigate(action)
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                findNavController().navigate(action)
             }
         }
 
@@ -204,8 +206,8 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
             val userData = UserBundle().apply {
                 username = data.replace("@", "")
             }
-            val action = PostsFragmentDirections.actionPostsFragmentToUserProfileFragment(userData)
-            v.findNavController().navigate(action)
+            val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+            findNavController().navigate(action)
         }
     }
 

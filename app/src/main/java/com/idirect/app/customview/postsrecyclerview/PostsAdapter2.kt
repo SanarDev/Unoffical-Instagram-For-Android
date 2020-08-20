@@ -62,7 +62,6 @@ class PostsAdapter2(
     private val dataSource: DataSource.Factory =
         DefaultHttpDataSourceFactory(Util.getUserAgent(context, "Instagram"))
     private val mGlide = GlideApp.with(context)
-    private val mPicasso = Picasso.Builder(context).build()
     var currentMediaPosition: Int = PlayManager.NONE
     private var displayWidth = DisplayUtils.getScreenWidth()
     private var displayHeight = DisplayUtils.getScreenHeight()
@@ -191,7 +190,7 @@ class PostsAdapter2(
                 btnLike = mHolder.btnLike
 
                 val candidate = item.imageVersions2.candidates[0]
-                loadImage(candidate.width, candidate.height, candidate.url, mHolder.imgPhoto)
+                loadImage(candidate.width, candidate.height, candidate.url, mHolder.imgPhoto,InstagramConstants.MediaType.IMAGE.type)
             }
             InstagramConstants.MediaType.VIDEO.type -> {
                 val mHolder = holder as PostVideoHolder
@@ -223,7 +222,8 @@ class PostsAdapter2(
                     previewImage.width,
                     previewImage.height,
                     previewImage.url,
-                    mHolder.photoView
+                    mHolder.photoView,
+                    InstagramConstants.MediaType.VIDEO.type
                 )
                 /* comment icon start*/
                 if (!item.isCommentThreadingEnabled) {
@@ -499,8 +499,12 @@ class PostsAdapter2(
         btnLike.setOnClickListener(onClickListener)
     }
 
-    private fun loadImage(width: Int, height: Int, url: String, imgPhoto: AppCompatImageView) {
-        var standardHeight = (height * displayWidth) / width
+    private fun loadImage(width: Int, height: Int, url: String, imgPhoto: AppCompatImageView,mediaType:Int = InstagramConstants.MediaType.IMAGE.type) {
+        if(mediaType == InstagramConstants.MediaType.IMAGE.type){
+            imgPhoto.layoutParams.apply {
+                this.height = height
+            }
+        }
         mGlide.load(url).encodeQuality(60).into(imgPhoto)
     }
 
@@ -1378,7 +1382,7 @@ class PostsAdapter2(
                 val dataBinding = holder.binding as LayoutCarouselImageBinding
 
                 val condidate = item.imageVersions2.candidates[0]
-                loadImage(condidate.width, condidate.height, condidate.url, dataBinding.imgPhoto)
+                loadImage(condidate.width, condidate.height, condidate.url, dataBinding.imgPhoto,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
 //                mPicasso.load(item.imageVersions2.candidates[1].url)
 //                    .into(dataBinding.imgPhoto)
             } else {
@@ -1387,7 +1391,7 @@ class PostsAdapter2(
                 val video = item.videoVersions[1]
                 val image = item.imageVersions2.candidates[0]
 
-                loadImage(image.width, image.height, image.url, dataBinding.photoView)
+                loadImage(image.width, image.height, image.url, dataBinding.photoView,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
 //
 //                mPicasso
 //                    .load(image.url)

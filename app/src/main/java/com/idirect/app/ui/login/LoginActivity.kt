@@ -17,6 +17,7 @@ import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.ui.twofactor.TwoFactorActivity
 import com.idirect.app.extentions.hideKeyboard
 import com.idirect.app.extentions.toast
+import com.idirect.app.ui.main.MainActivity
 
 class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
 
@@ -103,13 +104,18 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                         startActivity(
                             Intent(
                                 this@LoginActivity,
-                                FragmentInbox::class.java
+                                MainActivity::class.java
                             )
                         )
                     }
                 }
             }
         })
+        binding.btnLogin.setOnClickListener {
+            val username = binding.edtUsername.text.toString()
+            val password = binding.edtPassword.text.toString()
+            viewModel.login(username,password)
+        }
     }
 
     override fun onBackPressed() {

@@ -127,4 +127,8 @@
     <string name="share_to">Share to</string>
     <string name="send">Send</string>
     <string name="hashtag_not_support">Hash tag not supported in this version</string>
+    <string name="enter_username">Enter Username</string>
+    <string name="enter_password">Enter Password</string>
+    <string name="k">%sK</string>
+    <string name="m">%sM</string>
 </resources>

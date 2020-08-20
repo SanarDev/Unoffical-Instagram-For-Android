@@ -23,7 +23,8 @@ class PlayManager constructor(context: Context) {
         fun onStop()
     }
 
-    var player: SimpleExoPlayer = SimpleExoPlayer.Builder(context).build()
+    var _player: SimpleExoPlayer? = null
+    val player: SimpleExoPlayer get() = _player!!
     var playChangeLiveData = MutableLiveData<PlayProperties>()
 
     var currentPlayerId: String? = null
@@ -31,38 +32,43 @@ class PlayManager constructor(context: Context) {
     // for voice media
     var seekbarPlay: ProgressBar? = null
     var btnPlay: AppCompatImageButton? = null
-    private lateinit var runnable: Runnable
+    private var _runnable: Runnable? = null
+    private val runnable: Runnable get() = _runnable!!
 
     private var isFinishMedia = false
-    private var listener = object : Player.EventListener {
-        override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-            when (playbackState) {
-                Player.STATE_ENDED -> {
-                    seekbarPlay?.progress = 0
-                    btnPlay?.setImageResource(R.drawable.ic_play_circle)
-                    currentPlayerId = ""
-                    isFinishMedia = true
-                    player.seekTo(0)
-                }
-                Player.STATE_READY -> {
-                    isFinishMedia = false
-                }
-                else -> {
+    private var listener: Player.EventListener? = null
 
+    init {
+        _player = SimpleExoPlayer.Builder(context).build()
+        listener = object : Player.EventListener {
+            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_ENDED -> {
+                        seekbarPlay?.progress = 0
+                        btnPlay?.setImageResource(R.drawable.ic_play_circle)
+                        currentPlayerId = ""
+                        isFinishMedia = true
+                        player.seekTo(0)
+                    }
+                    Player.STATE_READY -> {
+                        isFinishMedia = false
+                    }
+                    else -> {
+
+                    }
                 }
             }
         }
-    }
 
-    init {
-
-        player.addListener(listener)
+        player.addListener(listener!!)
         val handler = Handler()
-        runnable = Runnable {
+        _runnable = Runnable {
             if (!isFinishMedia) {
                 seekbarPlay?.progress = (player.currentPosition * 100 / player.duration).toInt()
             }
-            handler.postDelayed(runnable, 100)
+            if(_runnable != null){
+                handler.postDelayed(runnable, 100)
+            }
         }
         handler.postDelayed(runnable, 0)
     }
@@ -73,7 +79,7 @@ class PlayManager constructor(context: Context) {
         player.prepare(mediaSource)
         player.playWhenReady = true
         player.seekTo(seekTo)
-        if(currentPlayerId != playerId){
+        if (currentPlayerId != playerId) {
             playChangeLiveData.postValue(
                 PlayProperties(
                     player.playWhenReady,
@@ -86,8 +92,13 @@ class PlayManager constructor(context: Context) {
     }
 
     fun releasePlay() {
-        player.removeListener(listener)
-        player.release()
+        if (_player != null) {
+            player.removeListener(listener!!)
+            player.release()
+        }
+        _runnable = null
+        _player = null
+        listener = null
     }
 
     fun stopPlay() {

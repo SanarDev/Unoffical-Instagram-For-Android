@@ -16,10 +16,12 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.Navigation
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
@@ -68,13 +70,17 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
     lateinit var mGlideRequestManager:RequestManager
 
     private lateinit var shareViewModel: ShareViewModel
-    private lateinit var layoutManager: LinearLayoutManager
     private var isLoadingMoreDirects: Boolean = false
     private var isMoreDirectExist: Boolean = true
     private val mHandler = Handler()
     private lateinit var user: InstagramLoggedUser
-    lateinit var adapter: DirectsAdapter
+    var _adapter: DirectsAdapter?=null
+    val adapter: DirectsAdapter get() = _adapter!!
 
+    override fun onDestroyView() {
+        _adapter = null
+        super.onDestroyView()
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -87,9 +93,8 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = DirectsAdapter(emptyList<Any>().toMutableList())
+        _adapter = DirectsAdapter(emptyList<Any>().toMutableList())
         binding.recyclerviewDirects.adapter = adapter
-        layoutManager = (binding.recyclerviewDirects.layoutManager as LinearLayoutManager)
         shareViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
         (requireActivity() as MainActivity).isHideNavigationBottom(false)
 
@@ -156,13 +161,13 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
 
         user = shareViewModel.getUser()
 
-
         binding.recyclerviewDirects.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 if (!isLoadingMoreDirects && isMoreDirectExist) {
+                    val layoutManager = binding.recyclerviewDirects.layoutManager as LinearLayoutManager
                     val totalItemCount = layoutManager.itemCount
-                    if (layoutManager != null && layoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
+                    if (layoutManager.findLastCompletelyVisibleItemPosition() == totalItemCount - 1) {
                         if (totalItemCount - 2 < 0) {
                             return
                         }
@@ -485,8 +490,8 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                     this.isActive = item.active
                     this.lastActivityAt = item.lastActivityAt
                 }
-                val action = FragmentInboxDirections.actionFragmentInboxToFragmentDirect(data)
-                Navigation.findNavController(it).navigate(action)
+                val action = NavigationMainGraphDirections.actionGlobalDirectFragment(data)
+                findNavController().navigate(action)
                 if (binding.edtSearch.text.toString().isNotEmpty()) {
                     binding.edtSearch.setText("")
                 }
@@ -497,6 +502,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
 //            }
             return item
         }
+
 
         fun setLoading(isLoading: Boolean) {
             if (isLoading) {

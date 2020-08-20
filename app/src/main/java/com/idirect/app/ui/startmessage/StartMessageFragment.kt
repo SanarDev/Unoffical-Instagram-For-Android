@@ -9,7 +9,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
@@ -131,13 +133,13 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
                     this.username = user.username
                     this.fullname = user.fullName
                 }
-                val action = StartMessageFragmentDirections.actionStartMessageFragmentToUserProfileFragment(userData)
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
                 val extras = FragmentNavigatorExtras(
                     dataBinding.imgProfileImage to dataBinding.imgProfileImage.transitionName,
                     dataBinding.txtUsername to dataBinding.txtUsername.transitionName,
                     dataBinding.txtFullname to dataBinding.txtFullname.transitionName
                 )
-                it.findNavController().navigate(action,extras)
+                findNavController().navigate(action,extras)
             }
             return item
         }

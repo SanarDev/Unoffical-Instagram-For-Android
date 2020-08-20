@@ -58,7 +58,7 @@ import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener
 import javax.inject.Inject
 
 class FragmentStoryItem(var userId: Long,
-                        var mStoryActionListener: StoryActionListener,
+                        var mStoryActionListener: StoryActionListener?=null,
                         var playItemAfterLoad:Boolean=false,
                         var isTouchEnable:Boolean = true) : BaseFragment<FragmentStoryItemBinding, StoryItemViewModel>(), ForwardListener,OnEmojiPopupDismissListener,OnEmojiPopupShownListener {
 
@@ -111,8 +111,8 @@ class FragmentStoryItem(var userId: Long,
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         emojiPopup?.releaseMemory()
+        super.onDestroyView()
     }
 
 //    fun releaseMemory() {
@@ -310,7 +310,7 @@ class FragmentStoryItem(var userId: Long,
             }
         }
         binding.layoutHeader.setOnClickListener {
-            mStoryActionListener.onProfileClick(it,userId,binding.txtUsername.text.toString())
+            mStoryActionListener?.onProfileClick(it,userId,binding.txtUsername.text.toString())
         }
     }
 
@@ -371,7 +371,7 @@ class FragmentStoryItem(var userId: Long,
         if (currentPosition >= progressBars.size) {
             currentPosition = items.size - 1
             if(moduleSource == "feed_timeline"){
-                mStoryActionListener.loadNextPage()
+                mStoryActionListener?.loadNextPage()
             }else{
                 requireActivity().onBackPressed()
             }

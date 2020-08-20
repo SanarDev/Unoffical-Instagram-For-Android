@@ -182,10 +182,10 @@ interface InstagramRemote {
     @GET(InstagramConstants.API_VERSION + "direct_v2/threads/get_by_participants/")
     fun getByParticipants(
         @HeaderMap header: Map<String, String>,
-        @Path("recipient_users") recipientUsers: String,
-        seqOd: Int,
-        limit: Int = 20
-    ): Call<ResponseBody>
+        @Query("recipient_users") recipientUsers: String,
+        @Query("seq_id")seqOd: Int,
+        @Query("limit")limit: Int = 20
+    ): Call<InstagramParticipantsResponse>
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/link/")
     fun sendLinkMessage(

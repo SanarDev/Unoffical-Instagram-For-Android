@@ -7,11 +7,13 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.fasterxml.jackson.core.io.NumberInput
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
@@ -24,9 +26,11 @@ import com.idirect.app.datasource.model.Comment
 import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.extensions.color
 import com.idirect.app.extentions.toast
+import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.TimeUtils
+import com.vanniktech.emoji.EmojiPopup
 import java.lang.Long
 import javax.inject.Inject
 
@@ -40,6 +44,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
         return NAME_TAG
     }
 
+    private lateinit var emojiPopup: EmojiPopup
+
     @Inject
     lateinit var mGlideRequestManager: RequestManager
     private lateinit var mAdapter: CommentAdapter
@@ -52,9 +58,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                 val userData = UserBundle().apply {
                     username = data.replace("@", "")
                 }
-                val action =
-                    CommentsFragmentDirections.actionCommentsFragmentToUserProfileFragment(userData)
-                v.findNavController().navigate(action)
+                val action =NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                findNavController().navigate(action)
             } else if (data.startsWith("#")) {
 
             } else {
@@ -63,11 +68,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                     val userData = UserBundle().apply {
                         userId = num.toString()
                     }
-                    val action =
-                        CommentsFragmentDirections.actionCommentsFragmentToUserProfileFragment(
-                            userData
-                        )
-                    v.findNavController().navigate(action)
+                    val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                    findNavController().navigate(action)
                 } catch (e: Exception) {
 
                 }
@@ -83,15 +85,39 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
         return R.layout.fragment_comment
     }
 
+    override fun onDestroyView() {
+        emojiPopup.releaseMemory()
+        super.onDestroyView()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val bundle = requireArguments()
         val postData = bundle.getParcelable<UserPost>("data")!!
         viewModel.init(postData.id)
-
+        (requireActivity() as MainActivity).isHideNavigationBottom(true)
         mAdapter = CommentAdapter(emptyArray<Comment>().toMutableList())
         binding.recyclerviewComments.adapter = mAdapter
+
+        emojiPopup =
+            EmojiPopup.Builder.fromRootView(binding.root)
+                .setOnEmojiPopupDismissListener {
+                    binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
+                }.setOnEmojiPopupShownListener {
+                    binding.btnEmoji.setImageResource(R.drawable.ic_keyboard_outline)
+                }.build(binding.edtComment);
+
+        binding.edtComment.setOnClickListener {
+            emojiPopup.dismiss()
+        }
+        binding.btnEmoji.setOnClickListener {
+            if(emojiPopup.isShowing){
+                emojiPopup.dismiss()
+            }else{
+                emojiPopup.toggle()
+            }
+        }
 
         mGlideRequestManager.load(postData.user.profilePicUrl).into(binding.imgOwnerProfile)
         binding.txtComment.setText(postData.user.username, postData.user.pk, postData.caption.text)

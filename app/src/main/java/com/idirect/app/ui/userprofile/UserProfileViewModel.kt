@@ -5,6 +5,8 @@ import androidx.databinding.ObservableField
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
+import com.idirect.app.R
+import com.idirect.app.core.BaseApplication
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.APIErrors
 import com.idirect.app.datasource.model.User
@@ -17,42 +19,72 @@ import okhttp3.ResponseBody
 import javax.inject.Inject
 import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
-open class UserProfileViewModel @Inject constructor(application: Application, var mUseCase: UseCase,var gson: Gson):BaseViewModel(application)
-{
+open class UserProfileViewModel @Inject constructor(
+    application: Application,
+    var mUseCase: UseCase,
+    var gson: Gson
+) : BaseViewModel(application) {
     private val _userLiveData = MutableLiveData<Resource<InstagramUserInfo>>()
-    var instagramPostsResponse:InstagramPostsResponse?=null
-    var userId:Long= 0
+    var instagramPostsResponse: InstagramPostsResponse? = null
+    var userId: Long = 0
     val resultUsePosts = MutableLiveData<Resource<InstagramPostsResponse>>()
-    val userLiveData = Transformations.map(_userLiveData){
-        if(it.status == Resource.Status.SUCCESS){
+    val userLiveData = Transformations.map(_userLiveData) {
+        if (it.status == Resource.Status.SUCCESS) {
             userId = it.data!!.user.pk
             getUserPosts(userId)
         }
         return@map it
     }
-    fun init(username:String?,userId: String?=null){
-        if(userId == null){
-            mUseCase.getUserInfoFromUsername(_userLiveData,username!!)
-        }else{
+
+    fun init(username: String?, userId: String? = null) {
+        if (userId == null) {
+            mUseCase.getUserInfoFromUsername(_userLiveData, username!!)
+        } else {
             getUserProfile(userId.toLong())
         }
     }
-    private fun getUserProfile(userId:Long){
-        mUseCase.getUserProfile(userId,_userLiveData)
+
+    private fun getUserProfile(userId: Long) {
+        mUseCase.getUserProfile(userId, _userLiveData)
     }
 
-    private fun getUserPosts(userId: Long){
+    private fun getUserPosts(userId: Long) {
         mUseCase.getUserPosts(userId).observeForever {
-            if(it.status == Resource.Status.SUCCESS){
+            if (it.status == Resource.Status.SUCCESS) {
                 instagramPostsResponse = it.data
             }
             resultUsePosts.value = it
         }
     }
 
-    fun loadMorePosts(){
+    fun loadMorePosts() {
         val posts = instagramPostsResponse!!.userPosts
-        val previousPostId = posts[posts.size -1].id
-        mUseCase.loadMoreUserPosts(userId,previousPostId,resultUsePosts)
+        val previousPostId = posts[posts.size - 1].id
+        mUseCase.loadMoreUserPosts(userId, previousPostId, resultUsePosts)
+    }
+
+    fun getStringNumber(number: Int): String {
+        var strNumber = ""
+        when(number){
+            in 0..9999 ->{
+                strNumber = number.toString()
+            }
+            in 10000..999999 ->{
+                val splitedNumber = "%.1f".format((number.toFloat() / 1000))
+
+                strNumber = String.format(
+                    getApplication<BaseApplication>().getString(R.string.k),
+                    splitedNumber
+                )
+            }
+            else ->{
+                val splitedNumber = "%.1f".format((number.toFloat() / 1000000))
+                strNumber = String.format(
+                    getApplication<BaseApplication>().getString(R.string.m),
+                    splitedNumber
+                )
+            }
+        }
+        return strNumber
     }
 }
