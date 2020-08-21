@@ -5,7 +5,6 @@ import com.idirect.app.ui.login.LoginActivity
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.playvideo.PlayVideoActivity
 import com.idirect.app.ui.setting.SettingActivity
-import com.idirect.app.ui.startmessage.StartMessageFragment
 import com.idirect.app.ui.twofactor.TwoFactorActivity
 import dagger.Module
 import dagger.android.ContributesAndroidInjector

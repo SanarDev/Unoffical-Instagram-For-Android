@@ -1,8 +1,9 @@
-package com.idirect.app.ui.startmessage
+package com.idirect.app.ui.search
 
 import android.app.Application
 import android.os.Handler
 import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.response.InstagramRecipients
@@ -10,19 +11,19 @@ import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
 import javax.inject.Inject
 
-class StartMessageViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
+class SearchViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
     BaseViewModel(application) {
 
 
     private var searchWord: String = ""
     private var lastSearchedWord: String = ""
     private val mHandler = Handler()
-    private val result = MediatorLiveData<Resource<InstagramRecipients>>()
+    private val result = MutableLiveData<Resource<InstagramRecipients>>()
     val liveData = Transformations.map(result) {
-        if(it.status == Resource.Status.SUCCESS){
-            for(index in it.data!!.recipients.indices){
+        if (it.status == Resource.Status.SUCCESS) {
+            for (index in it.data!!.recipients.indices) {
                 val item = it.data!!.recipients[index]
-                if(item.thread != null && item.thread.users.isEmpty()){
+                if (item.thread != null && item.thread.users.isEmpty()) {
                     it.data!!.recipients.removeAt(index)
                     break
                 }
@@ -33,15 +34,14 @@ class StartMessageViewModel @Inject constructor(application: Application, var mU
 
     init {
         mUseCase.getRecipients(result)
+        val runnable = Runnable {
+            lastSearchedWord = searchWord
+            mUseCase.getRecipients(result, searchWord)
+        }
         Thread {
             while (true) {
-                mHandler.post {
-                    if (searchWord != lastSearchedWord) {
-                        lastSearchedWord = searchWord
-                        mUseCase.getRecipients(result, searchWord)
-                    }
-                }
-                Thread.sleep(5000)
+                mHandler.post(runnable)
+                Thread.sleep(3000)
             }
         }.start()
     }
@@ -51,8 +51,11 @@ class StartMessageViewModel @Inject constructor(application: Application, var mU
     }
 
 
-    fun onSearch(s: CharSequence, start: Int, before: Int, count: Int) {
-        searchWord = s.toString()
+    fun search(word: String) {
+        if(searchWord == word){
+            return
+        }
+        searchWord = word
         result.postValue(Resource.loading())
     }
 }

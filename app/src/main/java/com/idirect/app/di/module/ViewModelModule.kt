@@ -16,7 +16,7 @@ import com.idirect.app.ui.playvideo.PlayVideoViewModel
 import com.idirect.app.ui.postcomments.CommentsViewModel
 import com.idirect.app.ui.posts.PostsViewModel
 import com.idirect.app.ui.setting.SettingViewModel
-import com.idirect.app.ui.startmessage.StartMessageViewModel
+import com.idirect.app.ui.search.SearchViewModel
 import com.idirect.app.ui.story.StoryItemViewModel
 import com.idirect.app.ui.story.StoryViewModel
 import com.idirect.app.ui.twofactor.TwoFactorViewModel
@@ -48,8 +48,8 @@ abstract class ViewModelModule {
 
     @Binds
     @IntoMap
-    @ViewModelKey(StartMessageViewModel::class)
-    abstract fun startMessageViewModel(startMessageViewModel: StartMessageViewModel):ViewModel
+    @ViewModelKey(SearchViewModel::class)
+    abstract fun startMessageViewModel(startMessageViewModel: SearchViewModel):ViewModel
 
     @Binds
     @IntoMap

@@ -34,10 +34,9 @@ import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.databinding.LayoutCarouselImageBinding
-import com.idirect.app.databinding.LayoutCarouselVideoBinding
 import com.idirect.app.datasource.model.CarouselMedia
 import com.idirect.app.datasource.model.UserPost
+import com.idirect.app.datasource.model.event.LoadingEvent
 import com.idirect.app.di.module.GlideApp
 import com.idirect.app.extensions.color
 import com.idirect.app.extensions.gone
@@ -55,7 +54,7 @@ class PostsAdapter2(
     var mHyperTextClick: HyperTextView.OnHyperTextClick,
     var mPlayManager: PlayManager,
     viewLifecycleOwner: LifecycleOwner,
-    var items: List<UserPost>
+    var items: MutableList<Any>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
 
@@ -68,19 +67,22 @@ class PostsAdapter2(
     private var adapters = HashMap<Int, CollectionMediaAdapter>()
     var mListener: PostsRecyclerListener? = null
 
+    companion object{
+        const val LOADGING = 100
+    }
     init {
         mPlayManager.playChangeLiveData.observe(viewLifecycleOwner, Observer {
             if (!it.isPlay) {
                 for (index in items.indices) {
                     val item = items[index]
-                    if (item.mediaType == InstagramConstants.MediaType.VIDEO.type && item.id == it.currentPlayId) {
+                    if (item is UserPost && item.mediaType == InstagramConstants.MediaType.VIDEO.type && item.id == it.currentPlayId) {
                         item.videoVersions[0].isPlay = false
                         item.videoVersions[0].playPosition =
                             mPlayManager.player.currentPosition
                         notifyItemChanged(index)
                         return@Observer
                     }
-                    if (item.mediaType == InstagramConstants.MediaType.CAROUSEL_MEDIA.type) {
+                    if (item is UserPost && item.mediaType == InstagramConstants.MediaType.CAROUSEL_MEDIA.type) {
                         for (indexCarousel in item.carouselMedias.indices) {
                             val carousel = item.carouselMedias[indexCarousel]
                             if (carousel.id == it.currentPlayId) {
@@ -96,12 +98,12 @@ class PostsAdapter2(
             } else if (it.previousPlayId != null) {
                 for (index in items.indices) {
                     val item = items[index]
-                    if (item.mediaType == InstagramConstants.MediaType.VIDEO.type && it.previousPlayId == item.id) {
+                    if (item is UserPost && item.mediaType == InstagramConstants.MediaType.VIDEO.type && it.previousPlayId == item.id) {
                         item.videoVersions[0].isPlay = false
                         item.videoVersions[0].playPosition = 0
                         notifyItemChanged(index)
                         return@Observer
-                    } else if (item.mediaType == InstagramConstants.MediaType.CAROUSEL_MEDIA.type) {
+                    } else if (item is UserPost && item.mediaType == InstagramConstants.MediaType.CAROUSEL_MEDIA.type) {
                         for (indexCarousel in item.carouselMedias.indices) {
                             val carousel = item.carouselMedias[indexCarousel]
                             if (carousel.id == it.previousPlayId) {
@@ -129,6 +131,10 @@ class PostsAdapter2(
         }
 
         return when (viewType) {
+            LOADGING ->{
+                val itemView = LayoutInflater.from(parent.context).inflate(R.layout.layout_loading,parent,false)
+                LoadingViewHolder(itemView as ViewGroup)
+            }
             InstagramConstants.MediaType.IMAGE.type -> {
                 PostImageHolder(cardView)
             }
@@ -149,12 +155,37 @@ class PostsAdapter2(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return items[position].mediaType
+        val item = items[position]
+        if(item is LoadingEvent){
+            return LOADGING
+        }
+        item as UserPost
+        return item.mediaType
+    }
+
+
+    fun setLoading(isLoading: Boolean,recyclerView: RecyclerView?=null) {
+        if (isLoading) {
+            items.add(LoadingEvent())
+            notifyItemInserted(items.size - 1)
+            recyclerView?.scrollToPosition(items.size - 1)
+        } else {
+            for (i in items.indices) {
+                if (items[i] is LoadingEvent) {
+                    items.removeAt(i)
+                    notifyItemRemoved(i)
+                }
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
 
+        if(item is LoadingEvent){
+            return
+        }
+        item as UserPost
         val txtLocationName: AppCompatTextView
         val layoutLikersProfile: LinearLayout
         val layoutLikes: LinearLayout
@@ -502,14 +533,18 @@ class PostsAdapter2(
     private fun loadImage(width: Int, height: Int, url: String, imgPhoto: AppCompatImageView,mediaType:Int = InstagramConstants.MediaType.IMAGE.type) {
         if(mediaType == InstagramConstants.MediaType.IMAGE.type){
             imgPhoto.layoutParams.apply {
-                this.height = height
+                if(height < displayWidth && width < displayWidth){
+                    this.height = displayWidth
+                }else{
+                    this.height = height
+                }
             }
         }
-        mGlide.load(url).encodeQuality(60).into(imgPhoto)
+        mGlide.load(url).into(imgPhoto)
     }
 
 
-    fun getStandardVideoSize(width: Int, height: Int): Array<Int> {
+    private fun getStandardVideoSize(width: Int, height: Int): Array<Int> {
         var standardHeight = (height * displayWidth) / width
         if (standardHeight > width && standardHeight > displayHeight / 1.5) {
             standardHeight = (displayHeight.toFloat() / 1.5f).toInt()
@@ -520,6 +555,7 @@ class PostsAdapter2(
         return arrayOf(displayWidth, standardHeight)
     }
 
+    inner class LoadingViewHolder(itemView: ViewGroup):RecyclerView.ViewHolder(itemView){}
     inner class PostVideoHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
@@ -814,7 +850,6 @@ class PostsAdapter2(
             linearLayoutParent.addView(layoutComment)
         }
     }
-
     inner class PostImageHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
@@ -1074,7 +1109,6 @@ class PostsAdapter2(
             linearLayoutParent.addView(layoutComment)
         }
     }
-
     inner class PostCarouselMediaHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
@@ -1375,23 +1409,34 @@ class PostsAdapter2(
     inner class CollectionMediaAdapter constructor(
         var positionOfAdapter: Int,
         var items: List<CarouselMedia>
-    ) : BaseAdapter() {
-        override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
-            val item = items[position]
-            if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
-                val dataBinding = holder.binding as LayoutCarouselImageBinding
+    ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            val frameLayout = FrameLayout(parent.context).apply {
+                layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,RecyclerView.LayoutParams.MATCH_PARENT)
+            }
+            if(viewType == InstagramConstants.MediaType.IMAGE.type){
+                return ImageViewHolder(frameLayout)
+            }else{
+                return VideoViewHolder(frameLayout)
+            }
+        }
 
+        override fun getItemCount(): Int {
+            return items.size
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            val item = items[position]
+            if(item.mediaType == InstagramConstants.MediaType.IMAGE.type){
                 val condidate = item.imageVersions2.candidates[0]
-                loadImage(condidate.width, condidate.height, condidate.url, dataBinding.imgPhoto,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
-//                mPicasso.load(item.imageVersions2.candidates[1].url)
-//                    .into(dataBinding.imgPhoto)
-            } else {
-                val dataBinding = holder.binding as LayoutCarouselVideoBinding
-                dataBinding.videoView.visibility = View.GONE
+                loadImage(condidate.width, condidate.height, condidate.url,(holder as ImageViewHolder).imgPhoto,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
+            }else{
+                val viewHolder = holder as VideoViewHolder
+                viewHolder.videoView.visibility = View.GONE
                 val video = item.videoVersions[1]
                 val image = item.imageVersions2.candidates[0]
 
-                loadImage(image.width, image.height, image.url, dataBinding.photoView,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
+                loadImage(image.width, image.height, image.url, viewHolder.imgPhoto,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
 //
 //                mPicasso
 //                    .load(image.url)
@@ -1404,7 +1449,7 @@ class PostsAdapter2(
                             "Instagram"
                         )
                     )
-                dataBinding.videoView.setOnClickListener {
+                viewHolder.videoView.setOnClickListener {
                     if (mPlayManager.isSoundEnable()) {
                         mPlayManager.disableSound()
                     } else {
@@ -1417,27 +1462,94 @@ class PostsAdapter2(
                     val mediaSource: MediaSource =
                         ProgressiveMediaSource.Factory(dataSource)
                             .createMediaSource(uri)
-                    dataBinding.photoView.visibility = View.GONE
-                    dataBinding.imgPlay.visibility = View.GONE
-                    dataBinding.videoView.visibility = View.VISIBLE
-                    dataBinding.videoView.player = mPlayManager.player
+                    viewHolder.imgPhoto.visibility = View.GONE
+                    viewHolder.imgPlay.visibility = View.GONE
+                    viewHolder.videoView.visibility = View.VISIBLE
+                    viewHolder.videoView.player = mPlayManager.player
                     mPlayManager.startPlay(mediaSource, item.id)
-                    dataBinding.videoView.showController()
+                    viewHolder.videoView.showController()
                     currentMediaPosition = positionOfAdapter
                 } else {
                     if (mPlayManager.currentPlayerId == item.id) {
                         mPlayManager.stopPlay()
                     }
-                    dataBinding.videoView.player = null
-                    dataBinding.videoView.visibility = View.GONE
-                    dataBinding.photoView.visibility = View.VISIBLE
-                    dataBinding.imgPlay.visibility = View.VISIBLE
+                    viewHolder.videoView.player = null
+                    viewHolder.videoView.visibility = View.GONE
+                    viewHolder.imgPhoto.visibility = View.VISIBLE
+                    viewHolder.imgPlay.visibility = View.VISIBLE
                 }
 
-                dataBinding.root.setOnClickListener {
+                viewHolder.itemView.setOnClickListener {
                     item.videoVersions[0].isPlay = true
                     this@CollectionMediaAdapter.notifyItemChanged(position)
                 }
+            }
+        }
+
+        override fun getItemViewType(position: Int): Int {
+            val item = items[position]
+            return item.mediaType
+        }
+
+        inner class ImageViewHolder constructor(itemView:ViewGroup): RecyclerView.ViewHolder(itemView){
+            val imgPhoto:AppCompatImageView
+            init {
+                imgPhoto = AppCompatImageView(itemView.context).apply {
+                    id = View.generateViewId()
+                    layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT)
+                    adjustViewBounds = true
+                }
+                itemView.addView(imgPhoto)
+            }
+        }
+        inner class VideoViewHolder constructor(itemView:ViewGroup): RecyclerView.ViewHolder(itemView){
+            val imgPhoto:AppCompatImageView
+            val imgPlay:AppCompatImageView
+            val videoView:PlayerView
+            init {
+                videoView = LayoutInflater.from(itemView.context)
+                    .inflate(R.layout.layout_video_player, null, false) as PlayerView
+                videoView.layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+                itemView.addView(videoView)
+
+                imgPhoto = AppCompatImageView(itemView.context).apply {
+                    id = View.generateViewId()
+                    layoutParams =  FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    adjustViewBounds = true
+                }
+                itemView.addView(imgPhoto)
+
+                imgPlay = AppCompatImageView(itemView.context).apply {
+                    id = View.generateViewId()
+                    layoutParams =  FrameLayout.LayoutParams(resources.dpToPx(50f), resources.dpToPx(50f)).apply {
+                        this.gravity = Gravity.CENTER
+                    }
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    adjustViewBounds = true
+                    isClickable = false
+                    isFocusable = false
+                    setImageResource(R.drawable.ic_play_circle)
+                    setColorFilter(Color.WHITE)
+                }
+                itemView.addView(imgPlay)
+            }
+        }
+        /*
+        override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
+            val item = items[position]
+            if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
+                val dataBinding = holder.binding as LayoutCarouselImageBinding
+
+                val condidate = item.imageVersions2.candidates[0]
+                loadImage(condidate.width, condidate.height, condidate.url, dataBinding.imgPhoto,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
+//                mPicasso.load(item.imageVersions2.candidates[1].url)
+//                    .into(dataBinding.imgPhoto)
+            } else {
+
             }
             return item
         }
@@ -1453,7 +1565,8 @@ class PostsAdapter2(
 
         override fun getItemCount(): Int {
             return items.size
-        }
+        }*/
+
     }
 
 }

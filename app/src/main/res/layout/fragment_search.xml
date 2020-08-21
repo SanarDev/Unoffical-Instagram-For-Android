@@ -11,26 +11,23 @@
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
             android:background="@color/theme_item">
 
-            <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/btnOnBackPress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/edt_search"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
                 android:background="@null"
-                android:src="@drawable/ic_back"
-                android:tint="@color/text_very_light" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="40dp"
-                android:layout_marginEnd="40dp"
-                android:fontFamily="sans-serif-medium"
-                android:text="@string/start_new_message"
+                android:fontFamily="sans-serif-light"
+                android:hint="@string/search"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
                 android:textColor="@color/text_very_light"
-                android:textSize="16sp" />
+                android:textColorHint="@color/hint_light"
+                android:textSize="14sp" />
 
         </androidx.appcompat.widget.Toolbar>
 
@@ -43,22 +40,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
-
-                <androidx.appcompat.widget.AppCompatEditText
-                    android:id="@+id/edt_search"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:background="@drawable/bg_message_2"
-                    android:fontFamily="sans-serif-light"
-                    android:hint="@string/search"
-                    android:paddingStart="15dp"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="15dp"
-                    android:paddingBottom="10dp"
-                    android:textColor="@color/text_very_light"
-                    android:textColorHint="@color/hint_light"
-                    android:textSize="14sp" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerview_threads"

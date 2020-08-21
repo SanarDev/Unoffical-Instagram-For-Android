@@ -19,13 +19,10 @@ class PostsRecyclerview constructor(context: Context, attr: AttributeSet? = null
                 (it as PostsAdapter2).mListener = value
             }
         }
-    private val mLayoutManager = layoutManager as LinearLayoutManager
-    private val mAdapter: PostsAdapter2 by lazy {
-        adapter!! as PostsAdapter2
-    }
 
     override fun onScrolled(dx: Int, dy: Int) {
         super.onScrolled(dx, dy)
+        val mLayoutManager = layoutManager as LinearLayoutManager
         val positionFirstItem = mLayoutManager.findFirstVisibleItemPosition()
         val positionOfLastItem = mLayoutManager.findLastVisibleItemPosition()
         if (positionFirstItem == -1) {
@@ -37,9 +34,9 @@ class PostsRecyclerview constructor(context: Context, attr: AttributeSet? = null
         }
 
         if (positionOfLastItem != -1) {
+            val mAdapter = adapter as PostsAdapter2
             if (mAdapter.currentMediaPosition != PlayManager.NONE &&
-                positionFirstItem != mAdapter.currentMediaPosition &&
-                positionOfLastItem != mAdapter.currentMediaPosition
+                mAdapter.currentMediaPosition !in positionFirstItem..positionOfLastItem
             ) {
                 mAdapter.currentMediaPosition = PlayManager.NONE
                 mAdapter.mPlayManager.stopPlay()

@@ -14,12 +14,9 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.Navigation
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
@@ -40,7 +37,6 @@ import com.idirect.app.ui.direct.DirectBundle
 import com.idirect.app.ui.login.LoginActivity
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.main.ShareViewModel
-import com.idirect.app.ui.startmessage.StartMessageFragment
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.TimeUtils
 import com.idirect.app.utils.dialog.DialogHelper

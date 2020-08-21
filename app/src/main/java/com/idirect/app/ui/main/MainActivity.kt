@@ -17,11 +17,13 @@ import com.idirect.app.realtime.commands.RealTime_ClearCache
 import com.idirect.app.realtime.commands.RealTime_StartService
 import com.idirect.app.realtime.commands.RealTime_StopService
 import com.idirect.app.realtime.service.RealTimeService
+import com.idirect.app.ui.direct.FragmentDirect
 import com.idirect.app.ui.forward.ForwardBundle
 import com.idirect.app.ui.forward.ForwardFragment
 import com.idirect.app.ui.forward.ForwardListener
 import com.idirect.app.ui.home.FragmentHome
 import com.idirect.app.ui.inbox.FragmentInbox
+import com.idirect.app.ui.search.FragmentSearch
 import com.idirect.app.utils.Resource
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -104,7 +106,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
             AHBottomNavigation.OnTabSelectedListener {
             override fun onTabSelected(position: Int, wasSelected: Boolean): Boolean {
                 if (wasSelected) {
-                    return false
+                    val nameTagLastFragment = getLastFragment().getNameTag()
+                    if( (nameTagLastFragment == FragmentHome.NAME_TAG && position == HOME_POSITION) ||
+                        (nameTagLastFragment == FragmentInbox.NAME_TAG && position == INBOX_POSITION) ||
+                        (nameTagLastFragment == FragmentSearch.NAME_TAG && position == SEARCH_POSITION)){
+                        return false
+                    }
                 }
                 when (position) {
                     INBOX_POSITION -> {
@@ -112,6 +119,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
                     }
                     HOME_POSITION -> {
                         navHostFragment.navController.navigate(R.id.action_global_homeFragment)
+                    }
+                    SEARCH_POSITION ->{
+                        navHostFragment.navController.navigate(R.id.action_global_searchFragment)
                     }
                 }
                 return true

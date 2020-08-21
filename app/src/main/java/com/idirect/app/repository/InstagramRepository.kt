@@ -35,6 +35,9 @@ class InstagramRepository(
     var recipients: InstagramRecipients? = null
     var userComments: InstagramCommentResponse? = null
     var stories: InstagramStoriesResponse? = null
+    var userInfos = HashMap<Long,InstagramUserInfo>()
+    var searchedValue = HashMap<String,InstagramRecipients>()
+    var timelinePosts:InstagramFeedTimeLineResponse?=null
 
     fun login(
         liveData: MutableLiveData<Resource<InstagramLoginResult>>,
@@ -224,7 +227,7 @@ class InstagramRepository(
     }
 
     fun getRecipients(
-        result: MediatorLiveData<Resource<InstagramRecipients>>,
+        result: MutableLiveData<Resource<InstagramRecipients>>,
         query: String? = null,
         header: HashMap<String, String>
     ) {
@@ -233,23 +236,29 @@ class InstagramRepository(
                 result.value = Resource.success(recipients)
                 return
             }
+        }else{
+            searchedValue[query]?.let {
+                result.value = Resource.success(it)
+                return
+            }
         }
-        result.addSource(NetworkCall<InstagramRecipients>().makeCall(
+        NetworkCall<InstagramRecipients>().makeCall(
             if (query == null || query.isEmpty()) mInstagramRemote.getRecipients(
                 header
             ) else mInstagramRemote.searchRecipients(
                 header,
                 query = query
             )
-        )
-            , Observer {
-                if (it.status == Resource.Status.SUCCESS) {
-                    if(query.isNullOrBlank()){
-                        recipients = it.data
-                    }
+        ).observeForever {
+            if (it.status == Resource.Status.SUCCESS) {
+                if(query.isNullOrBlank()){
+                    recipients = it.data
+                }else{
+                    searchedValue[query] = it.data!!
                 }
-                result.value = (it)
-            })
+            }
+            result.value = (it)
+        }
     }
 
     fun sendReaction(
@@ -484,12 +493,19 @@ class InstagramRepository(
         header: HashMap<String, String>,
         userId: Long
     ) {
+        if(userInfos[userId] != null){
+            result.value = Resource.success(userInfos[userId])
+            return
+        }
         NetworkCall<InstagramUserInfo>().makeCall(
             mInstagramRemote.getUserInfo(
                 header,
                 userId
             )
         ).observeForever {
+            if(it.status == Resource.Status.SUCCESS){
+                userInfos[userId] = it.data!!
+            }
             result.value = (it)
         }
     }
@@ -692,14 +708,24 @@ class InstagramRepository(
     fun getTimelinePosts(
         result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>,
         header: HashMap<String, String>,
-        data: RequestBody
+        data: RequestBody,
+        isRefresh: Boolean = false
     ) {
+        if(!isRefresh){
+            timelinePosts?.let {
+                result.value = Resource.success(it)
+                return
+            }
+        }
         NetworkCall<InstagramFeedTimeLineResponse>().makeCall(
             mInstagramRemote.getFeedTimeline(
                 header,
                 data
             )
         ).observeForever {
+            if(it.status == Resource.Status.SUCCESS){
+                timelinePosts = it.data
+            }
             result.value = it
         }
     }

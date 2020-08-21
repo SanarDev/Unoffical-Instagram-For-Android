@@ -1,13 +1,14 @@
-package com.idirect.app.ui.startmessage
+package com.idirect.app.ui.search
 
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
@@ -15,13 +16,14 @@ import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.databinding.ActivityStartMessageBinding
+import com.idirect.app.databinding.FragmentSearchBinding
+import com.idirect.app.databinding.FragmentStoryBinding
 import com.idirect.app.databinding.LayoutExplorerUserBinding
 import com.idirect.app.datasource.model.Recipients
 import com.idirect.app.datasource.model.event.ConnectionStateEvent
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
-import com.idirect.app.extensions.waitForTransition
+import com.idirect.app.extentions.hideKeyboard
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
@@ -29,15 +31,16 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
-class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMessageViewModel>() {
+class FragmentSearch : BaseFragment<FragmentSearchBinding, SearchViewModel>() {
 
     private lateinit var shareViewModel: ShareViewModel
     private var seqId: Int = 0
-    private lateinit var mAdapter: ThreadsAdapter
+    private var _mAdapter: ThreadsAdapter?=null
+    private val mAdapter: ThreadsAdapter get() = _mAdapter!!
 
     companion object {
         fun open(context: Context, seqId: Int) {
-            context.startActivity(Intent(context, StartMessageFragment::class.java).apply {
+            context.startActivity(Intent(context, FragmentSearch::class.java).apply {
                 putExtra("seq_id",seqId)
             })
         }
@@ -47,11 +50,16 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
     }
 
     override fun layoutRes(): Int {
-        return R.layout.activity_start_message
+        return R.layout.fragment_search
     }
 
-    override fun getViewModelClass(): Class<StartMessageViewModel> {
-        return StartMessageViewModel::class.java
+    override fun onDestroyView() {
+        _mAdapter = null
+        super.onDestroyView()
+    }
+
+    override fun getViewModelClass(): Class<SearchViewModel> {
+        return SearchViewModel::class.java
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -80,33 +88,23 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
                 }
             }
         })
-        mAdapter = ThreadsAdapter(emptyArray<Recipients>().toMutableList())
+        _mAdapter = ThreadsAdapter(emptyArray<Recipients>().toMutableList())
         binding.recyclerviewThreads.adapter = mAdapter
         binding.recyclerviewThreads.adapter = mAdapter
 //        waitForTransition(binding.recyclerviewThreads)
-    }
 
-
-    @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
-    fun onConnectionStateEvent(connectionStateEvent: ConnectionStateEvent){
-        when (connectionStateEvent.connection){
-            ConnectionStateEvent.State.NETWORK_CONNECTION_RESET ->{
-                viewModel.getRecipients(binding.edtSearch.text.toString())
-            }
-            else ->{
+        binding.edtSearch.addTextChangedListener(object :TextWatcher{
+            override fun afterTextChanged(s: Editable?) {
 
             }
-        }
-    }
 
-    override fun onStart() {
-        super.onStart()
-        EventBus.getDefault().register(this)
-    }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
 
-    override fun onStop() {
-        super.onStop()
-        EventBus.getDefault().unregister(this)
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                viewModel.search(s.toString())
+            }
+        })
     }
 
     inner class ThreadsAdapter(var items: MutableList<Recipients>) : BaseAdapter() {
@@ -120,9 +118,9 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
                 item.user
             }
 
-            ViewCompat.setTransitionName(dataBinding.imgProfileImage,"profile_${user.pk}")
-            ViewCompat.setTransitionName(dataBinding.txtUsername,"username_${user.pk}")
-            ViewCompat.setTransitionName(dataBinding.txtFullname,"fullname_${user.pk}")
+//            ViewCompat.setTransitionName(dataBinding.imgProfileImage,"profile_${user.pk}")
+//            ViewCompat.setTransitionName(dataBinding.txtUsername,"username_${user.pk}")
+//            ViewCompat.setTransitionName(dataBinding.txtFullname,"fullname_${user.pk}")
             dataBinding.txtFullname.text = user.fullName
             dataBinding.txtUsername.text = user.username
             Glide.with(requireContext()).load(user.profilePicUrl).into(dataBinding.imgProfileImage)
@@ -134,12 +132,13 @@ class StartMessageFragment : BaseFragment<ActivityStartMessageBinding, StartMess
                     this.fullname = user.fullName
                 }
                 val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
-                val extras = FragmentNavigatorExtras(
-                    dataBinding.imgProfileImage to dataBinding.imgProfileImage.transitionName,
-                    dataBinding.txtUsername to dataBinding.txtUsername.transitionName,
-                    dataBinding.txtFullname to dataBinding.txtFullname.transitionName
-                )
-                findNavController().navigate(action,extras)
+//                val extras = FragmentNavigatorExtras(
+//                    dataBinding.imgProfileImage to dataBinding.imgProfileImage.transitionName,
+//                    dataBinding.txtUsername to dataBinding.txtUsername.transitionName,
+//                    dataBinding.txtFullname to dataBinding.txtFullname.transitionName
+//                )
+                findNavController().navigate(action)
+                requireActivity().hideKeyboard()
             }
             return item
         }

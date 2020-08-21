@@ -1224,7 +1224,7 @@ class UseCase(
     }
 
     fun getRecipients(
-        result: MediatorLiveData<Resource<InstagramRecipients>>,
+        result: MutableLiveData<Resource<InstagramRecipients>>,
         query: String? = null
     ) {
         mInstagramRepository.getRecipients(result, query, getHeaders())

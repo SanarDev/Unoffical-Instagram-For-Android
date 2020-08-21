@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.Observer
@@ -35,6 +36,7 @@ import com.idirect.app.customview.customtextview.HyperTextView
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
 import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
+import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentPostsBinding
 import com.idirect.app.databinding.LayoutCarouselImageBinding
 import com.idirect.app.databinding.LayoutCarouselVideoBinding
@@ -70,15 +72,10 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
     @Inject
     lateinit var mPlayManager: PlayManager
 
-    private lateinit var mLayoutManager: LinearLayoutManager
     private var isMoreAvailable: Boolean = false
     private var isLoading: Boolean = false
     private lateinit var mAdapter: PostsAdapter2
     private var scrollToItemId: String? = null
-    private var currentMediaPosition: Int = -1
-    private var currentVideoLayout: View? = null
-    val displayWidth = DisplayUtils.getScreenWidth()
-    val displayHeight = DisplayUtils.getScreenHeight()
 
     override fun getViewModelClass(): Class<PostsViewModel> {
         return PostsViewModel::class.java
@@ -113,7 +110,6 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
             viewLifecycleOwner,
             emptyArray<UserPost>().toMutableList())
 
-        mLayoutManager = binding.recyclerviewPosts.layoutManager as LinearLayoutManager
         binding.recyclerviewPosts.adapter = mAdapter
         binding.recyclerviewPosts.mPostsRecyclerState = object:PostsRecyclerListener{
             override fun requestForLoadMore() {
@@ -173,7 +169,7 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
                     isLoading = false
                     isMoreAvailable = it.data!!.isMoreAvailable
                     if (it.data!!.numResults > 0) {
-                        mAdapter.items = it.data!!.userPosts
+                        mAdapter.items = it.data!!.userPosts.toMutableList()
                         mAdapter.notifyDataSetChanged()
                     }
                     if (scrollToItemId != null) {
@@ -188,6 +184,7 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
                     }
                 }
             }
+            mAdapter.setLoading(isLoading)
         })
     }
 
@@ -202,12 +199,27 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
     }
 
     override fun onClick(v: View, data: String) {
-        if (data.startsWith("@")) {
+        if (data == "SeeAllLikers") {
+
+        } else if (data.startsWith("@")) {
             val userData = UserBundle().apply {
                 username = data.replace("@", "")
             }
             val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
             findNavController().navigate(action)
+        } else if (data.startsWith("#")) {
+            CustomToast.show(requireContext(),getString(R.string.hashtag_not_support), Toast.LENGTH_SHORT)
+        } else {
+            try {
+                val num = java.lang.Long.parseLong(data)
+                val userData = UserBundle().apply {
+                    userId = num.toString()
+                }
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                findNavController().navigate(action)
+            } catch (e: Exception) {
+
+            }
         }
     }
 

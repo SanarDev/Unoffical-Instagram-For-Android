@@ -19,11 +19,13 @@ import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
+import com.idirect.app.customview.loadingadapter.LoadingAdapter
 import com.idirect.app.databinding.FragmentCommentBinding
 import com.idirect.app.databinding.LayoutCommentBinding
 import com.idirect.app.databinding.LayoutCommentReplyBinding
 import com.idirect.app.datasource.model.Comment
 import com.idirect.app.datasource.model.UserPost
+import com.idirect.app.datasource.model.event.LoadingEvent
 import com.idirect.app.extensions.color
 import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
@@ -44,7 +46,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
         return NAME_TAG
     }
 
-    private lateinit var emojiPopup: EmojiPopup
+    private var _emojiPopup: EmojiPopup?=null
+    private val emojiPopup: EmojiPopup get() = _emojiPopup!!
 
     @Inject
     lateinit var mGlideRequestManager: RequestManager
@@ -58,7 +61,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                 val userData = UserBundle().apply {
                     username = data.replace("@", "")
                 }
-                val action =NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
                 findNavController().navigate(action)
             } else if (data.startsWith("#")) {
 
@@ -68,7 +71,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                     val userData = UserBundle().apply {
                         userId = num.toString()
                     }
-                    val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                    val action =
+                        NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
                     findNavController().navigate(action)
                 } catch (e: Exception) {
 
@@ -86,7 +90,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
     }
 
     override fun onDestroyView() {
-        emojiPopup.releaseMemory()
+        _emojiPopup?.releaseMemory()
+        _emojiPopup = null
         super.onDestroyView()
     }
 
@@ -97,10 +102,10 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
         val postData = bundle.getParcelable<UserPost>("data")!!
         viewModel.init(postData.id)
         (requireActivity() as MainActivity).isHideNavigationBottom(true)
-        mAdapter = CommentAdapter(emptyArray<Comment>().toMutableList())
+        mAdapter = CommentAdapter()
         binding.recyclerviewComments.adapter = mAdapter
 
-        emojiPopup =
+        _emojiPopup =
             EmojiPopup.Builder.fromRootView(binding.root)
                 .setOnEmojiPopupDismissListener {
                     binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
@@ -112,9 +117,9 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
             emojiPopup.dismiss()
         }
         binding.btnEmoji.setOnClickListener {
-            if(emojiPopup.isShowing){
+            if (emojiPopup.isShowing) {
                 emojiPopup.dismiss()
-            }else{
+            } else {
                 emojiPopup.toggle()
             }
         }
@@ -140,7 +145,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                     isMoreAvailable = it.data!!.hasMoreHeadloadComments
                     binding.progressbar.visibility = View.GONE
                     binding.recyclerviewComments.visibility = View.VISIBLE
-                    mAdapter.items = it.data!!.comments
+                    mAdapter.items = it.data!!.comments.toMutableList()
                     mAdapter.notifyDataSetChanged()
                 }
                 Resource.Status.ERROR -> {
@@ -149,6 +154,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                     binding.recyclerviewComments.visibility = View.VISIBLE
                 }
             }
+            mAdapter.setLoading(isLoading,binding.recyclerviewComments)
         })
         val mLayoutManager = binding.recyclerviewComments.layoutManager as LinearLayoutManager
         binding.recyclerviewComments.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -165,10 +171,11 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
         })
     }
 
-    inner class CommentAdapter(var items: MutableList<Comment>) : BaseAdapter() {
-        override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
-            Log.i(InstagramConstants.DEBUG_TAG, "position $position is created now")
+    inner class CommentAdapter() : LoadingAdapter() {
+
+        override fun objForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]
+            item as Comment
             val dataBinding = holder.binding as LayoutCommentBinding
             dataBinding.txtComment.setText(item.user.username, item.user.pk, item.text)
             dataBinding.txtComment.mHyperTextClick = onHyperTextClick
@@ -203,9 +210,9 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                         replyCommentBinding.btnLike.setColorFilter(resources.color(R.color.text_light))
                     }
                     replyCommentBinding.btnLike.setOnClickListener {
-                        if(replyComment.hasLikedComment){
+                        if (replyComment.hasLikedComment) {
                             viewModel.unlikeComment(replyComment.pk)
-                        }else{
+                        } else {
                             viewModel.likeComment(replyComment.pk)
                         }
                         replyComment.hasLikedComment = !replyComment.hasLikedComment
@@ -222,9 +229,9 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                 dataBinding.btnLike.setColorFilter(resources.color(R.color.text_light))
             }
             dataBinding.btnLike.setOnClickListener {
-                if(item.hasLikedComment){
+                if (item.hasLikedComment) {
                     viewModel.unlikeComment(item.pk)
-                }else{
+                } else {
                     viewModel.likeComment(item.pk)
                 }
                 item.hasLikedComment = !item.hasLikedComment
@@ -233,12 +240,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
             return item
         }
 
-        override fun getLayoutIdForPosition(position: Int): Int {
+        override fun layoutIdForPosition(position: Int): Int {
             return R.layout.layout_comment
-        }
-
-        override fun getItemCount(): Int {
-            return items.size
         }
 
     }

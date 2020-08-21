@@ -39,9 +39,12 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
     lateinit var mGlide: RequestManager
     @Inject
     internal lateinit var viewModelFactory: DaggerViewModelFactory
-    private lateinit var emojiPopup: EmojiPopup
-    private lateinit var adapter: UsersAdapter
-    private lateinit var binding: FragmentForwardBinding
+    private var _emojiPopup: EmojiPopup?=null
+    private val emojiPopup: EmojiPopup get() = _emojiPopup!!
+    private var _adapter: UsersAdapter?=null
+    private val adapter: UsersAdapter get() = _adapter!!
+    private var _binding: FragmentForwardBinding?=null
+    private val binding: FragmentForwardBinding get() = _binding!!
     private lateinit var viewModel: ForwardViewModel
     private lateinit var forwardBundle:ForwardBundle
 
@@ -61,12 +64,20 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
         super.onAttach(context)
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _adapter = null
+        _emojiPopup?.releaseMemory()
+        _emojiPopup = null
+        _binding = null
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_forward, container, false)
+        _binding = DataBindingUtil.inflate(inflater, R.layout.fragment_forward, container, false)
         return binding.root
     }
 
@@ -84,11 +95,11 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
         })
         val user = viewModel.getUserData()
         mGlide.load(user.profilePicUrl).into(binding.imgProfile)
-        adapter = UsersAdapter(null)
+        _adapter = UsersAdapter(null)
         binding.recyclerviewThreads.adapter = adapter
 
 
-        emojiPopup =
+        _emojiPopup =
             EmojiPopup.Builder.fromRootView(binding.root)
                 .setOnEmojiPopupDismissListener {
                     binding.btnEmoji.setImageResource(R.drawable.ic_emoji)

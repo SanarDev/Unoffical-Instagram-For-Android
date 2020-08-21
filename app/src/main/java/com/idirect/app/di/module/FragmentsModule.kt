@@ -7,7 +7,7 @@ import com.idirect.app.ui.posts.FragmentCollection
 import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.ui.postcomments.CommentsFragment
 import com.idirect.app.ui.posts.PostsFragment
-import com.idirect.app.ui.startmessage.StartMessageFragment
+import com.idirect.app.ui.search.FragmentSearch
 import com.idirect.app.ui.story.FragmentStory
 import com.idirect.app.ui.story.FragmentStoryItem
 import com.idirect.app.ui.userprofile.UserProfileFragment
@@ -27,7 +27,7 @@ abstract class FragmentsModule {
     abstract fun contributeFragmentDirect(): FragmentDirect
 
     @ContributesAndroidInjector
-    abstract fun contributeStartMessageFragment(): StartMessageFragment
+    abstract fun contributeStartMessageFragment(): FragmentSearch
 
     @ContributesAndroidInjector
     abstract fun contributeUserProfileFragment(): UserProfileFragment

@@ -149,9 +149,10 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         viewModel.postsLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
                 isLoading = false
-                mAdapter.items = it.data!!.posts
+                mAdapter.items = it.data!!.posts.toMutableList()
                 mAdapter.notifyDataSetChanged()
             }
+            mAdapter.setLoading(isLoading)
         })
 
         _mStoryAdapter = StoriesAdapter(null)
