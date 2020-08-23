@@ -13,7 +13,7 @@ class TimeUtils {
             val mCalendar: Calendar = GregorianCalendar()
             val mTimeZone = mCalendar.timeZone
             val mGMTOffset = mTimeZone.rawOffset
-            return mGMTOffset
+            return 16200
         }
 
         fun convertTimestampToDate(context: Context, timestamp:Long): String {

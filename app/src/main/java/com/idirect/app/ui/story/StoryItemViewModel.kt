@@ -25,6 +25,12 @@ class StoryItemViewModel @Inject constructor(application: Application, var mUseC
         }
     }
 
+    fun replyStory(threadId: String,mediaId: String,mediaType:Int,text:String,reelId:Long){
+        mUseCase.sendStoryReply(threadId,mediaId,mediaType,reelId,text).observeForever {
+            storyReactionResult.value = it
+        }
+    }
+
     fun loadNextPageStory(userId: Long) {
         mUseCase.getNextPageStory(storyMediaLiveData, userId)
     }

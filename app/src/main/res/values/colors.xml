@@ -15,6 +15,7 @@
     <color name="theme_button">#232323</color>
     <color name="online_color">#2196F3</color>
     <color name="link">#2196F3</color>
+    <color name="verify_icon">#2196F3</color>
     <color name="theme_light">#999</color>
     <color name="theme_button_click">#2e2e2e</color>
     <color name="theme_highlight_item">@color/text_light</color>

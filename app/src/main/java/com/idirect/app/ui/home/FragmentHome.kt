@@ -10,6 +10,7 @@ import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
@@ -25,6 +26,7 @@ import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentHomeBinding
 import com.idirect.app.databinding.LayoutStoryBinding
+import com.idirect.app.datasource.model.Location
 import com.idirect.app.datasource.model.Story
 import com.idirect.app.datasource.model.Tray
 import com.idirect.app.datasource.model.UserPost
@@ -48,23 +50,23 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         const val NAME_TAG = "home"
     }
 
-    @Inject
-    lateinit var mGlideRequestManager: RequestManager
 
-    @Inject
-    lateinit var mPlayManager: PlayManager
+    @Inject lateinit var mPlayManager: PlayManager
 
     private var currentMediaPosition: Int = PlayManager.NONE
+
     private var _mStoryAdapter: StoriesAdapter?=null
     private val mStoryAdapter: StoriesAdapter get() = _mStoryAdapter!!
     private var _mAdapter: PostsAdapter2?=null
     private val mAdapter: PostsAdapter2 get() = _mAdapter!!
+    private var _mGlide:RequestManager?=null
+    private val mGlide:RequestManager get() = _mGlide!!
+
     private lateinit var dataSource: DataSource.Factory
 
-    val displayWidth = DisplayUtils.getScreenWidth()
-    val displayHeight = DisplayUtils.getScreenHeight()
     private var isLoading = false
     private var lastStoryClicked: kotlin.Long = 0
+
 
     override fun getViewModelClass(): Class<HomeViewModel> {
         return HomeViewModel::class.java
@@ -77,6 +79,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     override fun onDestroyView() {
         _mAdapter = null
         _mStoryAdapter = null
+        _mGlide = null
         super.onDestroyView()
     }
 
@@ -87,6 +90,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     ): View? {
         EmojiManager.install(IosEmojiProvider())
         dataSource = DefaultHttpDataSourceFactory(Util.getUserAgent(requireContext(), "Instagram"))
+        _mGlide = Glide.with(this@FragmentHome)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -94,12 +98,13 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        mPlayManager.setRepeat(true)
         _mAdapter = PostsAdapter2(
             requireContext(),
             /* hyperListener */ this@FragmentHome,
             mPlayManager,
-            viewLifecycleOwner,
-            emptyArray<UserPost>().toMutableList()
+            mGlide,
+            viewLifecycleOwner
         )
         (requireActivity() as MainActivity).isHideNavigationBottom(false)
 
@@ -141,16 +146,19 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             override fun userProfile(v: View, userId: kotlin.Long, username: String) {
                 val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(UserBundle().apply {
                     this.username = username
-                    this.userId = userId.toString()
+                    this.userId = userId
                 })
                 findNavController().navigate(action)
+            }
+
+            override fun onLocationClick(v: View, location: Location) {
+                CustomToast.show(requireContext(),getString(R.string.location_not_support),Toast.LENGTH_SHORT)
             }
         }
         viewModel.postsLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
                 isLoading = false
-                mAdapter.items = it.data!!.posts.toMutableList()
-                mAdapter.notifyDataSetChanged()
+                mAdapter.items = (it.data!!.posts.toMutableList())
             }
             mAdapter.setLoading(isLoading)
         })
@@ -194,7 +202,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             val item = items!![position]
             val dataBinding = holder.binding as LayoutStoryBinding
             dataBinding.txtUsername.text = item.user.username
-            mGlideRequestManager.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
+            mGlide.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
             if(item.seen == 0.toLong() || item.latestReelMedia > item.seen){
                 if(item.hasBestiesMedia){
                     dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_close_friend_story)
@@ -235,7 +243,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             try {
                 val num = Long.parseLong(data)
                 val userData = UserBundle().apply {
-                    userId = num.toString()
+                    userId = num
                 }
                 val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
                 findNavController().navigate(action)

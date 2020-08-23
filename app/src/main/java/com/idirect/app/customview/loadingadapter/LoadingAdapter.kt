@@ -7,7 +7,6 @@ import com.idirect.app.datasource.model.event.LoadingEvent
 
 abstract class LoadingAdapter(var items:MutableList<Any> = ArrayList<Any>().toMutableList()) : BaseAdapter() {
 
-
     fun setLoading(isLoading: Boolean,recyclerView: RecyclerView?=null) {
         if (isLoading) {
             items.add(LoadingEvent())

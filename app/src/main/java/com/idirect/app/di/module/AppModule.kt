@@ -38,12 +38,6 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideGlide(application: Application): RequestManager {
-        return GlideApp.with(application)
-    }
-
-    @Provides
-    @Singleton
     fun provideHandler(): Handler {
         return Handler()
     }
@@ -65,6 +59,14 @@ class AppModule {
     @Singleton
     fun provideCookieUtils(application: Application): CookieUtils {
         return CookieUtils(application)
+    }
+
+    @Provides
+    @Singleton
+    fun provideThread(): Thread {
+        return Thread().apply {
+            name = "thread_1"
+        }
     }
 
 

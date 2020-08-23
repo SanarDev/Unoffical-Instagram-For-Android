@@ -1,62 +1,32 @@
 package com.idirect.app.ui.posts
 
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.RelativeLayout
 import android.widget.Toast
-import androidx.appcompat.widget.AppCompatImageView
-import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.Observer
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.PagerSnapHelper
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.SnapHelper
+import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
-import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.customview.postsrecyclerview.PostsAdapter
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
 import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentPostsBinding
-import com.idirect.app.databinding.LayoutCarouselImageBinding
-import com.idirect.app.databinding.LayoutCarouselVideoBinding
-import com.idirect.app.databinding.LayoutUserDetailPostBinding
-import com.idirect.app.datasource.model.CarouselMedia
+import com.idirect.app.datasource.model.Location
 import com.idirect.app.datasource.model.UserPost
-import com.idirect.app.extensions.color
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
-import com.idirect.app.extentions.dpToPx
-import com.idirect.app.extentions.toast
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.forward.ForwardBundle
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.userprofile.UserBundle
-import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
-import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
-import com.vanniktech.emoji.EmojiTextView
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import javax.inject.Inject
 
@@ -66,16 +36,18 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
     companion object{
         const val NAME_TAG = "posts"
     }
-    @Inject
-    lateinit var mGlideRequestManager: RequestManager
 
     @Inject
     lateinit var mPlayManager: PlayManager
 
     private var isMoreAvailable: Boolean = false
     private var isLoading: Boolean = false
-    private lateinit var mAdapter: PostsAdapter2
+    private var _mAdapter: PostsAdapter2?=null
+    private val mAdapter: PostsAdapter2 get() = _mAdapter!!
     private var scrollToItemId: String? = null
+
+    private var _mGlide:RequestManager?=null
+    private val mGlide:RequestManager get() = _mGlide!!
 
     override fun getViewModelClass(): Class<PostsViewModel> {
         return PostsViewModel::class.java
@@ -85,12 +57,18 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
         return R.layout.fragment_posts
     }
 
+    override fun onDestroyView() {
+        _mAdapter = null
+        _mGlide = null
+        super.onDestroyView()
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         EmojiManager.install(IosEmojiProvider())
+        _mGlide = Glide.with(this@PostsFragment)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -104,11 +82,11 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
         bundle.remove("scroll_to_item_id")
         viewModel.init(userId)
 
-        mAdapter = PostsAdapter2(requireContext(),
+        _mAdapter = PostsAdapter2(requireContext(),
             this@PostsFragment,
             mPlayManager,
-            viewLifecycleOwner,
-            emptyArray<UserPost>().toMutableList())
+            mGlide,
+            viewLifecycleOwner)
 
         binding.recyclerviewPosts.adapter = mAdapter
         binding.recyclerviewPosts.mPostsRecyclerState = object:PostsRecyclerListener{
@@ -147,11 +125,15 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
 
             override fun userProfile(v: View, userId: Long, username: String) {
                 val userData = UserBundle().apply {
-                    this.userId = userId.toString()
+                    this.userId = userId
                     this.username = username
                 }
                 val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
                 findNavController().navigate(action)
+            }
+
+            override fun onLocationClick(v: View, location: Location) {
+                CustomToast.show(requireContext(),getString(R.string.location_not_support),Toast.LENGTH_SHORT)
             }
         }
 
@@ -188,6 +170,17 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
         })
     }
 
+
+    override fun onPause() {
+        super.onPause()
+        mPlayManager.pausePlay()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mPlayManager.resumePlay()
+    }
+
     override fun onStop() {
         super.onStop()
         mPlayManager.stopPlay()
@@ -213,7 +206,7 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
             try {
                 val num = java.lang.Long.parseLong(data)
                 val userData = UserBundle().apply {
-                    userId = num.toString()
+                    userId = num
                 }
                 val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
                 findNavController().navigate(action)

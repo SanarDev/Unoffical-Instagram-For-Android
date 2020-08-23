@@ -24,6 +24,8 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Priority
+import com.bumptech.glide.RequestManager
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
@@ -45,31 +47,43 @@ import com.idirect.app.extentions.color
 import com.idirect.app.extentions.dpToPx
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.utils.DisplayUtils
+import com.idirect.app.utils.TextUtil
 import com.squareup.picasso.Picasso
 import com.tylersuehr.chips.CircleImageView
 import java.lang.Exception
 
 class PostsAdapter2(
-    var context: Context,
-    var mHyperTextClick: HyperTextView.OnHyperTextClick,
-    var mPlayManager: PlayManager,
-    viewLifecycleOwner: LifecycleOwner,
-    var items: MutableList<Any>
+    val context: Context,
+    val mHyperTextClick: HyperTextView.OnHyperTextClick,
+    val mPlayManager: PlayManager,
+    val mGlide:RequestManager,
+    viewLifecycleOwner: LifecycleOwner
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
 
+    companion object {
+        const val LOADGING = 100
+    }
+
     private val dataSource: DataSource.Factory =
         DefaultHttpDataSourceFactory(Util.getUserAgent(context, "Instagram"))
-    private val mGlide = GlideApp.with(context)
     var currentMediaPosition: Int = PlayManager.NONE
     private var displayWidth = DisplayUtils.getScreenWidth()
     private var displayHeight = DisplayUtils.getScreenHeight()
     private var adapters = HashMap<Int, CollectionMediaAdapter>()
     var mListener: PostsRecyclerListener? = null
 
-    companion object{
-        const val LOADGING = 100
-    }
+    var items: MutableList<Any> = ArrayList<Any>().toMutableList()
+        set(value) {
+            field = value
+            for (item in value) {
+                if (item is UserPost && (item.mediaType == InstagramConstants.MediaType.IMAGE.type || item.mediaType == InstagramConstants.MediaType.VIDEO.type)) {
+//                    mGlide.load(item.imageVersions2.candidates[0].url).preload()
+                }
+            }
+            notifyDataSetChanged()
+        }
+
     init {
         mPlayManager.playChangeLiveData.observe(viewLifecycleOwner, Observer {
             if (!it.isPlay) {
@@ -131,8 +145,9 @@ class PostsAdapter2(
         }
 
         return when (viewType) {
-            LOADGING ->{
-                val itemView = LayoutInflater.from(parent.context).inflate(R.layout.layout_loading,parent,false)
+            LOADGING -> {
+                val itemView = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.layout_loading, parent, false)
                 LoadingViewHolder(itemView as ViewGroup)
             }
             InstagramConstants.MediaType.IMAGE.type -> {
@@ -156,7 +171,7 @@ class PostsAdapter2(
 
     override fun getItemViewType(position: Int): Int {
         val item = items[position]
-        if(item is LoadingEvent){
+        if (item is LoadingEvent) {
             return LOADGING
         }
         item as UserPost
@@ -164,7 +179,7 @@ class PostsAdapter2(
     }
 
 
-    fun setLoading(isLoading: Boolean,recyclerView: RecyclerView?=null) {
+    fun setLoading(isLoading: Boolean, recyclerView: RecyclerView? = null) {
         if (isLoading) {
             items.add(LoadingEvent())
             notifyItemInserted(items.size - 1)
@@ -182,7 +197,7 @@ class PostsAdapter2(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
 
-        if(item is LoadingEvent){
+        if (item is LoadingEvent) {
             return
         }
         item as UserPost
@@ -194,7 +209,7 @@ class PostsAdapter2(
         val btnViewComments: AppCompatTextView
         val btnTopLikerUsername: AppCompatTextView
         val btnOthers: AppCompatTextView
-        val txtUsername: AppCompatTextView
+        val txtUsername: HyperTextView
         val txtCaption: AppCompatTextView
         val btnComment: AppCompatImageView
         val btnLike: AppCompatImageView
@@ -221,7 +236,13 @@ class PostsAdapter2(
                 btnLike = mHolder.btnLike
 
                 val candidate = item.imageVersions2.candidates[0]
-                loadImage(candidate.width, candidate.height, candidate.url, mHolder.imgPhoto,InstagramConstants.MediaType.IMAGE.type)
+                loadImage(
+                    candidate.width,
+                    candidate.height,
+                    candidate.url,
+                    mHolder.imgPhoto,
+                    InstagramConstants.MediaType.IMAGE.type
+                )
             }
             InstagramConstants.MediaType.VIDEO.type -> {
                 val mHolder = holder as PostVideoHolder
@@ -249,6 +270,11 @@ class PostsAdapter2(
                     height = size[1]
                 }
 
+                if (previewImage.height == video.height) {
+                    mHolder.photoView.scaleType = ImageView.ScaleType.FIT_CENTER
+                } else {
+                    mHolder.photoView.scaleType = ImageView.ScaleType.CENTER_CROP
+                }
                 loadImage(
                     previewImage.width,
                     previewImage.height,
@@ -333,6 +359,7 @@ class PostsAdapter2(
                 adapters.put(position, CollectionMediaAdapter(position, item.carouselMedias))
                 mHolder.recyclerviewMedia.adapter = adapters[position]
 
+                val mediasSize = item.carouselMedias.size
                 mHolder.recyclerviewMedia.addOnScrollListener(object :
                     RecyclerView.OnScrollListener() {
                     override fun onScrollStateChanged(
@@ -341,11 +368,14 @@ class PostsAdapter2(
                     ) {
                         if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                             val visibleItem =
-                                (recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+                                (recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+                            if (visibleItem >= mediasSize) {
+                                return
+                            }
                             mHolder.txtPagePosition.text = String.format(
                                 context.getString(R.string.page_position),
                                 visibleItem + 1,
-                                item.carouselMedias.size
+                                mediasSize
                             )
                             if (item.carouselMedias[visibleItem].mediaType == InstagramConstants.MediaType.VIDEO.type &&
                                 mPlayManager.currentPlayerId != item.carouselMedias[visibleItem].id
@@ -379,20 +409,20 @@ class PostsAdapter2(
 
         val onClickListener = object : View.OnClickListener {
             override fun onClick(v: View?) {
-                when(v!!.id){
-                    txtUsername.id ->{
+                when (v!!.id) {
+                    txtUsername.id -> {
                         mListener?.userProfile(v, item.user.pk, item.user.username)
                     }
-                    btnComment.id ->{
+                    btnComment.id -> {
                         mListener?.showComments(v!!, item)
                     }
-                    btnViewComments.id ->{
+                    btnViewComments.id -> {
                         mListener?.showComments(v!!, item)
                     }
-                    btnShare.id ->{
+                    btnShare.id -> {
                         mListener?.shareMedia(v, item.id, item.mediaType)
                     }
-                    btnLike.id ->{
+                    btnLike.id -> {
                         if (item.isHasLiked) {
                             btnLike.setImageResource(R.drawable.instagram_heart_outline_24)
                             btnLike.setColorFilter(context.resources.color(R.color.white))
@@ -406,6 +436,9 @@ class PostsAdapter2(
                         }
                         item.isHasLiked = !item.isHasLiked
                     }
+                    txtLocationName.id -> {
+                        mListener?.onLocationClick(v, location = item.location)
+                    }
                 }
             }
         }
@@ -416,6 +449,7 @@ class PostsAdapter2(
         } else {
             txtLocationName.text = item.location.shortName
             txtLocationName.visibility = View.VISIBLE
+            txtLocationName.setOnClickListener(onClickListener)
         }
         /* Location End*/
 
@@ -428,7 +462,7 @@ class PostsAdapter2(
                 HyperTextView.getLikedByHyperText(
                     item.facepileTopLikers[0].username,
                     item.facepileTopLikers[0].pk,
-                    item.likeCount
+                    TextUtil.getStringNumber(context, item.likeCount)
                 )
             )
             for (liker in item.facepileTopLikers) {
@@ -442,21 +476,29 @@ class PostsAdapter2(
             }
         } else {
             layoutLikersProfile.visibility = View.GONE
-            txtLikesCount.setText(HyperTextView.getLikersCountHyperText(item.likeCount))
+            txtLikesCount.setText(
+                HyperTextView.getLikersCountHyperText(
+                    TextUtil.getStringNumber(
+                        context,
+                        item.likeCount
+                    )
+                )
+            )
         }
         txtLikesCount.mHyperTextClick = mHyperTextClick
         /* Profile top likers End*/
 
 
-        txtUsername.text = item.user.username
-        txtUsername.setOnClickListener(onClickListener)
+        txtUsername.setText(item.user.username, item.user.pk, item.user.isVerified)
+        txtUsername.mHyperTextClick = mHyperTextClick
 
         if (item.caption != null) {
             txtCaption.setText(
-                item.caption.user.username,
-                item.caption.user.pk,
+                item.user.username,
+                item.user.pk,
+                item.user.isVerified,
                 item.caption.text,
-                3
+                100
             )
             txtCaption.mHyperTextClick = mHyperTextClick
         }
@@ -470,7 +512,10 @@ class PostsAdapter2(
         if (item.previewComments != null && item.previewComments.isNotEmpty()) {
             visible(btnViewComments)
             btnViewComments.text =
-                String.format(context.getString(R.string.view_all_comments), item.commentCount)
+                String.format(
+                    context.getString(R.string.view_all_comments),
+                    TextUtil.getStringNumber(context, item.commentCount)
+                )
             btnViewComments.setOnClickListener(onClickListener)
             for (comment in item.previewComments) {
                 val layoutPreviewComment =
@@ -490,7 +535,14 @@ class PostsAdapter2(
                 val txtComment: HyperTextView = layoutPreviewComment.findViewById(R.id.txt_comment)
                 val imgLike: AppCompatImageView = layoutPreviewComment.findViewById(R.id.img_like)
 
-                txtComment.setText(comment.user.username, comment.user.pk, comment.text)
+                txtComment.setText(
+                    comment.user.username,
+                    comment.user.pk,
+                    comment.user.isVerified,
+                    comment.text,
+                    100
+
+                )
                 txtComment.mHyperTextClick = mHyperTextClick
 
                 if (comment.hasLikedComment) {
@@ -530,17 +582,27 @@ class PostsAdapter2(
         btnLike.setOnClickListener(onClickListener)
     }
 
-    private fun loadImage(width: Int, height: Int, url: String, imgPhoto: AppCompatImageView,mediaType:Int = InstagramConstants.MediaType.IMAGE.type) {
-        if(mediaType == InstagramConstants.MediaType.IMAGE.type){
+    private fun loadImage(
+        width: Int,
+        height: Int,
+        url: String,
+        imgPhoto: AppCompatImageView,
+        mediaType: Int = InstagramConstants.MediaType.IMAGE.type
+    ) {
+        if (mediaType == InstagramConstants.MediaType.IMAGE.type) {
             imgPhoto.layoutParams.apply {
-                if(height < displayWidth && width < displayWidth){
+                if (height < displayWidth && width < displayWidth) {
                     this.height = displayWidth
-                }else{
+                } else {
                     this.height = height
                 }
             }
         }
-        mGlide.load(url).into(imgPhoto)
+        mGlide
+            .load(url)
+            .placeholder(R.drawable.placeholder_loading)
+            .priority(Priority.IMMEDIATE)
+            .into(imgPhoto)
     }
 
 
@@ -555,11 +617,11 @@ class PostsAdapter2(
         return arrayOf(displayWidth, standardHeight)
     }
 
-    inner class LoadingViewHolder(itemView: ViewGroup):RecyclerView.ViewHolder(itemView){}
+    inner class LoadingViewHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {}
     inner class PostVideoHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
-        val txtUsername: AppCompatTextView
+        val txtUsername: HyperTextView
         val txtLocation: AppCompatTextView
         val txtLikeCount: HyperTextView
         val btnViewComment: AppCompatTextView
@@ -619,13 +681,12 @@ class PostsAdapter2(
             }
             linearLayoutHeader.addView(linearLayoutUsernameLocation)
 
-            txtUsername = AppCompatTextView(itemView.context).apply {
+            txtUsername = HyperTextView(itemView.context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
-                typeface = Typeface.DEFAULT_BOLD;
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
                 id = View.generateViewId()
             }
@@ -667,7 +728,6 @@ class PostsAdapter2(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
-                scaleType = ImageView.ScaleType.CENTER_CROP
                 id = View.generateViewId()
             }
             frameLayoutMedia.addView(photoView)
@@ -850,10 +910,11 @@ class PostsAdapter2(
             linearLayoutParent.addView(layoutComment)
         }
     }
+
     inner class PostImageHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
-        val txtUsername: AppCompatTextView
+        val txtUsername: HyperTextView
         val txtLocation: AppCompatTextView
         val txtLikeCount: HyperTextView
         val btnViewComment: AppCompatTextView
@@ -910,13 +971,12 @@ class PostsAdapter2(
             }
             linearLayoutHeader.addView(linearLayoutUsernameLocation)
 
-            txtUsername = AppCompatTextView(itemView.context).apply {
+            txtUsername = HyperTextView(itemView.context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
-                typeface = Typeface.DEFAULT_BOLD;
                 id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtUsername)
@@ -1109,10 +1169,11 @@ class PostsAdapter2(
             linearLayoutParent.addView(layoutComment)
         }
     }
+
     inner class PostCarouselMediaHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
-        val txtUsername: AppCompatTextView
+        val txtUsername: HyperTextView
         val txtLocation: AppCompatTextView
         val txtLikeCount: HyperTextView
         val txtPagePosition: AppCompatTextView
@@ -1170,13 +1231,12 @@ class PostsAdapter2(
             }
             linearLayoutHeader.addView(linearLayoutUsernameLocation)
 
-            txtUsername = AppCompatTextView(itemView.context).apply {
+            txtUsername = HyperTextView(itemView.context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
-                typeface = Typeface.DEFAULT_BOLD;
                 id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtUsername)
@@ -1412,11 +1472,14 @@ class PostsAdapter2(
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val frameLayout = FrameLayout(parent.context).apply {
-                layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,RecyclerView.LayoutParams.MATCH_PARENT)
+                layoutParams = RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.MATCH_PARENT,
+                    RecyclerView.LayoutParams.MATCH_PARENT
+                )
             }
-            if(viewType == InstagramConstants.MediaType.IMAGE.type){
+            if (viewType == InstagramConstants.MediaType.IMAGE.type) {
                 return ImageViewHolder(frameLayout)
-            }else{
+            } else {
                 return VideoViewHolder(frameLayout)
             }
         }
@@ -1427,16 +1490,28 @@ class PostsAdapter2(
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val item = items[position]
-            if(item.mediaType == InstagramConstants.MediaType.IMAGE.type){
+            if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
                 val condidate = item.imageVersions2.candidates[0]
-                loadImage(condidate.width, condidate.height, condidate.url,(holder as ImageViewHolder).imgPhoto,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
-            }else{
+                loadImage(
+                    condidate.width,
+                    condidate.height,
+                    condidate.url,
+                    (holder as ImageViewHolder).imgPhoto,
+                    InstagramConstants.MediaType.CAROUSEL_MEDIA.type
+                )
+            } else {
                 val viewHolder = holder as VideoViewHolder
                 viewHolder.videoView.visibility = View.GONE
                 val video = item.videoVersions[1]
                 val image = item.imageVersions2.candidates[0]
 
-                loadImage(image.width, image.height, image.url, viewHolder.imgPhoto,InstagramConstants.MediaType.CAROUSEL_MEDIA.type)
+                loadImage(
+                    image.width,
+                    image.height,
+                    image.url,
+                    viewHolder.imgPhoto,
+                    InstagramConstants.MediaType.CAROUSEL_MEDIA.type
+                )
 //
 //                mPicasso
 //                    .load(image.url)
@@ -1491,21 +1566,29 @@ class PostsAdapter2(
             return item.mediaType
         }
 
-        inner class ImageViewHolder constructor(itemView:ViewGroup): RecyclerView.ViewHolder(itemView){
-            val imgPhoto:AppCompatImageView
+        inner class ImageViewHolder constructor(itemView: ViewGroup) :
+            RecyclerView.ViewHolder(itemView) {
+            val imgPhoto: AppCompatImageView
+
             init {
                 imgPhoto = AppCompatImageView(itemView.context).apply {
                     id = View.generateViewId()
-                    layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT)
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                    )
                     adjustViewBounds = true
                 }
                 itemView.addView(imgPhoto)
             }
         }
-        inner class VideoViewHolder constructor(itemView:ViewGroup): RecyclerView.ViewHolder(itemView){
-            val imgPhoto:AppCompatImageView
-            val imgPlay:AppCompatImageView
-            val videoView:PlayerView
+
+        inner class VideoViewHolder constructor(itemView: ViewGroup) :
+            RecyclerView.ViewHolder(itemView) {
+            val imgPhoto: AppCompatImageView
+            val imgPlay: AppCompatImageView
+            val videoView: PlayerView
+
             init {
                 videoView = LayoutInflater.from(itemView.context)
                     .inflate(R.layout.layout_video_player, null, false) as PlayerView
@@ -1517,7 +1600,10 @@ class PostsAdapter2(
 
                 imgPhoto = AppCompatImageView(itemView.context).apply {
                     id = View.generateViewId()
-                    layoutParams =  FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT)
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                    )
                     scaleType = ImageView.ScaleType.CENTER_CROP
                     adjustViewBounds = true
                 }
@@ -1525,9 +1611,11 @@ class PostsAdapter2(
 
                 imgPlay = AppCompatImageView(itemView.context).apply {
                     id = View.generateViewId()
-                    layoutParams =  FrameLayout.LayoutParams(resources.dpToPx(50f), resources.dpToPx(50f)).apply {
-                        this.gravity = Gravity.CENTER
-                    }
+                    layoutParams =
+                        FrameLayout.LayoutParams(resources.dpToPx(50f), resources.dpToPx(50f))
+                            .apply {
+                                this.gravity = Gravity.CENTER
+                            }
                     scaleType = ImageView.ScaleType.CENTER_CROP
                     adjustViewBounds = true
                     isClickable = false

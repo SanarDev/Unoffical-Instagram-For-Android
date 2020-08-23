@@ -5,19 +5,22 @@ import android.os.Parcelable;
 
 public class UserBundle implements Parcelable {
 
-    private String username;
-    private String userId;
+    private String username = "";
+    private long userId;
     private String profilePic;
     private String fullname;
+    private boolean isVerified = false;
 
     public UserBundle(){
 
     }
+
     protected UserBundle(Parcel in) {
         username = in.readString();
-        userId = in.readString();
+        userId = in.readLong();
         profilePic = in.readString();
         fullname = in.readString();
+        isVerified = in.readByte() != 0;
     }
 
     public static final Creator<UserBundle> CREATOR = new Creator<UserBundle>() {
@@ -40,11 +43,11 @@ public class UserBundle implements Parcelable {
         this.username = username;
     }
 
-    public String getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 
@@ -64,6 +67,18 @@ public class UserBundle implements Parcelable {
         this.fullname = fullname;
     }
 
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
+    }
+
+    public static Creator<UserBundle> getCREATOR() {
+        return CREATOR;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -72,8 +87,9 @@ public class UserBundle implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(username);
-        dest.writeString(userId);
+        dest.writeLong(userId);
         dest.writeString(profilePic);
         dest.writeString(fullname);
+        dest.writeByte((byte) (isVerified ? 1 : 0));
     }
 }

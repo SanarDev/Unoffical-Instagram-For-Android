@@ -122,14 +122,15 @@ class FragmentSearch : BaseFragment<FragmentSearchBinding, SearchViewModel>() {
 //            ViewCompat.setTransitionName(dataBinding.txtUsername,"username_${user.pk}")
 //            ViewCompat.setTransitionName(dataBinding.txtFullname,"fullname_${user.pk}")
             dataBinding.txtFullname.text = user.fullName
-            dataBinding.txtUsername.text = user.username
+            dataBinding.txtUsername.setText(user.username,user.pk,user.isVerified)
             Glide.with(requireContext()).load(user.profilePicUrl).into(dataBinding.imgProfileImage)
             dataBinding.root.setOnClickListener {
                 val userData = UserBundle().apply {
-                    this.userId = user.pk.toString()
+                    this.userId = user.pk
                     this.profilePic = user.profilePicUrl
                     this.username = user.username
                     this.fullname = user.fullName
+                    this.isVerified = user.isVerified
                 }
                 val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
 //                val extras = FragmentNavigatorExtras(

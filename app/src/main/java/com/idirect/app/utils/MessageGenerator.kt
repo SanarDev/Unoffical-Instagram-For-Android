@@ -8,7 +8,7 @@ import java.util.*
 class MessageGenerator {
 
     companion object {
-        fun like(userId: Long, clientContext: String): Message =
+        fun like(userId: Long, threadId:String,clientContext: String): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -18,9 +18,10 @@ class MessageGenerator {
                 this.like = "❤"
                 this.isDelivered = false
                 this.clientContext = clientContext
+                this.threadId = threadId
             }
 
-        fun text(text: String, userId: Long, clientContext: String): Message =
+        fun text(text: String, userId: Long, threadId:String,clientContext: String): Message =
             Message().apply {
                 this.text = text
                 this.timestamp = System.currentTimeMillis()
@@ -29,11 +30,13 @@ class MessageGenerator {
                 this.itemId = UUID.randomUUID().toString()
                 this.isDelivered = false
                 this.clientContext = clientContext
+                this.threadId = threadId
             }
 
         fun voiceMedia(
             context: Context,
             userId: Long,
+            threadId:String,
             clientContext: String,
             localFilePath: String
         ): Message =
@@ -50,9 +53,10 @@ class MessageGenerator {
                     this.localFilePath = localFilePath
                     this.localDuration = MediaUtils.getMediaDuration(context, localFilePath)
                 }
+                this.threadId = threadId
             }
 
-        fun imageMedia(userId: Long, clientContext: String, localFilePath: String): Message =
+        fun imageMedia(userId: Long,threadId:String, clientContext: String, localFilePath: String): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -61,6 +65,7 @@ class MessageGenerator {
                 this.itemId = UUID.randomUUID().toString()
                 this.isDelivered = false
                 this.clientContext = clientContext
+                this.threadId = threadId
                 this.media = Media().apply {
                     this.isLocal = true
                     this.localFilePath = localFilePath
@@ -68,7 +73,7 @@ class MessageGenerator {
                 }
             }
 
-        fun videoMedia(userId: Long, clientContext: String, localFilePath: String): Message =
+        fun videoMedia(userId: Long, threadId:String,clientContext: String, localFilePath: String): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -77,6 +82,7 @@ class MessageGenerator {
                 this.itemId = UUID.randomUUID().toString()
                 this.isDelivered = false
                 this.clientContext = clientContext
+                this.threadId = threadId
                 this.media = Media().apply {
                     this.isLocal = true
                     this.localFilePath = localFilePath
@@ -115,6 +121,7 @@ class MessageGenerator {
             text: String,
             linkList: MutableList<String>,
             userId: Long,
+            threadId:String,
             clientContext: String
         ): Message = Message().apply {
             this.link = Link().apply {
@@ -129,6 +136,7 @@ class MessageGenerator {
             this.isDelivered = false
             this.itemId = UUID.randomUUID().toString()
             this.clientContext = clientContext
+            this.threadId = threadId
         }
     }
 }

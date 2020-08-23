@@ -1529,7 +1529,7 @@ class UseCase(
             put("max_id", maxId)
             put("bloks_versioning_id", InstagramConstants.BLOKS_VERSION_ID)
         }
-        mInstagramRepository.getTimelinePosts(
+        mInstagramRepository.loadMoreTimelinePosts(
             result,
             getHeaders(),
             formUrlEncode(data)

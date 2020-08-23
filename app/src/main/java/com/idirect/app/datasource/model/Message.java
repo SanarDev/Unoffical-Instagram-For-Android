@@ -1,6 +1,7 @@
 package com.idirect.app.datasource.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -78,6 +79,16 @@ public class Message {
     @SerializedName("is_delivered")
     @Expose
     private boolean isDelivered = true;
+    @JsonIgnore
+    private String threadId;
+
+    public String getThreadId() {
+        return threadId;
+    }
+
+    public void setThreadId(String threadId) {
+        this.threadId = threadId;
+    }
 
     public Object getProfile() {
         return profile;

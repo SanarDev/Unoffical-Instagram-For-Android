@@ -1,6 +1,7 @@
 package com.idirect.app.customview.postsrecyclerview
 
 import android.view.View
+import com.idirect.app.datasource.model.Location
 import com.idirect.app.datasource.model.UserPost
 
 interface PostsRecyclerListener {
@@ -13,4 +14,5 @@ interface PostsRecyclerListener {
     fun shareMedia(v:View,mediaId: String,mediaType:Int)
     fun showComments(v:View,post: UserPost)
     fun userProfile(v:View,userId:Long,username:String)
+    fun onLocationClick(v:View,location:Location)
 }

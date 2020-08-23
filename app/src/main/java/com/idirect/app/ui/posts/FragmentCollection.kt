@@ -29,17 +29,29 @@ class FragmentCollection constructor(var media: CarouselMedia) :
     BaseFragment<FragmentCollectionBinding, FragmentCollectionViewModel>() {
 
     @Inject
-    lateinit var mGlideRequestManager: RequestManager
-
-    @Inject
     lateinit var mPlayManager: PlayManager
 
     private var mediaSource: MediaSource? = null
+    private var _mGlide:RequestManager?=null
+    private val mGlide:RequestManager get() = _mGlide!!
+
 
     override fun onResume() {
         super.onResume()
     }
 
+    override fun onDestroyView() {
+        _mGlide = null
+        super.onDestroyView()
+    }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _mGlide = Glide.with(this@FragmentCollection)
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -49,7 +61,7 @@ class FragmentCollection constructor(var media: CarouselMedia) :
                 val image = media.imageVersions2.candidates[0]
                 visible(binding.photoView)
                 gone(binding.imgPlay,binding.videoView)
-                mGlideRequestManager.load(image.url)
+                mGlide.load(image.url)
                     .placeholder(R.drawable.post_load_place_holder)
                     .into(binding.photoView)
             }
@@ -77,7 +89,7 @@ class FragmentCollection constructor(var media: CarouselMedia) :
                         stop()
                     }
                 }
-                mGlideRequestManager
+                mGlide
                     .asBitmap()
                     .load(image.url)
                     .placeholder(R.drawable.post_load_place_holder)

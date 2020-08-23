@@ -48,7 +48,9 @@ class PlayManager constructor(context: Context) {
                         btnPlay?.setImageResource(R.drawable.ic_play_circle)
                         currentPlayerId = ""
                         isFinishMedia = true
-                        player.seekTo(0)
+                        if(player.repeatMode != SimpleExoPlayer.REPEAT_MODE_OFF){
+                            player.seekTo(0)
+                        }
                     }
                     Player.STATE_READY -> {
                         isFinishMedia = false
@@ -63,14 +65,14 @@ class PlayManager constructor(context: Context) {
         player.addListener(listener!!)
         val handler = Handler()
         _runnable = Runnable {
-            if (!isFinishMedia) {
+            if (!isFinishMedia && _player != null) {
                 seekbarPlay?.progress = (player.currentPosition * 100 / player.duration).toInt()
             }
             if(_runnable != null){
                 handler.postDelayed(runnable, 100)
             }
         }
-        handler.postDelayed(runnable, 0)
+        handler.post(runnable)
     }
 
     fun startPlay(mediaSource: MediaSource, playerId: String, seekTo: Long = 0) {
@@ -93,6 +95,7 @@ class PlayManager constructor(context: Context) {
 
     fun releasePlay() {
         if (_player != null) {
+            pausePlay()
             player.removeListener(listener!!)
             player.release()
         }
@@ -128,5 +131,12 @@ class PlayManager constructor(context: Context) {
         return player.volume == 1.0f
     }
 
+    fun setRepeat(isRepeatEnable:Boolean){
+        if(isRepeatEnable){
+            player.repeatMode = SimpleExoPlayer.REPEAT_MODE_ALL
+        }else{
+            player.repeatMode = SimpleExoPlayer.REPEAT_MODE_OFF
+        }
+    }
 
 }

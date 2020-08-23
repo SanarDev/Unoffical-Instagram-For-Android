@@ -16,8 +16,13 @@ class SearchViewModel @Inject constructor(application: Application, var mUseCase
 
 
     private var searchWord: String = ""
-    private var lastSearchedWord: String = ""
     private val mHandler = Handler()
+    private var lastSearchTimestamp = 0.toLong()
+    private val runnable = Runnable {
+        if (System.currentTimeMillis() - 2000 > lastSearchTimestamp) {
+            mUseCase.getRecipients(result, searchWord)
+        }
+    }
     private val result = MutableLiveData<Resource<InstagramRecipients>>()
     val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.SUCCESS) {
@@ -34,16 +39,7 @@ class SearchViewModel @Inject constructor(application: Application, var mUseCase
 
     init {
         mUseCase.getRecipients(result)
-        val runnable = Runnable {
-            lastSearchedWord = searchWord
-            mUseCase.getRecipients(result, searchWord)
-        }
-        Thread {
-            while (true) {
-                mHandler.post(runnable)
-                Thread.sleep(3000)
-            }
-        }.start()
+
     }
 
     fun getRecipients(query: String = "") {
@@ -52,9 +48,11 @@ class SearchViewModel @Inject constructor(application: Application, var mUseCase
 
 
     fun search(word: String) {
-        if(searchWord == word){
+        if (searchWord == word) {
             return
         }
+        lastSearchTimestamp = System.currentTimeMillis()
+        mHandler.postDelayed(runnable, 3000)
         searchWord = word
         result.postValue(Resource.loading())
     }

@@ -104,11 +104,11 @@
     <string name="transition_media">media</string>
     <string name="connected">iDirect</string>
     <string name="start_message">Start Message</string>
-    <string name="likes_count">%d likes</string>
-    <string name="view_all_comments">View all %d comments</string>
+    <string name="likes_count">%s likes</string>
+    <string name="view_all_comments">View all %s comments</string>
     <string name="liked_by">Liked by</string>
     <string name="and">and</string>
-    <string name="others_liker_count">%d others</string>
+    <string name="others_liker_count">%s others</string>
     <string name="comments">Comments</string>
     <string name="reply">Reply</string>
     <string name="emoji_laugh">😂</string>
@@ -131,4 +131,5 @@
     <string name="enter_password">Enter Password</string>
     <string name="k">%sK</string>
     <string name="m">%sM</string>
+    <string name="location_not_support">Location not supported in this version</string>
 </resources>

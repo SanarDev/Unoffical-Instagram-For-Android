@@ -79,6 +79,9 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
                 FragmentInbox.NAME_TAG -> {
                     binding.ahbottomNavigation.currentItem = INBOX_POSITION
                 }
+                FragmentSearch.NAME_TAG ->{
+                    binding.ahbottomNavigation.currentItem = SEARCH_POSITION
+                }
             }
         }
         val homeItem =

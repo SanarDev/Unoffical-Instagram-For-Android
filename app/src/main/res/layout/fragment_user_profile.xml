@@ -25,7 +25,7 @@
                 android:src="@drawable/ic_back"
                 android:tint="@color/white" />
 
-            <androidx.appcompat.widget.AppCompatTextView
+            <com.idirect.app.customview.customtextview.HyperTextView
                 android:id="@+id/txt_username"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -254,15 +254,6 @@
 
             </com.google.android.material.appbar.AppBarLayout>
 
-            <ProgressBar
-                android:id="@+id/posts_progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="50dp"
-                android:visibility="gone"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
             <LinearLayout
                 android:id="@+id/layout_private_page"
@@ -286,11 +277,9 @@
                 android:id="@+id/recyclerview_posts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
                 android:clipToPadding="false"
                 android:paddingTop="20dp"
-                android:paddingBottom="50dp"
+                android:paddingBottom="20dp"
                 app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 app:spanCount="3"

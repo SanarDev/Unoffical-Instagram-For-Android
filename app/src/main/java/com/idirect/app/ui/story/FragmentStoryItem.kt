@@ -11,8 +11,10 @@ import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -20,6 +22,7 @@ import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
@@ -57,15 +60,15 @@ import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener
 import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener
 import javax.inject.Inject
 
-class FragmentStoryItem(var userId: Long,
-                        var mStoryActionListener: StoryActionListener?=null,
-                        var playItemAfterLoad:Boolean=false,
-                        var isTouchEnable:Boolean = true) : BaseFragment<FragmentStoryItemBinding, StoryItemViewModel>(), ForwardListener,OnEmojiPopupDismissListener,OnEmojiPopupShownListener {
+class FragmentStoryItem(
+    var userId: Long,
+    var mStoryActionListener: StoryActionListener? = null,
+    var playItemAfterLoad: Boolean = false,
+    var isTouchEnable: Boolean = true
+) : BaseFragment<FragmentStoryItemBinding, StoryItemViewModel>(), ForwardListener,
+    OnEmojiPopupDismissListener, OnEmojiPopupShownListener {
 
     private var moduleSource: String = "feed_timeline"
-
-    @Inject
-    lateinit var mGlide: RequestManager
 
     @Inject
     lateinit var mHandler: Handler
@@ -91,12 +94,23 @@ class FragmentStoryItem(var userId: Long,
     private var isForwardWindowShow: Boolean = false
     private lateinit var dataSource: DataSource.Factory
     private lateinit var mGlideRequestListener: RequestListener<Bitmap>
-    private var emojiPopup: EmojiPopup?=null
+    private var emojiPopup: EmojiPopup? = null
     private lateinit var sharedViewModel: ShareViewModel
-    private var currentTray: Tray?=null
-    val valueAnimator = ValueAnimator.ofInt(0, 100).apply {
-        duration = 5000
+    private var currentTray: Tray? = null
+    private var valueAnimatorUpdateListener = object : ValueAnimator.AnimatorUpdateListener {
+        override fun onAnimationUpdate(animation: ValueAnimator?) {
+            if (currentPosition != -1) {
+                val value = animation!!.animatedValue as Int
+                progressBars[currentPosition].progress = value
+            }
+        }
     }
+
+    var _valueAnimator: ValueAnimator? = null
+    val valueAnimator: ValueAnimator get() = _valueAnimator!!
+
+    private var _mGlide:RequestManager?=null
+    private val mGlide:RequestManager get() = _mGlide!!
 
     override fun getViewModelClass(): Class<StoryItemViewModel> {
         return StoryItemViewModel::class.java
@@ -111,17 +125,28 @@ class FragmentStoryItem(var userId: Long,
     }
 
     override fun onDestroyView() {
+        valueAnimator.removeUpdateListener(valueAnimatorUpdateListener)
         emojiPopup?.releaseMemory()
+        _mGlide = null
         super.onDestroyView()
     }
 
-//    fun releaseMemory() {
+    //    fun releaseMemory() {
 //        if (Build.VERSION.SDK_INT < 16) {
 //            binding.layoutParent.getViewTreeObserver().removeGlobalOnLayoutListener(emojiPopup.onGlobalLayoutListener)
 //        } else {
 //            binding.layoutParent.getViewTreeObserver().removeOnGlobalLayoutListener(onGlobalLayoutListener)
 //        }
 //    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _mGlide = Glide.with(this@FragmentStoryItem)
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -130,6 +155,23 @@ class FragmentStoryItem(var userId: Long,
 
         dataSource = DefaultHttpDataSourceFactory(Util.getUserAgent(requireContext(), "Instagram"))
         sharedViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
+
+        _valueAnimator = ValueAnimator.ofInt(0, 100).apply {
+            duration = 5000
+        }
+        valueAnimator.addUpdateListener(valueAnimatorUpdateListener)
+
+        valueAnimator.doOnStart {
+            binding.recyclerviewEmoji.visibility = View.INVISIBLE
+        }
+        valueAnimator.doOnEnd {
+            if (!isCancelValueAnimator) {
+                showNextItem()
+            } else {
+                isCancelValueAnimator = false
+            }
+        }
+
         emojiPopup =
             EmojiPopup.Builder
                 .fromRootView(binding.root)
@@ -150,14 +192,15 @@ class FragmentStoryItem(var userId: Long,
                 currentTray = it.data!!
                 items = it.data!!.items
                 initLayout(it.data!!)
-                if(playItemAfterLoad){
+                if (playItemAfterLoad) {
                     showNextItem()
                 }
             }
         })
         viewModel.storyReactionResult.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
-                CustomToast.show(requireContext(),
+                CustomToast.show(
+                    requireContext(),
                     getString(R.string.reaction_send),
                     Toast.LENGTH_LONG
                 )
@@ -165,7 +208,7 @@ class FragmentStoryItem(var userId: Long,
         })
 
         binding.layoutMessage.setOnTouchListener { v, event ->
-            if(event.action == MotionEvent.ACTION_CANCEL){
+            if (event.action == MotionEvent.ACTION_CANCEL) {
                 binding.layoutItems.fadeIn(100)
                 valueAnimator.resume()
                 mPlayManager.resumePlay()
@@ -174,7 +217,7 @@ class FragmentStoryItem(var userId: Long,
             if (event.action == MotionEvent.ACTION_UP) {
                 isPauseAnyThing = false
                 if (System.currentTimeMillis() - actionDownTimestamp < 200) {
-                    Log.i(InstagramConstants.DEBUG_TAG,"175")
+                    Log.i(InstagramConstants.DEBUG_TAG, "175")
                     binding.layoutItems.fadeIn(0)
                     isCancelValueAnimator = true
                     valueAnimator.cancel()
@@ -186,7 +229,7 @@ class FragmentStoryItem(var userId: Long,
                         showNextItem()
                     }
                 } else {
-                    Log.i(InstagramConstants.DEBUG_TAG,"185")
+                    Log.i(InstagramConstants.DEBUG_TAG, "185")
                     binding.layoutItems.fadeIn(100)
                     valueAnimator.resume()
                     mPlayManager.resumePlay()
@@ -207,23 +250,6 @@ class FragmentStoryItem(var userId: Long,
             return@setOnTouchListener true
         }
 
-        valueAnimator.addUpdateListener {
-            if(currentPosition != -1){
-                val value = it.animatedValue as Int
-                progressBars[currentPosition].progress = value
-            }
-        }
-
-        valueAnimator.doOnStart {
-            binding.recyclerviewEmoji.visibility = View.INVISIBLE
-        }
-        valueAnimator.doOnEnd {
-            if (!isCancelValueAnimator) {
-                showNextItem()
-            } else {
-                isCancelValueAnimator = false
-            }
-        }
         binding.videoView.layoutParams.apply {
             width = displayWidth
             height = displayHeight
@@ -235,7 +261,7 @@ class FragmentStoryItem(var userId: Long,
                         valueAnimator.pause()
                     }
                     Player.STATE_READY -> {
-                        if (!isPauseAnyThing){
+                        if (!isPauseAnyThing) {
                             valueAnimator.resume()
                         }
                     }
@@ -295,7 +321,15 @@ class FragmentStoryItem(var userId: Long,
 
         binding.btnSend.setOnClickListener {
             if (it.rotation == SEND_MESSAGE_ROTATE) {
-
+                val currentStory = currentTray!!.items[currentPosition]
+                viewModel.replyStory( sharedViewModel.getThreadIdByUserId(currentTray!!.user.pk),
+                    currentStory.id,
+                    currentStory.mediaType,
+                    binding.edtMessage.text.toString(),
+                    currentStory.pk)
+                binding.edtMessage.setText("")
+                emojiPopup?.dismiss()
+                requireActivity().hideKeyboard()
             } else {
                 val currentItem = currentTray!!.items[currentPosition]
                 val bundle = ForwardBundle(
@@ -310,7 +344,7 @@ class FragmentStoryItem(var userId: Long,
             }
         }
         binding.layoutHeader.setOnClickListener {
-            mStoryActionListener?.onProfileClick(it,userId,binding.txtUsername.text.toString())
+            mStoryActionListener?.onProfileClick(it, userId, binding.txtUsername.text.toString())
         }
     }
 
@@ -352,8 +386,8 @@ class FragmentStoryItem(var userId: Long,
                         resources.dpToPx(1.5f)
                     ).apply {
                         this.weight = 1f
-                        this.marginStart = resources.dpToPx(3f)
-                        this.marginEnd = resources.dpToPx(3f)
+                        this.marginStart = resources.dpToPx(2f)
+                        this.marginEnd = resources.dpToPx(2f)
                     }
                 setProgressColor(context.color(R.color.white))
             }
@@ -361,18 +395,18 @@ class FragmentStoryItem(var userId: Long,
     }
 
     fun showNextItem() {
-        if(currentTray == null){
+        if (currentTray == null) {
             return
         }
         currentPosition += 1
-        if(currentPosition < 0){
+        if (currentPosition < 0) {
             currentPosition = 0
         }
         if (currentPosition >= progressBars.size) {
             currentPosition = items.size - 1
-            if(moduleSource == "feed_timeline"){
+            if (moduleSource == "feed_timeline") {
                 mStoryActionListener?.loadNextPage()
-            }else{
+            } else {
                 requireActivity().onBackPressed()
             }
             return
@@ -431,7 +465,7 @@ class FragmentStoryItem(var userId: Long,
 
     override fun onKeyboardOpen() {
         super.onKeyboardOpen()
-        if(isForwardWindowShow){
+        if (isForwardWindowShow) {
             return
         }
         isPauseAnyThing = true
@@ -443,7 +477,7 @@ class FragmentStoryItem(var userId: Long,
 
     override fun onKeyboardHide() {
         super.onKeyboardHide()
-        if(isForwardWindowShow){
+        if (isForwardWindowShow) {
             return
         }
         isPauseAnyThing = false
@@ -462,7 +496,7 @@ class FragmentStoryItem(var userId: Long,
 
     override fun onResume() {
         super.onResume()
-        if(isForwardWindowShow){
+        if (isForwardWindowShow) {
             return
         }
         mPlayManager.resumePlay()
@@ -505,6 +539,7 @@ class FragmentStoryItem(var userId: Long,
     override fun onStop() {
         super.onStop()
     }
+
     override fun onDestroy() {
         super.onDestroy()
         mPlayManager.releasePlay()

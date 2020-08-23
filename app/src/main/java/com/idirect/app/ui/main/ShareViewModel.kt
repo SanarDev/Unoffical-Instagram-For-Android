@@ -175,6 +175,7 @@ class ShareViewModel @Inject constructor(
             val message = MessageGenerator.voiceMedia(
                 getApplication(),
                 mUseCase.getUserData()!!.pk!!,
+                currentThread!!.threadId,
                 clCotext,
                 currentVoiceFileName!!
             )
@@ -220,12 +221,14 @@ class ShareViewModel @Inject constructor(
                 text,
                 linkList,
                 mUseCase.getUserData()!!.pk!!,
+                threadId,
                 clientContext
             )
         } else {
             MessageGenerator.text(
                 text,
                 mUseCase.getUserData()!!.pk!!,
+                threadId,
                 clientContext
             )
         }
@@ -245,7 +248,7 @@ class ShareViewModel @Inject constructor(
                 val users = currentThread!!.users
                 if (msg.media.mediaType == 1) {
                     mUseCase.sendMediaImage(
-                        currentThread!!.threadId,
+                        msg.threadId,
                         getUsersPk(users),
                         msg.media.localFilePath,
                         msg.clientContext
@@ -259,7 +262,7 @@ class ShareViewModel @Inject constructor(
                         }
                 } else {
                     mUseCase.sendMediaVideo(
-                        currentThread!!.threadId,
+                        msg.threadId,
                         getUsersPk(users),
                         msg.media.localFilePath,
                         msg.clientContext
@@ -277,7 +280,7 @@ class ShareViewModel @Inject constructor(
                 mUseCase.sendLinkMessage(
                     msg.link.text,
                     msg.link.linkList,
-                    currentThread!!.threadId,
+                    msg.threadId,
                     msg.clientContext
                 ).observeForever {
                     if (it.status == Resource.Status.SUCCESS) {
@@ -291,7 +294,7 @@ class ShareViewModel @Inject constructor(
                 RealTimeService.run(
                     getApplication(),
                     RealTime_SendMessage(
-                        currentThread!!.threadId,
+                        msg.threadId,
                         msg.clientContext,
                         msg.text
                     )
@@ -360,27 +363,40 @@ class ShareViewModel @Inject constructor(
         return resources.dpToPx(standardWidth) + plus
     }
 
-    fun uploadMedias(threadId: String = currentThread!!.threadId, items: List<String>) {
+    fun generateUploadMediaModelFromPath(threadId: String,paths: List<String>): MutableList<UploadMedia> {
+        val uploadMedias = ArrayList<UploadMedia>().toMutableList()
+        val user = mUseCase.getUserData()
+        for(item in paths){
+            val clientContext = InstagramHashUtils.getClientContext()
+            uploadMedias.add(UploadMedia().apply {
+                this.clientContext = clientContext
+                this.localPath = item
+                this.threadId = threadId
+                this.senderId = user!!.pk!!
+            })
+        }
+        return uploadMedias
+    }
+    fun uploadMedias(items: List<UploadMedia>) {
         if (items.isEmpty()) {
             return
         }
-        val thread = getThreadById(threadId)!!
         val list = ArrayList<Message>().toMutableList()
         for (item in items) {
-            val clientContext = InstagramHashUtils.getClientContext()
-            var mimeType = MediaUtils.getMimeType(item) ?: "image/jpeg"
+            var mimeType = MediaUtils.getMimeType(item.localPath) ?: "image/jpeg"
             val message = when {
                 mimeType!!.contains("image") -> {
-                    MessageGenerator.imageMedia(thread.viewerId, clientContext, item)
+                    MessageGenerator.imageMedia(item.senderId, item.threadId,item.clientContext,item.localPath)
                 }
                 mimeType!!.contains("video") -> {
-                    MessageGenerator.videoMedia(thread.viewerId, clientContext, item)
+                    MessageGenerator.videoMedia(item.senderId, item.threadId,item.clientContext,item.localPath)
                 }
                 else -> {
-                    MessageGenerator.imageMedia(thread.viewerId, clientContext, item)
+                    MessageGenerator.imageMedia(item.senderId, item.threadId,item.clientContext,item.localPath)
                 }
             }
-            threadNewMessageLiveData.value = Pair(threadId, message)
+            val thread = getThreadById(item.threadId)
+            threadNewMessageLiveData.value = Pair(thread.threadId, message)
             thread.messages.add(message)
             list.add(message)
         }
@@ -811,7 +827,7 @@ class ShareViewModel @Inject constructor(
                 clientContext
             )
         )
-        val message = MessageGenerator.like(mUseCase.getUserData()!!.pk!!, clientContext)
+        val message = MessageGenerator.like(mUseCase.getUserData()!!.pk!!,threadId, clientContext)
         getThreadById(threadId).messages.add(0, message)
         threadNewMessageLiveData.value = Pair(threadId, message)
     }

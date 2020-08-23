@@ -57,6 +57,7 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
     }
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
+        EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTED))
         val packet = msg as MqttMessage
         when (packet!!.fixedHeader().messageType()) {
             MqttMessageType.CONNACK -> {

@@ -20,8 +20,6 @@ public class MyGlideModule extends AppGlideModule {
 
     @Override
     public void applyOptions(@NonNull Context context, @NonNull GlideBuilder builder) {
-        RequestOptions options = new RequestOptions();
-        builder.setDefaultRequestOptions(options);
-        builder.setDiskCache(new DiskLruCacheFactory(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "MyCashe","", 400*1024*1024));
+    
     }
 }

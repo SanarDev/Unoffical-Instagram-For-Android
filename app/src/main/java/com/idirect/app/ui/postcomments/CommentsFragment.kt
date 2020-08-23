@@ -2,7 +2,9 @@ package com.idirect.app.ui.postcomments
 
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -48,9 +50,9 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
 
     private var _emojiPopup: EmojiPopup?=null
     private val emojiPopup: EmojiPopup get() = _emojiPopup!!
+    private var _mGlide:RequestManager?=null
+    private val mGlide:RequestManager get() = _mGlide!!
 
-    @Inject
-    lateinit var mGlideRequestManager: RequestManager
     private lateinit var mAdapter: CommentAdapter
     private var isLoading = false
     private var isMoreAvailable = false
@@ -69,7 +71,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                 try {
                     val num = Long.parseLong(data)
                     val userData = UserBundle().apply {
-                        userId = num.toString()
+                        userId = num
                     }
                     val action =
                         NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
@@ -92,7 +94,17 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
     override fun onDestroyView() {
         _emojiPopup?.releaseMemory()
         _emojiPopup = null
+        _mGlide = null
         super.onDestroyView()
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _mGlide = Glide.with(this@CommentsFragment)
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -124,8 +136,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
             }
         }
 
-        mGlideRequestManager.load(postData.user.profilePicUrl).into(binding.imgOwnerProfile)
-        binding.txtComment.setText(postData.user.username, postData.user.pk, postData.caption.text)
+        mGlide.load(postData.user.profilePicUrl).into(binding.imgOwnerProfile)
+        binding.txtComment.setText(postData.user.username, postData.user.pk,postData.user.isVerified, postData.caption.text)
         binding.txtComment.mHyperTextClick = onHyperTextClick
         binding.txtPostTime.text =
             TimeUtils.convertTimestampToDate(requireContext(), postData.takenAt)
@@ -177,11 +189,11 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
             val item = items[position]
             item as Comment
             val dataBinding = holder.binding as LayoutCommentBinding
-            dataBinding.txtComment.setText(item.user.username, item.user.pk, item.text)
+            dataBinding.txtComment.setText(item.user.username, item.user.pk,item.user.isVerified, item.text)
             dataBinding.txtComment.mHyperTextClick = onHyperTextClick
             dataBinding.txtTime.text =
                 TimeUtils.convertTimestampToDate(requireContext(), item.createdAt)
-            mGlideRequestManager.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
+            mGlide.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
 
             dataBinding.layoutCommentReply.removeAllViews()
             if (item.previewChildComments != null && item.previewChildComments.isNotEmpty()) {
@@ -192,11 +204,12 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                         null,
                         false
                     )
-                    mGlideRequestManager.load(replyComment.user.profilePicUrl)
+                    mGlide.load(replyComment.user.profilePicUrl)
                         .into(replyCommentBinding.imgProfile)
                     replyCommentBinding.txtComment.setText(
                         replyComment.user.username,
                         replyComment.user.pk,
+                        replyComment.user.isVerified,
                         replyComment.text
                     )
                     replyCommentBinding.txtComment.mHyperTextClick = onHyperTextClick

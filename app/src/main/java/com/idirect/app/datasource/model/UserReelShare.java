@@ -44,6 +44,33 @@ public class UserReelShare {
     @SerializedName("allowed_commenter_type")
     @Expose
     private String allowedCommenterType;
+    @SerializedName("is_verified")
+    @Expose
+    private Boolean isVerified;
+
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public void setPrivate(boolean aPrivate) {
+        isPrivate = aPrivate;
+    }
+
+    public boolean isUnpublished() {
+        return isUnpublished;
+    }
+
+    public void setUnpublished(boolean unpublished) {
+        isUnpublished = unpublished;
+    }
+
+    public Boolean getVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(Boolean verified) {
+        isVerified = verified;
+    }
 
     public long getPk() {
         return pk;

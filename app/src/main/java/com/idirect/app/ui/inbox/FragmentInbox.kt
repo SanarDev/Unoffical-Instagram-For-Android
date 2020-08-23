@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
@@ -62,19 +63,21 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
         return InboxViewModel::class.java
     }
 
-    @Inject
-    lateinit var mGlideRequestManager:RequestManager
-
     private lateinit var shareViewModel: ShareViewModel
     private var isLoadingMoreDirects: Boolean = false
     private var isMoreDirectExist: Boolean = true
     private val mHandler = Handler()
     private lateinit var user: InstagramLoggedUser
+
     var _adapter: DirectsAdapter?=null
     val adapter: DirectsAdapter get() = _adapter!!
+    private var _mGlide:RequestManager?=null
+    private val mGlide:RequestManager get() = _mGlide!!
+
 
     override fun onDestroyView() {
         _adapter = null
+        _mGlide = null
         super.onDestroyView()
     }
     override fun onCreateView(
@@ -83,6 +86,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
         savedInstanceState: Bundle?
     ): View? {
         EmojiManager.install(IosEmojiProvider())
+        _mGlide = Glide.with(this@FragmentInbox)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -443,20 +447,20 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 visible(dataBinding.layoutProfileImageGroup)
                 gone(dataBinding.layoutProfileImageUser)
                 if (item.users.size >= 2) {
-                    mGlideRequestManager.load(item.users[1].profilePicUrl)
+                    mGlide.load(item.users[1].profilePicUrl)
                         .into(dataBinding.profileImageG1)
-                    mGlideRequestManager.load(item.users[0].profilePicUrl)
+                    mGlide.load(item.users[0].profilePicUrl)
                         .into(dataBinding.profileImageG2)
                 } else {
-                    mGlideRequestManager.load(user.profilePicUrl)
+                    mGlide.load(user.profilePicUrl)
                         .into(dataBinding.profileImageG1)
-                    mGlideRequestManager.load(item.users[0].profilePicUrl)
+                    mGlide.load(item.users[0].profilePicUrl)
                         .into(dataBinding.profileImageG2)
                 }
             } else {
                 gone(dataBinding.layoutProfileImageGroup)
                 visible(dataBinding.layoutProfileImageUser)
-                mGlideRequestManager.load(item.users[0].profilePicUrl)
+                mGlide.load(item.users[0].profilePicUrl)
                     .into(dataBinding.profileImage)
             }
             dataBinding.profileMoreOption.setOnClickListener {

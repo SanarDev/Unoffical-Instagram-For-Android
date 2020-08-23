@@ -14,6 +14,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
@@ -36,15 +37,18 @@ import javax.inject.Inject
 class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
 
     @Inject
-    lateinit var mGlide: RequestManager
-    @Inject
     internal lateinit var viewModelFactory: DaggerViewModelFactory
+
     private var _emojiPopup: EmojiPopup?=null
     private val emojiPopup: EmojiPopup get() = _emojiPopup!!
     private var _adapter: UsersAdapter?=null
     private val adapter: UsersAdapter get() = _adapter!!
     private var _binding: FragmentForwardBinding?=null
     private val binding: FragmentForwardBinding get() = _binding!!
+    private var _mGlide:RequestManager?=null
+    private val mGlide:RequestManager get() = _mGlide!!
+
+
     private lateinit var viewModel: ForwardViewModel
     private lateinit var forwardBundle:ForwardBundle
 
@@ -70,6 +74,7 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
         _emojiPopup?.releaseMemory()
         _emojiPopup = null
         _binding = null
+        _mGlide = null
     }
 
     override fun onCreateView(
@@ -78,6 +83,7 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
         savedInstanceState: Bundle?
     ): View? {
         _binding = DataBindingUtil.inflate(inflater, R.layout.fragment_forward, container, false)
+        _mGlide = Glide.with(this@ForwardFragment)
         return binding.root
     }
 

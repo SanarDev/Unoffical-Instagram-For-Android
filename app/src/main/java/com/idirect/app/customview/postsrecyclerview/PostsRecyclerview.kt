@@ -2,12 +2,14 @@ package com.idirect.app.customview.postsrecyclerview
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.idirect.app.constants.InstagramConstants
+import com.bumptech.glide.Glide
+import com.bumptech.glide.ListPreloader.PreloadModelProvider
+import com.bumptech.glide.ListPreloader.PreloadSizeProvider
+import com.bumptech.glide.util.FixedPreloadSizeProvider
 import com.idirect.app.manager.PlayManager
-import java.lang.RuntimeException
+
 
 class PostsRecyclerview constructor(context: Context, attr: AttributeSet? = null) :
     RecyclerView(context, attr) {

@@ -27,7 +27,7 @@ import com.idirect.app.ui.posts.PostsFragment
 class MediaCollection constructor(
     context: Context,
     var media: CarouselMedia,
-    var mGlideRequestManager: RequestManager,
+    var mGlide: RequestManager,
     var mPlayManager: PlayManager
 ) : FrameLayout(context, null) {
 //

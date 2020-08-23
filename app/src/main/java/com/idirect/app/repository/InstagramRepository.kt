@@ -730,6 +730,21 @@ class InstagramRepository(
         }
     }
 
+    fun loadMoreTimelinePosts(
+        result: MutableLiveData<Resource<InstagramFeedTimeLineResponse>>,
+        header: HashMap<String, String>,
+        data: RequestBody
+    ) {
+        NetworkCall<InstagramFeedTimeLineResponse>().makeCall(
+            mInstagramRemote.getFeedTimeline(
+                header,
+                data
+            )
+        ).observeForever {
+            result.value = it
+        }
+    }
+
     fun getTimelineStory(
         result: MutableLiveData<Resource<InstagramStoriesResponse>>,
         header: HashMap<String, String>,
