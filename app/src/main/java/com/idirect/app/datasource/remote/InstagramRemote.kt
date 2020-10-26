@@ -259,6 +259,9 @@ interface InstagramRemote {
     @POST(InstagramConstants.API_VERSION  + "media/{media_id}/comment_unlike/")
     fun unlikeComment(@HeaderMap header: Map<String, String>, @Path("media_id")mediaId: String,@Body requestBody: RequestBody):Call<ResponseBody>
 
+    @POST(InstagramConstants.API_VERSION +"media/{media_id}/comment/")
+    fun sendComment(@HeaderMap header: Map<String, String>, @Path("media_id")mediaId: String,@Body requestBody: RequestBody):Call<ResponseBody>
+
     @GET(InstagramConstants.API_VERSION + "users/{user_name}/usernameinfo/")
     fun getUsernameInfo(@HeaderMap header: Map<String, String>,@Path("user_name") userUsername:String,@Query("from_module") fromModule:String = "feed_timeline"):Call<InstagramUserInfo>
 
@@ -282,4 +285,5 @@ interface InstagramRemote {
 
     @POST(InstagramConstants.API_VERSION + "direct_v2/threads/broadcast/story_share/")
     fun shareStory(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody,@Query("media_type") mediaType:String):Call<ResponseBody>
+
 }

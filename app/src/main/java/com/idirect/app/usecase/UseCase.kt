@@ -777,8 +777,8 @@ class UseCase(
             put("thread_id", threadId)
             put("action", "mark_seen")
             put("client_context", clientContext)
-            put("_csrftoken", cookie!!.csrftoken!!)
-            put("_uuid", cookie!!.adid)
+            put("_csrftoken", cookie.csrftoken!!)
+            put("_uuid", cookie.adid)
             put("offline_threading_id", clientContext)
         }
         mInstagramRepository.markAsSeen(
@@ -811,7 +811,6 @@ class UseCase(
         val user = getUserData()
         defaultHeaderMap = HashMap<String, String>()
         defaultHeaderMap!![InstagramConstants.X_DEVICE_ID] = cookie.deviceID
-        defaultHeaderMap!![InstagramConstants.X_DEVICE_ID] = "en_US"
         defaultHeaderMap!![InstagramConstants.X_IG_DEVICE_LOCALE] = "en_US"
         defaultHeaderMap!![InstagramConstants.X_IG_MAPPED_LOCALE] = "en_US"
         defaultHeaderMap!![InstagramConstants.X_PIGEON_SESSION_ID] = UUID.randomUUID().toString()
@@ -1106,14 +1105,14 @@ class UseCase(
     }
 
     fun getFile(fileLiveData: MutableLiveData<File>, url: String, id: String) {
-        val file = StorageUtils.getFile(application, "$id")
+        val file = StorageUtils.getFile(application, id)
         if (file != null) {
             fileLiveData.postValue(file)
         } else {
             val result = MediatorLiveData<InputStream>()
             mInstagramRepository.downloadAudio(result, url)
             result.observeForever {
-                StorageUtils.saveFile(application, "$id", it)
+                StorageUtils.saveFile(application, id, it)
                 getFile(fileLiveData, url, id)
             }
         }
@@ -1597,7 +1596,7 @@ class UseCase(
         return result
     }
 
-    fun sendStoryReply(
+    fun sendStr(
         threadId: String,
         mediaId: String,
         mediaType: Int,
@@ -1713,10 +1712,10 @@ class UseCase(
         getTimelineStories(liveData)
         liveData.observeForever {
             for (index in it!!.data!!.tray.indices) {
-                val tray = it!!.data!!.tray[index]
+                val tray = it.data!!.tray[index]
                 if(tray.user.pk == userId ){
                     try{
-                        result.value = Resource.success(it!!.data!!.tray[index + 1])
+                        result.value = Resource.success(it.data!!.tray[index + 1])
                         return@observeForever
                     }catch (e:Exception){
                         result.value = Resource.error(null)
@@ -1735,4 +1734,27 @@ class UseCase(
         mInstagramRepository.loadMoreComments(result,getHeaders(),mediaId,nextMinId)
     }
 
+    fun sendComment(
+        mediaId: String,
+        text: String
+    ){
+        val result = MutableLiveData<Resource<ResponseBody>>()
+        val cookie = getCookie()
+        val user = getUserData()!!
+        val idempotenceToken = UUID.randomUUID().toString()
+        val data = HashMap<String,Any>().apply {
+            put("feed_position",0)
+            put("container_module","comment_v2")
+            put("is_carousel_bumped_post",false)
+            put("comment_text",text)
+            put("_uuid",cookie.adid)
+            put("_uid",user.pk!!)
+            put("radio_type","wifi-none")
+            put("_csrftoken",cookie.csrftoken!!)
+            put("idempotence_token",idempotenceToken)
+            put("inventory_source","media_or_ad")
+//            put("user_breadcrumb",userBreadcrumb)
+        }
+        mInstagramRepository.sendComment(result,getHeaders(),mediaId,getSignaturePayload(data))
+    }
 }

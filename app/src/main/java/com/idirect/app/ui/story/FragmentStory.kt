@@ -31,7 +31,6 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>() {
     private val mAdapter: StoriesAdapter get() = _mAdapter!!
     private var userId: Long = 0
 
-    @Inject lateinit var mPlayManager: PlayManager
     @Inject lateinit var mHandler: Handler
 
     override fun getViewModelClass(): Class<StoryViewModel> {

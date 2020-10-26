@@ -825,5 +825,10 @@ class InstagramRepository(
         }
     }
 
+    fun sendComment(result: MutableLiveData<Resource<ResponseBody>>, header: HashMap<String, String>, mediaId: String, data: RequestBody){
+        NetworkCall<ResponseBody>().makeCall(mInstagramRemote.sendComment(header,mediaId,data)).observeForever {
+            result.value = it
+        }
+    }
 
 }

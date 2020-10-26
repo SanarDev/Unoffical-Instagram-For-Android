@@ -74,7 +74,7 @@ class FbnsPacketDecoderJava : ReplayingDecoder<ParseState?>() {
                             buffer,
                             mqttFixedHeader
                         )
-                    variableHeader = decodedVariableHeader.value
+                    variableHeader = decodedVariableHeader!!.value
                     if (bytesRemainingInVariablePart > maxBytesInMessage) {
                         throw DecoderException("too large message: $bytesRemainingInVariablePart bytes")
                     }
@@ -121,7 +121,7 @@ class FbnsPacketDecoderJava : ReplayingDecoder<ParseState?>() {
                             buffer,
                             mqttFixedHeader
                         )
-                    variableHeader = decodedVariableHeader.value
+                    variableHeader = decodedVariableHeader!!.value
                     if (bytesRemainingInVariablePart > maxBytesInMessage) {
                         throw DecoderException("too large message: $bytesRemainingInVariablePart bytes")
                     }
@@ -221,7 +221,7 @@ class FbnsPacketDecoderJava : ReplayingDecoder<ParseState?>() {
         private fun decodeVariableHeader(
             buffer: ByteBuf,
             mqttFixedHeader: MqttFixedHeader?
-        ): Result<*> {
+        ): Result<*>? {
             return when (mqttFixedHeader!!.messageType()) {
                 MqttMessageType.CONNECT -> decodeConnectionVariableHeader(
                     buffer
@@ -241,6 +241,9 @@ class FbnsPacketDecoderJava : ReplayingDecoder<ParseState?>() {
                         null,
                         0
                     )
+                else -> {
+                    null;
+                }
             }
             return Result<Any?>(
                 null,

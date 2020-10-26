@@ -2,8 +2,6 @@ package com.idirect.app.customview.postsrecyclerview
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.util.Log
 import android.util.TypedValue
@@ -18,7 +16,6 @@ import android.widget.RelativeLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.cardview.widget.CardView
-import androidx.core.view.setMargins
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,12 +31,10 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseAdapter
 import com.idirect.app.customview.customtextview.HyperTextView
 import com.idirect.app.datasource.model.CarouselMedia
 import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.datasource.model.event.LoadingEvent
-import com.idirect.app.di.module.GlideApp
 import com.idirect.app.extensions.color
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
@@ -48,15 +43,13 @@ import com.idirect.app.extentions.dpToPx
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.TextUtil
-import com.squareup.picasso.Picasso
 import com.tylersuehr.chips.CircleImageView
-import java.lang.Exception
 
 class PostsAdapter2(
     val context: Context,
     val mHyperTextClick: HyperTextView.OnHyperTextClick,
     val mPlayManager: PlayManager,
-    val mGlide:RequestManager,
+    val mGlide: RequestManager,
     viewLifecycleOwner: LifecycleOwner
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -72,19 +65,19 @@ class PostsAdapter2(
     private var displayHeight = DisplayUtils.getScreenHeight()
     private var adapters = HashMap<Int, CollectionMediaAdapter>()
     var mListener: PostsRecyclerListener? = null
+    private var videoView: PlayerView
 
     var items: MutableList<Any> = ArrayList<Any>().toMutableList()
         set(value) {
             field = value
-            for (item in value) {
-                if (item is UserPost && (item.mediaType == InstagramConstants.MediaType.IMAGE.type || item.mediaType == InstagramConstants.MediaType.VIDEO.type)) {
-//                    mGlide.load(item.imageVersions2.candidates[0].url).preload()
-                }
-            }
             notifyDataSetChanged()
         }
 
     init {
+        videoView = LayoutInflater.from(context)
+            .inflate(R.layout.layout_video_player, null, false) as PlayerView
+        videoView.player = mPlayManager.player
+
         mPlayManager.playChangeLiveData.observe(viewLifecycleOwner, Observer {
             if (!it.isPlay) {
                 for (index in items.indices) {
@@ -294,18 +287,18 @@ class PostsAdapter2(
                     val mediaSource: MediaSource =
                         ProgressiveMediaSource.Factory(dataSource)
                             .createMediaSource(Uri.parse(video.url))
-                    mHolder.videoView.player = mPlayManager.player
                     mHolder.photoView.visibility = View.GONE
                     mHolder.imgPlay.visibility = View.GONE
+                    removeVideoView(videoView)
+                    mHolder.mediaContainer.addView(videoView)
                     mPlayManager.startPlay(mediaSource, item.id)
-                    mHolder.videoView.showController()
                     currentMediaPosition = position
                     mGlide.clear(mHolder.photoView)
                 } else {
                     if (mPlayManager.currentPlayerId == item.id) {
                         mPlayManager.stopPlay()
                     }
-                    mHolder.videoView.player = null
+                    mHolder.mediaContainer.removeAllViews()
                     mHolder.photoView.visibility = View.VISIBLE
                     mHolder.imgPlay.visibility = View.VISIBLE
                 }
@@ -406,6 +399,7 @@ class PostsAdapter2(
                 btnLike = mHolder.btnLike
             }
         }
+
 
         val onClickListener = object : View.OnClickListener {
             override fun onClick(v: View?) {
@@ -582,6 +576,15 @@ class PostsAdapter2(
         btnLike.setOnClickListener(onClickListener)
     }
 
+    private fun removeVideoView(videoView: PlayerView) {
+        val parent = videoView.parent ?: return
+        parent as ViewGroup
+        val index = parent.indexOfChild(videoView)
+        if (index >= 0) {
+            parent.removeViewAt(index)
+        }
+    }
+
     private fun loadImage(
         width: Int,
         height: Int,
@@ -589,18 +592,23 @@ class PostsAdapter2(
         imgPhoto: AppCompatImageView,
         mediaType: Int = InstagramConstants.MediaType.IMAGE.type
     ) {
+        var imageWidth = displayWidth
+        var imageHeight = height
+
         if (mediaType == InstagramConstants.MediaType.IMAGE.type) {
             imgPhoto.layoutParams.apply {
                 if (height < displayWidth && width < displayWidth) {
                     this.height = displayWidth
+                    imageHeight = displayWidth
                 } else {
                     this.height = height
+                    imageHeight = height
                 }
             }
         }
         mGlide
             .load(url)
-            .placeholder(R.drawable.placeholder_loading)
+            .override(imageWidth,imageHeight)
             .priority(Priority.IMMEDIATE)
             .into(imgPhoto)
     }
@@ -626,7 +634,7 @@ class PostsAdapter2(
         val txtLikeCount: HyperTextView
         val btnViewComment: AppCompatTextView
         val txtCaption: HyperTextView
-        val videoView: PlayerView
+        val mediaContainer: FrameLayout
         val photoView: AppCompatImageView
         val imgPlay: AppCompatImageView
         val btnLike: AppCompatImageView
@@ -715,13 +723,14 @@ class PostsAdapter2(
             }
             linearLayoutParent.addView(frameLayoutMedia)
 
-            videoView = LayoutInflater.from(itemView.context)
-                .inflate(R.layout.layout_video_player, null, false) as PlayerView
-            videoView.layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-            frameLayoutMedia.addView(videoView)
+            mediaContainer = FrameLayout(itemView.context).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+                id = View.generateViewId()
+            }
+            frameLayoutMedia.addView(mediaContainer)
 
             photoView = AppCompatImageView(itemView.context).apply {
                 layoutParams = FrameLayout.LayoutParams(
@@ -1501,8 +1510,7 @@ class PostsAdapter2(
                 )
             } else {
                 val viewHolder = holder as VideoViewHolder
-                viewHolder.videoView.visibility = View.GONE
-                val video = item.videoVersions[1]
+                val video = item.videoVersions[0]
                 val image = item.imageVersions2.candidates[0]
 
                 loadImage(
@@ -1524,13 +1532,13 @@ class PostsAdapter2(
                             "Instagram"
                         )
                     )
-                viewHolder.videoView.setOnClickListener {
-                    if (mPlayManager.isSoundEnable()) {
-                        mPlayManager.disableSound()
-                    } else {
-                        mPlayManager.enableSound()
-                    }
-                }
+//                viewHolder.mediaContainer.setOnClickListener {
+//                    if (mPlayManager.isSoundEnable()) {
+//                        mPlayManager.disableSound()
+//                    } else {
+//                        mPlayManager.enableSound()
+//                    }
+//                }
 
                 if (item.videoVersions[0].isPlay) {
                     val uri = Uri.parse(video.url)
@@ -1539,17 +1547,15 @@ class PostsAdapter2(
                             .createMediaSource(uri)
                     viewHolder.imgPhoto.visibility = View.GONE
                     viewHolder.imgPlay.visibility = View.GONE
-                    viewHolder.videoView.visibility = View.VISIBLE
-                    viewHolder.videoView.player = mPlayManager.player
+                    removeVideoView(videoView)
+                    viewHolder.mediaContainer.addView(videoView)
                     mPlayManager.startPlay(mediaSource, item.id)
-                    viewHolder.videoView.showController()
                     currentMediaPosition = positionOfAdapter
                 } else {
                     if (mPlayManager.currentPlayerId == item.id) {
                         mPlayManager.stopPlay()
                     }
-                    viewHolder.videoView.player = null
-                    viewHolder.videoView.visibility = View.GONE
+                    viewHolder.mediaContainer.removeAllViews()
                     viewHolder.imgPhoto.visibility = View.VISIBLE
                     viewHolder.imgPlay.visibility = View.VISIBLE
                 }
@@ -1587,16 +1593,15 @@ class PostsAdapter2(
             RecyclerView.ViewHolder(itemView) {
             val imgPhoto: AppCompatImageView
             val imgPlay: AppCompatImageView
-            val videoView: PlayerView
+            val mediaContainer: FrameLayout
 
             init {
-                videoView = LayoutInflater.from(itemView.context)
-                    .inflate(R.layout.layout_video_player, null, false) as PlayerView
-                videoView.layoutParams = FrameLayout.LayoutParams(
+                mediaContainer = FrameLayout(itemView.context)
+                mediaContainer.layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
-                itemView.addView(videoView)
+                itemView.addView(mediaContainer)
 
                 imgPhoto = AppCompatImageView(itemView.context).apply {
                     id = View.generateViewId()
