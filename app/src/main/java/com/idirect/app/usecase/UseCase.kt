@@ -1596,7 +1596,7 @@ class UseCase(
         return result
     }
 
-    fun sendStr(
+    fun sendStoryReply(
         threadId: String,
         mediaId: String,
         mediaType: Int,

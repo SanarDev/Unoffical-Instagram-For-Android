@@ -15,6 +15,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.LinearInterpolator
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -97,14 +98,13 @@ class FragmentStoryItem(
     private var emojiPopup: EmojiPopup? = null
     private lateinit var sharedViewModel: ShareViewModel
     private var currentTray: Tray? = null
-    private var valueAnimatorUpdateListener = object : ValueAnimator.AnimatorUpdateListener {
-        override fun onAnimationUpdate(animation: ValueAnimator?) {
+    private var valueAnimatorUpdateListener =
+        ValueAnimator.AnimatorUpdateListener { animation ->
             if (currentPosition != -1) {
                 val value = animation!!.animatedValue as Int
                 progressBars[currentPosition].progress = value
             }
         }
-    }
 
     var _valueAnimator: ValueAnimator? = null
     val valueAnimator: ValueAnimator get() = _valueAnimator!!
@@ -158,6 +158,7 @@ class FragmentStoryItem(
 
         _valueAnimator = ValueAnimator.ofInt(0, 100).apply {
             duration = 5000
+            interpolator = LinearInterpolator()
         }
         valueAnimator.addUpdateListener(valueAnimatorUpdateListener)
 
