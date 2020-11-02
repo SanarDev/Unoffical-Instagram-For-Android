@@ -6,8 +6,8 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         android:padding="5dp">
 
         <com.tylersuehr.chips.CircleImageView
@@ -30,7 +30,7 @@
             android:singleLine="true"
             android:text="@string/your_story"
             android:textColor="@color/text_very_light"
-            android:textSize="12sp" />
+            android:textSize="14sp" />
 
     </LinearLayout>
 </layout>

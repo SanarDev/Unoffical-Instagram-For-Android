@@ -3,7 +3,7 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
-    <color name="theme_background">#F3F3F3</color>
+    <color name="theme_background">#F2F2F2</color>
     <color name="theme_background_dialog">#2e2e2e</color>
     <color name="theme_background_incoming_message">@color/theme_item</color>
     <color name="theme_item">#EEEEEE</color>

@@ -139,4 +139,5 @@
     <string name="error_in_unlike_comment">Error in unlike comment</string>
     <string name="error_in_like_comment">Error in like comment</string>
     <string name="media">Media</string>
+    <string name="more">More</string>
 </resources>

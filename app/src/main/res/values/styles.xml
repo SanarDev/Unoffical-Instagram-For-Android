@@ -10,6 +10,7 @@
         <item name="android:screenOrientation">portrait</item>
         <item name="android:windowActivityTransitions">true</item>
         <item name="android:statusBarColor">@color/theme_item</item>
+        <item name="fontFamily">@font/primary_en_number</item>
     </style>
 
     <style name="edtCodeStyle" parent="Widget.AppCompat.EditText">

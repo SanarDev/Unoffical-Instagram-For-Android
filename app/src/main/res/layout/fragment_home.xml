@@ -29,14 +29,15 @@
 
                         <androidx.appcompat.widget.Toolbar
                             android:layout_width="match_parent"
-                            android:layout_height="50dp"
+                            android:layout_height="40dp"
                             android:background="@color/toolbar">
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="40dp"
+                                android:layout_gravity="center"
                                 android:text="@string/app_name"
+                                android:fontFamily="@font/logo"
                                 android:textColor="@color/text_very_light"
                                 android:textSize="18sp" />
 
@@ -68,7 +69,8 @@
                 android:paddingBottom="50dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
-                tools:listitem="@layout/layout_user_detail_post" />
+                tools:listitem="@layout/layout_post_image"
+                tools:itemCount="10"/>
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
     </LinearLayout>
