@@ -125,7 +125,7 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>() {
     }
 
     inner class StoriesAdapter(
-        var items: List<Tray>?,
+        var items: List<com.sanardev.instagramapijava.model.story.Tray>?,
         fragmentManager: FragmentManager
     ) :
         FragmentStatePagerAdapter(fragmentManager, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {

@@ -26,10 +26,7 @@ import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentHomeBinding
 import com.idirect.app.databinding.LayoutStoryBinding
-import com.idirect.app.datasource.model.Location
-import com.idirect.app.datasource.model.Story
-import com.idirect.app.datasource.model.Tray
-import com.idirect.app.datasource.model.UserPost
+import com.idirect.app.datasource.model.*
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.forward.ForwardBundle
 import com.idirect.app.ui.main.MainActivity
@@ -37,6 +34,7 @@ import com.idirect.app.ui.postcomments.CommentsFragmentDirections
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.model.timeline.MediaOrAd
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import java.lang.Long
@@ -138,8 +136,8 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
                 (requireActivity() as MainActivity).showShareWindow(forwardBundle)
             }
 
-            override fun showComments(v: View, post: UserPost) {
-                val action = NavigationMainGraphDirections.actionGlobalCommentFragment(post)
+            override fun showComments(v: View, post: MediaOrAd) {
+                val action = NavigationMainGraphDirections.actionGlobalCommentFragment(post.id)
                 findNavController().navigate(action)
             }
 
@@ -158,7 +156,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         viewModel.postsLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
                 isLoading = false
-                mAdapter.items = (it.data!!.posts.toMutableList())
+                mAdapter.items = (it.data!!.feedItems.toMutableList())
             }
             mAdapter.setLoading(isLoading)
         })
@@ -197,7 +195,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         mPlayManager.releasePlay()
     }
 
-    inner class StoriesAdapter(var items: MutableList<Tray>?) : BaseAdapter() {
+    inner class StoriesAdapter(var items: MutableList<com.sanardev.instagramapijava.model.story.Tray>?) : BaseAdapter() {
         override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items!![position]
             val dataBinding = holder.binding as LayoutStoryBinding

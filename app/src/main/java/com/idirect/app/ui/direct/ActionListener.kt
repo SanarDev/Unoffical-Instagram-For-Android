@@ -1,7 +1,7 @@
 package com.idirect.app.ui.direct
 
-import com.idirect.app.datasource.model.Message
 import com.idirect.app.realtime.commands.RealTimeCommand
+import com.sanardev.instagramapijava.model.direct.Message
 
 interface ActionListener {
 

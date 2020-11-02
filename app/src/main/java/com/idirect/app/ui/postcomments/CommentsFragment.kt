@@ -25,15 +25,13 @@ import com.idirect.app.customview.loadingadapter.LoadingAdapter
 import com.idirect.app.databinding.FragmentCommentBinding
 import com.idirect.app.databinding.LayoutCommentBinding
 import com.idirect.app.databinding.LayoutCommentReplyBinding
-import com.idirect.app.datasource.model.Comment
-import com.idirect.app.datasource.model.UserPost
-import com.idirect.app.datasource.model.event.LoadingEvent
 import com.idirect.app.extensions.color
 import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.TimeUtils
+import com.sanardev.instagramapijava.model.media.Comment
 import com.vanniktech.emoji.EmojiPopup
 import java.lang.Long
 import javax.inject.Inject
@@ -110,9 +108,8 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val bundle = requireArguments()
-        val postData = bundle.getParcelable<UserPost>("data")!!
-        viewModel.init(postData.id)
+        val mediaId = requireArguments().getString("media_id")!!
+        viewModel.init(mediaId)
         (requireActivity() as MainActivity).isHideNavigationBottom(true)
         mAdapter = CommentAdapter()
         binding.recyclerviewComments.adapter = mAdapter
@@ -136,13 +133,13 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
             }
         }
 
-        mGlide.load(postData.user.profilePicUrl).into(binding.imgOwnerProfile)
-        binding.txtComment.setText(postData.user.username, postData.user.pk,postData.user.isVerified, postData.caption.text)
-        binding.txtComment.mHyperTextClick = onHyperTextClick
-        binding.txtPostTime.text =
-            TimeUtils.convertTimestampToDate(requireContext(), postData.takenAt)
-        binding.edtComment.hint =
-            String.format(getString(R.string.comment_hint), viewModel.getUser().username)
+//        mGlide.load(postData.user.profilePicUrl).into(binding.imgOwnerProfile)
+//        binding.txtComment.setText(postData.user.username, postData.user.pk,postData.user.isVerified, postData.caption.text)
+//        binding.txtComment.mHyperTextClick = onHyperTextClick
+//        binding.txtPostTime.text =
+//            TimeUtils.convertTimestampToDate(requireContext(), postData.takenAt)
+//        binding.edtComment.hint =
+//            String.format(getString(R.string.comment_hint), viewModel.getUser().username)
 
         viewModel.comments.observe(viewLifecycleOwner, Observer {
             when (it.status) {
@@ -191,6 +188,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
             val dataBinding = holder.binding as LayoutCommentBinding
             dataBinding.txtComment.setText(item.user.username, item.user.pk,item.user.isVerified, item.text)
             dataBinding.txtComment.mHyperTextClick = onHyperTextClick
+            dataBinding.txtComment.setLinkTextColor(color(R.color.hyperText))
             dataBinding.txtTime.text =
                 TimeUtils.convertTimestampToDate(requireContext(), item.createdAt)
             mGlide.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
@@ -212,6 +210,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                         replyComment.user.isVerified,
                         replyComment.text
                     )
+                    replyCommentBinding.txtComment.setLinkTextColor(color(R.color.hyperText))
                     replyCommentBinding.txtComment.mHyperTextClick = onHyperTextClick
                     replyCommentBinding.txtTime.text =
                         TimeUtils.convertTimestampToDate(requireContext(), replyComment.createdAt)

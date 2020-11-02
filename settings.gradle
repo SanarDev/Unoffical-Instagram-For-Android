@@ -1,3 +1,4 @@
+include ':instagramforjava'
 include ':emoji-ios'
 include ':emoji'
 include ':emoji-kotlin'

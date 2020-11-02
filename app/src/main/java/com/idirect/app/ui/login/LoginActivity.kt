@@ -5,11 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import com.idirect.app.core.BaseActivity
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
+import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.ActivityLoginBinding
 import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.utils.Resource
@@ -18,14 +20,17 @@ import com.idirect.app.ui.twofactor.TwoFactorActivity
 import com.idirect.app.extentions.hideKeyboard
 import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
+import com.sanardev.instagramapijava.IGConstants
+import com.sanardev.instagramapijava.InstaClient
 
 class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
 
-    companion object{
-        fun open(context: Context){
-            context.startActivity(Intent(context,LoginActivity::class.java))
+    companion object {
+        fun open(context: Context) {
+            context.startActivity(Intent(context, LoginActivity::class.java))
         }
     }
+
     override fun layoutRes(): Int {
         return R.layout.activity_login
     }
@@ -34,6 +39,8 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
         return LoginViewModel::class.java
     }
 
+    private lateinit var password: String
+    private lateinit var username: String
     val handler = Handler()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,64 +64,48 @@ class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
                     binding.btnLogin.visibility = View.VISIBLE
                     binding.layoutButton.isEnabled = true
 
-                    when(it.data?.errorType){
-                        InstagramConstants.Error.BAD_PASSWORD.msg ->{
-                            DialogHelper.createDialog(
-                                this@LoginActivity,
-                                layoutInflater,
-                                getString(R.string.error),
-                                getString(R.string.incorrect_password),
-                                getString(R.string.try_again)
-                            )
-                            return@Observer
-                        }
-                        InstagramConstants.Error.RATE_LIMIT.msg ->{
-                            DialogHelper.createDialog(
-                                this@LoginActivity,
-                                layoutInflater,
-                                getString(R.string.error),
-                                it.data!!.message!!,
-                                getString(R.string.Ok)
-                            )
-                            return@Observer
-                        }
-                    }
-
-                    if(it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code){
-                        toast(getString(R.string.error_internet_connection))
-                        return@Observer
-                    }
-                    if (it.data?.twoFactorRequired != null && it.data?.twoFactorRequired!!) {
-                        startActivity(
-                            Intent(
-                                this@LoginActivity,
-                                TwoFactorActivity::class.java
-                            ).putExtras(Bundle().apply {
-                                putParcelable("two_factor_info", it.data!!.two_factor_info)
-                            })
-                        )
-                    }
+                    toast(getString(R.string.error_internet_connection))
                 }
                 Resource.Status.SUCCESS -> {
                     binding.progressbar.visibility = View.INVISIBLE
                     binding.btnLogin.visibility = View.VISIBLE
                     binding.layoutButton.isEnabled = true
 
-                    if (it.status == Resource.Status.SUCCESS && it.data?.status == "ok") {
+                    if (it.data!!.status == IGConstants.STATUS_SUCCESS) {
                         startActivity(
                             Intent(
                                 this@LoginActivity,
                                 MainActivity::class.java
                             )
                         )
+                    }else{
+                        when(it.data!!.errorType){
+                            IGConstants.Errors.LOGIN_BAD_PASSWORD ->{
+                                CustomToast.show(applicationContext,getString(R.string.bad_password),Toast.LENGTH_SHORT)
+                            }
+                            IGConstants.Errors.LOGIN_TOO_MANY_TRIED ->{
+                                CustomToast.show(applicationContext,getString(R.string.too_many_tried),Toast.LENGTH_SHORT)
+                            }
+                            IGConstants.Errors.LOGIN_REQUIRE_TWO_STEP_AUTH ->{
+                                startActivity(
+                                    Intent(
+                                        this@LoginActivity,
+                                        TwoFactorActivity::class.java
+                                    ).apply {
+                                        putExtra("username",username)
+                                        putExtra("password",password)
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
         })
         binding.btnLogin.setOnClickListener {
-            val username = binding.edtUsername.text.toString()
-            val password = binding.edtPassword.text.toString()
-            viewModel.login(username,password)
+            username = binding.edtUsername.text.toString()
+            password = binding.edtPassword.text.toString()
+            viewModel.login(username, password)
         }
     }
 

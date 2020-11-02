@@ -49,10 +49,21 @@
         tools:layout="@layout/fragment_posts"/>
 
     <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.idirect.app.ui.profile.FragmentProfile"
+        android:label="ProfileFragment"
+        tools:layout="@layout/fragment_profile"/>
+
+    <fragment
         android:id="@+id/commentsFragment"
         android:name="com.idirect.app.ui.postcomments.CommentsFragment"
         android:label="CommentsFragment"
-        tools:layout="@layout/fragment_comment"/>
+        tools:layout="@layout/fragment_comment">
+
+        <argument android:name="media_id"
+            app:argType="string"/>
+
+    </fragment>
 
     <fragment
         android:id="@+id/fragmentStory"
@@ -60,11 +71,20 @@
         android:label="FragmentStory"
         tools:layout="@layout/fragment_story"/>
 
+    <fragment android:id="@+id/fragmentSinglePost"
+        android:name="com.idirect.app.ui.singlepost.FragmentSinglePost"/>
+
     <action android:id="@+id/action_global_homeFragment"
         app:destination="@id/fragmentHome"/>
 
     <action android:id="@+id/action_global_inboxFragment"
         app:destination="@id/fragmentInbox"/>
+
+    <action android:id="@+id/action_global_singlePostFragment"
+        app:destination="@id/fragmentSinglePost">
+        <argument android:name="mediaId"
+            app:argType="string"/>
+    </action>
 
     <action
         android:id="@+id/action_global_directFragment"
@@ -87,8 +107,9 @@
     <action
         android:id="@+id/action_global_commentFragment"
         app:destination="@id/commentsFragment">
-        <argument android:name="data"
-            app:argType="com.idirect.app.datasource.model.UserPost" />
+<!--        #comment_code-->
+<!--        <argument android:name="data"-->
+<!--            app:argType="com.sanardev.instagramapijava.model.timeline.MediaOrAd" />-->
     </action>
 
     <action
@@ -129,5 +150,9 @@
     <action
         android:id="@+id/action_global_searchFragment"
         app:destination="@id/fragmentSearch"/>
+
+    <action
+        android:id="@+id/action_global_profileFragment"
+        app:destination="@id/profileFragment"/>
 
 </navigation>

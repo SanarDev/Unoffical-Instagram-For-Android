@@ -88,7 +88,7 @@ class FragmentSearch : BaseFragment<FragmentSearchBinding, SearchViewModel>() {
                 }
             }
         })
-        _mAdapter = ThreadsAdapter(emptyArray<Recipients>().toMutableList())
+        _mAdapter = ThreadsAdapter(emptyArray<com.sanardev.instagramapijava.model.explore.Recipients>().toMutableList())
         binding.recyclerviewThreads.adapter = mAdapter
         binding.recyclerviewThreads.adapter = mAdapter
 //        waitForTransition(binding.recyclerviewThreads)
@@ -107,7 +107,7 @@ class FragmentSearch : BaseFragment<FragmentSearchBinding, SearchViewModel>() {
         })
     }
 
-    inner class ThreadsAdapter(var items: MutableList<Recipients>) : BaseAdapter() {
+    inner class ThreadsAdapter(var items: MutableList<com.sanardev.instagramapijava.model.explore.Recipients>) : BaseAdapter() {
         override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]
             val thread = item.thread

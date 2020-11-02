@@ -30,7 +30,7 @@
                         <androidx.appcompat.widget.Toolbar
                             android:layout_width="match_parent"
                             android:layout_height="50dp"
-                            android:background="@color/theme_item">
+                            android:background="@color/toolbar">
 
                             <androidx.appcompat.widget.AppCompatTextView
                                 android:layout_width="wrap_content"
@@ -49,14 +49,10 @@
                             android:layout_marginTop="5dp"
                             android:clipToPadding="false"
                             android:orientation="horizontal"
-                            android:paddingStart="10dp"
+                            android:paddingStart="20dp"
                             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                             tools:listitem="@layout/layout_story" />
 
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="@color/theme_item" />
                     </LinearLayout>
 
                 </com.google.android.material.appbar.CollapsingToolbarLayout>
@@ -67,8 +63,6 @@
                 android:id="@+id/recyclerview_posts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
                 android:clipToPadding="false"
                 android:paddingTop="10dp"
                 android:paddingBottom="50dp"

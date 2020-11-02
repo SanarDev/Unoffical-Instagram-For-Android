@@ -11,14 +11,20 @@ import com.idirect.app.datasource.model.response.InstagramLoginResult
 import com.idirect.app.datasource.model.response.InstagramTwoFactorInfo
 import com.idirect.app.utils.Resource
 import com.idirect.app.usecase.UseCase
+import com.sanardev.instagramapijava.IGConstants
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.model.login.IGTwoFactorInfo
+import com.sanardev.instagramapijava.response.IGLoginResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import java.lang.StringBuilder
 import javax.inject.Inject
 
 class TwoFactorViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
     BaseViewModel(application) {
 
+    private lateinit var instaClient: InstaClient
     val isLoading = MutableLiveData<Boolean>(false)
-    val result = MutableLiveData<Resource<InstagramLoginResult>>()
+    val result = MutableLiveData<Resource<IGLoginResponse>>()
 
     val isEnableResendButton = ObservableField<Boolean>(false)
     val endOfPhoneNumber = ObservableField<String>("")
@@ -39,10 +45,11 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
     val textCodeThree = ObservableField<String>()
 
     var timer: Int = 0
-    lateinit var instagramTwoFactorInfo: InstagramTwoFactorInfo
+    lateinit var instagramTwoFactorInfo: IGTwoFactorInfo
 
-    fun initData(instagramTwoFactorInfo: InstagramTwoFactorInfo) {
-        this@TwoFactorViewModel.instagramTwoFactorInfo = instagramTwoFactorInfo
+    fun initData(username:String,password:String) {
+        instaClient = InstaClient((getApplication() as Application).applicationContext,username,password);
+        this@TwoFactorViewModel.instagramTwoFactorInfo = instaClient.accountProcessor.twoStepAuthInfo
         endOfPhoneNumber.set(instagramTwoFactorInfo.obfuscatedPhoneNumber)
         if (instagramTwoFactorInfo.phoneVerificationSettings != null) {
             timer = instagramTwoFactorInfo.phoneVerificationSettings!!.resendSmsDelaySec
@@ -105,17 +112,14 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
             .append(textCodeSix.get())
             .toString()
 
-        mUseCase.checkTwoFactorCode(instagramTwoFactorInfo, code).observeForever {
-            if(it.status == Resource.Status.ERROR){
-                textCodeOne.set("")
-                textCodeTwo.set("")
-                textCodeThree.set("")
-                textCodeFour.set("")
-                textCodeFive.set("")
-                textCodeSix.set("")
-            }
-            result.value = it
-        }
+        instaClient.accountProcessor.twoStepAuth(code)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+            result.value = Resource.success(it)
+        },{
+            result.value = Resource.error()
+        },{
+        })
     }
 
     fun edtOneTextChange(s: CharSequence, start: Int, before: Int, count: Int) {

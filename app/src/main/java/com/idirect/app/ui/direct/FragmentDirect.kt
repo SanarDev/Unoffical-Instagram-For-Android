@@ -4,7 +4,6 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
@@ -15,7 +14,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
 import androidx.core.app.ActivityCompat
@@ -26,10 +24,8 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.TransitionInflater
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
@@ -44,16 +40,12 @@ import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
-import com.idirect.app.core.BaseApplication
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.doubleclick.DoubleClick
 import com.idirect.app.customview.doubleclick.DoubleClickListener
 import com.idirect.app.databinding.*
 import com.idirect.app.datasource.model.DirectDate
-import com.idirect.app.datasource.model.Message
-import com.idirect.app.datasource.model.Thread
 import com.idirect.app.datasource.model.event.*
-import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.extensions.*
 import com.idirect.app.extentions.*
 import com.idirect.app.manager.PlayManager
@@ -67,6 +59,9 @@ import com.idirect.app.ui.selectimage.SelectImageDialog
 import com.idirect.app.ui.selectimage.SelectImageListener
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.*
+import com.sanardev.instagramapijava.model.direct.IGThread
+import com.sanardev.instagramapijava.model.direct.Message
+import com.sanardev.instagramapijava.model.login.IGLoggedUser
 import com.tylersuehr.chips.CircleImageView
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.EmojiPopup
@@ -92,8 +87,8 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     private var isLoading = false
     private var olderMessageExist = true
 
-    private var _thread: Thread?=null
-    private val thread: Thread get() = _thread!!
+    private var _igThread: IGThread?=null
+    private val igThread: IGThread get() = _igThread!!
     private var _mGlide:RequestManager?=null
     private val mGlide:RequestManager get() = _mGlide!!
 
@@ -130,7 +125,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     override fun onDestroyView() {
         removeWaitForTransition(binding.recyclerviewChats,onPreDrawListener)
         emojiPopup.releaseMemory()
-        shareViewModel.currentThread = null
+        shareViewModel.currentIGThread = null
         super.onDestroyView()
     }
 
@@ -189,8 +184,8 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         shareViewModel.mutableLiveData.observe(viewLifecycleOwner, Observer {
             when (it.status) {
                 Resource.Status.SUCCESS -> {
-                    if(shareViewModel.currentThread != null){
-                        val thread = shareViewModel.getThreadById(shareViewModel.currentThread!!.threadId!!)
+                    if(shareViewModel.currentIGThread != null){
+                        val thread = shareViewModel.getThreadById(shareViewModel.currentIGThread!!.threadId!!)
                         gone(binding.includeLayoutNetwork.root, binding.progressbar)
                         olderMessageExist = thread.oldestCursor != null
                         if (thread.messages.size > mAdapter.items.size) {
@@ -207,7 +202,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             if (it == null) {
                 return@Observer
             }
-            if (it.first == shareViewModel.currentThread!!.threadId!!) {
+            if (it.first == shareViewModel.currentIGThread!!.threadId!!) {
                 mAdapter.items.add(0, it.second)
                 mAdapter.notifyItemInserted(0)
                 binding.recyclerviewChats.scrollToPosition(0)
@@ -215,11 +210,20 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             }
         })
 
+        shareViewModel.threadMessageRemoved.observe(viewLifecycleOwner, Observer {
+            if(it == null){
+                return@Observer
+            }
+            if(igThread.threadId == it.threadId){
+                mAdapter.setItems(viewModel.releaseMessages(shareViewModel.getThreadById(igThread.threadId).messages).toMutableList())
+            }
+        })
+
         shareViewModel.messageChange.observe(viewLifecycleOwner, Observer {
             if (it == null) {
                 return@Observer
             }
-            if (it.first == shareViewModel.currentThread!!.threadId!!) {
+            if (it.first == shareViewModel.currentIGThread!!.threadId!!) {
                 for (i in mAdapter.items.indices) {
                     val message = mAdapter.items[i]
                     if (message is Message) {
@@ -309,7 +313,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     RealTimeService.run(
                         requireContext(),
                         RealTime_SendTypingState(
-                            thread.threadId,
+                            igThread.threadId,
                             true,
                             InstagramHashUtils.getClientContext()
                         )
@@ -320,7 +324,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     RealTimeService.run(
                         requireContext(),
                         RealTime_SendTypingState(
-                            thread.threadId,
+                            igThread.threadId,
                             false,
                             InstagramHashUtils.getClientContext()
                         )
@@ -342,7 +346,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         if (mAdapter.items[totalItemCount - 2] is Message) {
                             shareViewModel.loadMoreItem(
                                 (mAdapter.items[totalItemCount - 2] as Message).itemId,
-                                thread.threadId
+                                igThread.threadId
                             )
                             isLoading = true
                             mAdapter.setLoading(isLoading)
@@ -362,8 +366,10 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             binding.progressbar.visibility = View.GONE
         }
     }
-    private fun initThreadData(thread: Thread?=null,directBundle: DirectBundle?=null){
-        if(thread == null && directBundle == null){
+
+    // data for profile name, profile iamge , last seen, is online
+    private fun initThreadData(IGThread: IGThread?=null, directBundle: DirectBundle?=null){
+        if(IGThread == null && directBundle == null){
             return
         }
         val threadTitle:String
@@ -371,15 +377,15 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         val profilePicUrl2:String
         val isGroup:Boolean
 
-        if(thread != null){
-            threadTitle = thread.threadTitle
-            profilePicUrl = thread.users[0].profilePicUrl
-            profilePicUrl2 = if(thread.isGroup){
-                thread.users[1].profilePicUrl
+        if(IGThread != null){
+            threadTitle = IGThread.threadTitle
+            profilePicUrl = IGThread.users[0].profilePicUrl
+            profilePicUrl2 = if(IGThread.group){
+                IGThread.users[1].profilePicUrl
             }else{
                 ""
             }
-            isGroup = thread.isGroup
+            isGroup = IGThread.group
         }else{
             threadTitle = directBundle!!.threadTitle
             profilePicUrl = directBundle.profileImage
@@ -410,10 +416,10 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     }
     private fun initThreadWithBundle(directBundle: DirectBundle) {
         if(directBundle.threadId != null){
-            shareViewModel.currentThread = shareViewModel.getThreadById(directBundle.threadId)
-            initThreadData(thread = shareViewModel.currentThread!!)
-            _thread = shareViewModel.currentThread!!
-            val messages = shareViewModel.currentThread!!.messages
+            shareViewModel.currentIGThread = shareViewModel.getThreadById(directBundle.threadId)
+            initThreadData(IGThread = shareViewModel.currentIGThread!!)
+            _igThread = shareViewModel.currentIGThread!!
+            val messages = shareViewModel.currentIGThread!!.messages
             mAdapter.setItems(viewModel.releaseMessages(messages).toMutableList())
         }else{
             initThreadData(directBundle = directBundle)
@@ -423,10 +429,10 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 }
                 if(it.status == Resource.Status.SUCCESS){
                     setLoading(false)
-                    shareViewModel.currentThread = it.data
-                    initThreadData(thread = shareViewModel.currentThread!!)
-                    _thread = shareViewModel.currentThread!!
-                    val messages = shareViewModel.currentThread!!.messages
+                    shareViewModel.currentIGThread = it.data
+                    initThreadData(IGThread = shareViewModel.currentIGThread!!)
+                    _igThread = shareViewModel.currentIGThread!!
+                    val messages = shareViewModel.currentIGThread!!.messages
                     mAdapter.setItems(viewModel.releaseMessages(messages).toMutableList())
                 }
             })
@@ -437,8 +443,8 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     override fun onClick(v: View?) {
         when (v!!.id) {
             binding.toolbar.id -> {
-                if (!thread.isGroup) {
-                    val user = thread.users[0]
+                if (!igThread.group) {
+                    val user = igThread.users[0]
                     val userId = user.pk
                     ViewCompat.setTransitionName(binding.imgProfileImage, "profile_$userId")
                     ViewCompat.setTransitionName(binding.txtProfileName, "username_$userId")
@@ -483,7 +489,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 }
                 SelectImageDialog(object : SelectImageListener {
                     override fun onImageSelected(imagesPath: List<String>) {
-                        shareViewModel.uploadMedias(shareViewModel.generateUploadMediaModelFromPath(thread.threadId,imagesPath))
+                        shareViewModel.uploadMedias(shareViewModel.generateUploadMediaModelFromPath(igThread.threadId,imagesPath))
                     }
                 }).show(requireActivity().supportFragmentManager, "Dialog")
             }
@@ -493,10 +499,10 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     return
                 }
                 binding.edtTextChat.setText("")
-                shareViewModel.sendTextMessage(shareViewModel.currentThread!!.threadId!!, text)
+                shareViewModel.sendTextMessage(shareViewModel.currentIGThread!!.threadId!!, text)
             }
             binding.btnLike.id -> {
-                shareViewModel.sendLike(shareViewModel.currentThread!!.threadId)
+                shareViewModel.sendLike(shareViewModel.currentIGThread!!.threadId)
             }
             binding.btnVoice.id -> {
                 ActivityCompat.requestPermissions(
@@ -533,23 +539,24 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     }
 
     private fun checkUserStatus() {
-        if(_thread == null){
+        if(_igThread == null){
             return
         }
-        if (!thread.isGroup && thread.active) {
-            binding.txtProfileDec.text = getString(R.string.online)
-            binding.txtProfileDec.setTextColor(color(R.color.online_color))
-        } else {
-            if (thread.lastActivityAt == 0.toLong()) {
-                binding.txtProfileDec.text = thread.threadTitle
-            } else {
-                binding.txtProfileDec.text = String.format(
-                    getString(R.string.active_at),
-                    TimeUtils.convertTimestampToDate(requireContext(), thread.lastActivityAt)
-                )
-                binding.txtProfileDec.setTextColor(color(R.color.text_light))
-            }
-        }
+        // #comment_code
+//        if (!IGThread.group && IGThread.active) {
+//            binding.txtProfileDec.text = getString(R.string.online)
+//            binding.txtProfileDec.setTextColor(color(R.color.online_color))
+//        } else {
+//            if (IGThread.lastActivityAt == 0.toLong()) {
+//                binding.txtProfileDec.text = IGThread.threadTitle
+//            } else {
+//                binding.txtProfileDec.text = String.format(
+//                    getString(R.string.active_at),
+//                    TimeUtils.convertTimestampToDate(requireContext(), IGThread.lastActivityAt)
+//                )
+//                binding.txtProfileDec.setTextColor(color(R.color.text_light))
+//            }
+//        }
     }
 //
 //    override fun onHideKeyboard() {
@@ -573,7 +580,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             )
     }
 
-    inner class ChatsAdapter(var user: InstagramLoggedUser) :
+    inner class ChatsAdapter(var user: IGLoggedUser) :
         BaseAdapter() {
 
         var items: MutableList<Any> = ArrayList<Any>().toMutableList()
@@ -786,7 +793,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         if (likes[i].senderId == mAdapter.user.pk) {
                             profileUrl = mAdapter.user.profilePicUrl
                         } else {
-                            for (user in thread.users) {
+                            for (user in igThread.users) {
                                 if (likes[i].senderId == user.pk) {
                                     profileUrl = user.profilePicUrl
                                 }
@@ -814,8 +821,8 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
             }
 
             var lastSeenAt: Long = 0
-            if (thread.lastSeenAt != null) {
-                for (ls in thread.lastSeenAt.entries) {
+            if (igThread.lastSeenAt != null) {
+                for (ls in igThread.lastSeenAt.entries) {
                     if (ls.key.toLong() != item.userId) {
                         // for example last seen in group is laster seen
                         viewModel.convertToStandardTimeStamp(ls.value.timeStamp).also {
@@ -831,7 +838,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 RealTimeService.run(
                     requireContext(),
                     RealTime_MarkAsSeen(
-                        thread.threadId,
+                        igThread.threadId,
                         item.itemId
                     )
                 )
@@ -891,7 +898,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
                         shareViewModel.sendReaction(
                             item.itemId,
-                            thread.threadId,
+                            igThread.threadId,
                             item.clientContext
                         )
                     }
@@ -912,7 +919,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 }
             }
             if (txtSendername != null) {
-                if (thread.isGroup && item.userId != thread.viewerId) {
+                if (igThread.group && item.userId != igThread.viewerId) {
                     visible(txtSendername)
                     txtSendername.text = shareViewModel.getUsername(item.userId)
                 } else {
@@ -963,7 +970,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     if (item.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
                         val dataBinding = holder.binding as LayoutReelShareReplyBinding
                         dataBinding.layoutStory.layoutDirection =
-                            if (item.userId == thread.viewerId) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
+                            if (item.userId == igThread.viewerId) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
                         if (item.reelShare.media?.imageVersions2 != null) {
                             val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
                             val size =
@@ -1017,12 +1024,12 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         val dataBinding = holder.binding as LayoutReelShareBinding
                         gone(dataBinding.imgProfile, dataBinding.txtUsername)
                         layoutMessage?.background = null
-                        if (item.userId == thread.viewerId) {
+                        if (item.userId == igThread.viewerId) {
                             dataBinding.layoutParent.gravity = Gravity.RIGHT
                             dataBinding.layoutStory.layoutDirection = View.LAYOUT_DIRECTION_RTL
                             dataBinding.txtReelStatus.text = String.format(
                                 getString(R.string.mentioned_person_in_your_story),
-                                thread.users[0].username
+                                igThread.users[0].username
                             )
                         } else {
                             dataBinding.txtReelStatus.text =
@@ -1111,12 +1118,12 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                 return
                             }
                             item.reelShare.media?.imageVersions2?.also {
-//                                val action =
-//                                    FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
-//                                        FullScreenFragment.TYPE_URL,
-//                                        it.candidates[0].url
-//                                    )
-//                                view!!.findNavController().navigate(action)
+                                val action =
+                                    NavigationMainGraphDirections.actionGlobalFullScreenFragment(
+                                        FullScreenFragment.TYPE_URL,
+                                        it.candidates[0].url
+                                    )
+                                view!!.findNavController().navigate(action)
                                 return
                             }
                         }
@@ -1151,7 +1158,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
                                 shareViewModel.sendReaction(
                                     item.itemId,
-                                    thread.threadId,
+                                    igThread.threadId,
                                     item.clientContext
                                 )
                             }
@@ -1186,11 +1193,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     val id: String = item.itemId
                     val uri: Uri
                     val duration: Int
-                    if (item.voiceMediaData.isLocal) {
-                        uri = Uri.fromFile(File(item.voiceMediaData.localFilePath))
+                    if (item.voiceMediaData.bundle != null && item.voiceMediaData.bundle["isLocal"] == true) {
+                        uri = Uri.fromFile(File(item.voiceMediaData.bundle["localFilePath"] as String))
                         mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                             .createMediaSource(uri)
-                        duration = item.voiceMediaData.localDuration
+                        duration = item.voiceMediaData.bundle["localDuration"] as Int
                     } else {
 //                        id = item.voiceMediaData.voiceMedia.id
                         uri = Uri.parse(item.voiceMediaData.voiceMedia.audio.audioSrc)
@@ -1238,16 +1245,16 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         dataBinding.imgMedia,
                         "media_${item.clientContext}"
                     )
-                    if (item.media.isLocal) {
+                    if (item.media.bundle != null && item.media.bundle["isLocal"] == true) {
                         val originalSize =
-                            MediaUtils.getMediaWidthAndHeight(item.media.localFilePath)
+                            MediaUtils.getMediaWidthAndHeight(item.media.bundle["localFilePath"] as String)
                         val size = shareViewModel.getStandardWidthAndHeight(
                             originalSize[0],
                             originalSize[1],
                             0.5f
                         )
                         if (item.media.mediaType == 1) {
-                            mGlide.load(File(item.media.localFilePath))
+                            mGlide.load(File(item.media.bundle["localFilePath"] as String))
                                 .override(size[0], size[1])
                                 .placeholder(R.drawable.placeholder_loading)
                                 .into(dataBinding.imgMedia)
@@ -1255,7 +1262,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         } else {
                             val options = RequestOptions().frame(0)
                             mGlide.asBitmap()
-                                .load(File(item.media.localFilePath))
+                                .load(File(item.media.bundle["localFilePath"] as String))
                                 .override(size[0], size[1])
                                 .centerCrop()
                                 .apply(options)
@@ -1285,7 +1292,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
                                 shareViewModel.sendReaction(
                                     item.itemId,
-                                    thread.threadId,
+                                    igThread.threadId,
                                     item.clientContext
                                 )
                             }
@@ -1297,16 +1304,16 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                         item.media.videoVersions[0].url
                                     )
                                 } else {
-//                                    val action =
-//                                        FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
-//                                            FullScreenFragment.TYPE_URL,
-//                                            images.url,
-//                                            item.clientContext
-//                                        )
-//                                    val extras = FragmentNavigatorExtras(
-//                                        dataBinding.imgMedia to dataBinding.imgMedia.transitionName
-//                                    )
-//                                    view!!.findNavController().navigate(action, extras)
+                                    val action =
+                                        NavigationMainGraphDirections.actionGlobalFullScreenFragment(
+                                            FullScreenFragment.TYPE_URL,
+                                            images.url,
+                                            item.clientContext
+                                        )
+                                    val extras = FragmentNavigatorExtras(
+                                        dataBinding.imgMedia to dataBinding.imgMedia.transitionName
+                                    )
+                                    view!!.findNavController().navigate(action, extras)
                                 }
                             }
                         }))
@@ -1319,22 +1326,22 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         dataBinding.txtMessage.text = getString(R.string.view_photo)
                         dataBinding.layoutMedia.setOnClickListener {
                             shareViewModel.markAsSeenRavenMedia(
-                                shareViewModel.currentThread!!.threadId!!,
+                                shareViewModel.currentIGThread!!.threadId!!,
                                 item.itemId,
                                 item.clientContext
                             )
-//                            val action =
-//                                FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
-//                                    FullScreenFragment.TYPE_URL,
-//                                    media.imageVersions2.candidates[0].url
-//                                )
-//                            it!!.findNavController().navigate(action)
+                            val action =
+                                NavigationMainGraphDirections.actionGlobalFullScreenFragment(
+                                    FullScreenFragment.TYPE_URL,
+                                    media.imageVersions2.candidates[0].url
+                                )
+                            it!!.findNavController().navigate(action)
                         }
                     } else if (media.videoVersions != null) {
                         dataBinding.txtMessage.text = getString(R.string.view_video)
                         dataBinding.layoutMedia.setOnClickListener {
                             shareViewModel.markAsSeenRavenMedia(
-                                shareViewModel.currentThread!!.threadId!!,
+                                shareViewModel.currentIGThread!!.threadId!!,
                                 item.itemId,
                                 item.clientContext
                             )
@@ -1378,11 +1385,11 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                             gone(dataBinding.layoutImageView, dataBinding.imgMultipleItem)
                             dataBinding.layoutVideoView.visibility = View.VISIBLE
                             val videoSrc = item.mediaShare.videoVersions[0].url
-                            val image = item.mediaShare.imageVersions2.candidates[1].url
+                            val image = item.mediaShare.imageVersions2.candidates[0].url
                             mGlide.load(image).into(dataBinding.imgPreviewVideo)
                         }
                         InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
-                            val image = media.carouselMedia[0].imageVersions2
+                            val image = media.carouselMedias[0].imageVersions2
                             gone(dataBinding.layoutVideoView)
                             visible(dataBinding.imgMultipleItem)
                             dataBinding.layoutImageView.visibility = View.VISIBLE
@@ -1405,36 +1412,17 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 //                        RealTimeService.run(this@DirectActivity,RealTime_SendReaction(item.itemId,"like",item.clientContext,threadId,"created"))
                             shareViewModel.sendReaction(
                                 item.itemId,
-                                thread.threadId,
+                                igThread.threadId,
                                 item.clientContext
                             )
                         }
 
                         override fun onSingleClick(view: View?) {
-                            when (media.mediaType) {
-                                InstagramConstants.MediaType.IMAGE.type -> {
-//                                    val action =
-//                                        FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
-//                                            FullScreenFragment.TYPE_URL,
-//                                            media.imageVersions2.candidates[0].url
-//                                        )
-//                                    view!!.findNavController().navigate(action)
-                                }
-                                InstagramConstants.MediaType.VIDEO.type -> {
-                                    PlayVideoActivity.playUrl(
-                                        activity!!,
-                                        item.mediaShare.videoVersions[0].url
-                                    )
-                                }
-                                InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
-//                                    val action =
-//                                        FragmentDirectDirections.actionFragmentDirectToFullScreenFragment(
-//                                            FullScreenFragment.TYPE_POST,
-//                                            media.id
-//                                        )
-//                                    view!!.findNavController().navigate(action)
-                                }
-                            }
+                            val action =
+                                NavigationMainGraphDirections.actionGlobalSinglePostFragment(
+                                    media.id
+                                )
+                            view!!.findNavController().navigate(action)
                         }
                     }))
 
@@ -1518,7 +1506,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         }
 
         private fun showPopupOptions(item: Message, view: View) {
-            if (item.userId == thread.viewerId && item.isDelivered) {
+            if (item.userId == igThread.viewerId && item.isDelivered) {
                 requireContext().vibration(50)
                 val dialog = Dialog(view.context)
                 val viewDataBinding: LayoutMessageOptionBinding = DataBindingUtil.inflate(
@@ -1530,10 +1518,10 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 viewDataBinding.remove.setOnClickListener {
                     RealTimeService.run(
                         requireContext(),
-                        RealTime_ClearItemCache(thread.threadId, item.itemId)
+                        RealTime_ClearItemCache(igThread.threadId, item.itemId)
                     )
                     shareViewModel.unsendMessage(
-                        shareViewModel.currentThread!!.threadId!!,
+                        shareViewModel.currentIGThread!!.threadId!!,
                         item.itemId,
                         item.clientContext
                     )

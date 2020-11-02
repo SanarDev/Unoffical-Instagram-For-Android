@@ -9,13 +9,18 @@ import com.idirect.app.datasource.model.response.InstagramCommentResponse
 import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.model.login.IGLoggedUser
+import com.sanardev.instagramapijava.response.IGCommentsResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import okhttp3.ResponseBody
 import javax.inject.Inject
 
-class CommentsViewModel @Inject constructor(application: Application,var mUseCase: UseCase):BaseViewModel(application){
+class CommentsViewModel @Inject constructor(application: Application):BaseViewModel(application){
 
-    private val _comments = MutableLiveData<Resource<InstagramCommentResponse>>()
-    private var instagramCommentResponse:InstagramCommentResponse?=null
+    private val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
+    private val _comments = MutableLiveData<Resource<IGCommentsResponse>>()
+    private var instagramCommentResponse:IGCommentsResponse?=null
     private lateinit var mediaId:String
     val comments = Transformations.map(_comments){
         if(it.status == Resource.Status.SUCCESS){
@@ -34,23 +39,30 @@ class CommentsViewModel @Inject constructor(application: Application,var mUseCas
     }
     fun init(mediaId:String){
         this.mediaId = mediaId
-
-        mUseCase.getPostComments(_comments,mediaId)
+        instaClient.commentProcessor.getPostComments(mediaId)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                _comments.value = Resource.success(it)
+            },{},{})
     }
 
-    fun getUser(): InstagramLoggedUser {
-        return mUseCase.getUserData()!!
+    fun getUser(): IGLoggedUser {
+        return instaClient.loggedUser
     }
 
     fun loadMoreComments() {
-        mUseCase.loadMoreComment(_comments,instagramCommentResponse!!.mediaId,instagramCommentResponse!!.nextMinId)
+        instaClient.commentProcessor.getPostComments(mediaId,instagramCommentResponse!!.nextMinId)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                _comments.value = Resource.success(it)
+            },{},{})
     }
 
     fun unlikeComment(pk: Long) {
-        mUseCase.unlikeComment(pk.toString())
+        instaClient.commentProcessor.unlikeComment(pk.toString()).subscribe({},{},{})
     }
     fun likeComment(pk: Long) {
-        mUseCase.likeComment(pk.toString())
+        instaClient.commentProcessor.likeComment(pk.toString()).subscribe()
     }
 
 }

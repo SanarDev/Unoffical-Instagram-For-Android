@@ -7,7 +7,9 @@ import com.idirect.app.ui.posts.FragmentCollection
 import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.ui.postcomments.CommentsFragment
 import com.idirect.app.ui.posts.PostsFragment
+import com.idirect.app.ui.profile.FragmentProfile
 import com.idirect.app.ui.search.FragmentSearch
+import com.idirect.app.ui.singlepost.FragmentSinglePost
 import com.idirect.app.ui.story.FragmentStory
 import com.idirect.app.ui.story.FragmentStoryItem
 import com.idirect.app.ui.userprofile.UserProfileFragment
@@ -49,4 +51,10 @@ abstract class FragmentsModule {
 
     @ContributesAndroidInjector
     abstract fun contributeForwardFragment(): ForwardFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeFragmentProfile(): FragmentProfile
+
+    @ContributesAndroidInjector
+    abstract fun contributeFragmentSinglePost(): FragmentSinglePost
 }

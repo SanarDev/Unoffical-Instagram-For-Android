@@ -26,10 +26,7 @@ import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.FragmentInboxBinding
 import com.idirect.app.databinding.LayoutDirectBinding
-import com.idirect.app.datasource.model.Thread
 import com.idirect.app.datasource.model.event.*
-import com.idirect.app.datasource.model.response.InstagramDirects
-import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.setTextViewDrawableColor
 import com.idirect.app.extensions.visible
@@ -42,9 +39,11 @@ import com.idirect.app.utils.Resource
 import com.idirect.app.utils.TimeUtils
 import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.utils.dialog.DialogListener
+import com.sanardev.instagramapijava.model.direct.IGThread
+import com.sanardev.instagramapijava.model.login.IGLoggedUser
+import com.sanardev.instagramapijava.response.IGDirectsResponse
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
-import javax.inject.Inject
 
 
 class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
@@ -67,7 +66,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
     private var isLoadingMoreDirects: Boolean = false
     private var isMoreDirectExist: Boolean = true
     private val mHandler = Handler()
-    private lateinit var user: InstagramLoggedUser
+    private lateinit var user: IGLoggedUser
 
     var _adapter: DirectsAdapter?=null
     val adapter: DirectsAdapter get() = _adapter!!
@@ -106,7 +105,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             }
             for (index in adapter.items.indices) {
                 val thread = adapter.items[index]
-                if (thread is Thread && thread.threadId == it.first) {
+                if (thread is IGThread && thread.threadId == it.first) {
                     thread.messages.add(0, it.second)
                     adapter.notifyItemMoved(index, 0)
                     break
@@ -119,7 +118,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             }
             for (index in adapter.items.indices) {
                 val thread = adapter.items[index]
-                if (thread is Thread && thread.threadId == it.threadId) {
+                if (thread is IGThread && thread.threadId == it.threadId) {
                     adapter.items[index] = shareViewModel.getThreadById(it.threadId)!!
                     adapter.notifyItemChanged(index)
                     break
@@ -127,14 +126,14 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             }
         })
         shareViewModel.threadsPresence.observe(viewLifecycleOwner, Observer {
-            adapter.items = shareViewModel.instagramDirect!!.inbox.threads.toMutableList()
+            adapter.items = shareViewModel.instagramDirect!!.inbox.igThreads.toMutableList()
             adapter.notifyDataSetChanged()
         })
 
         shareViewModel.threadChange.observe(viewLifecycleOwner, Observer {
             for (index in adapter.items.indices) {
                 val thread = adapter.items[index]
-                if (thread is Thread && thread.threadId == it) {
+                if (thread is IGThread && thread.threadId == it) {
                     adapter.items[index] = shareViewModel.getThreadById(it)!!
                     adapter.notifyItemChanged(index)
                     break
@@ -198,8 +197,8 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
 //        return super.onOptionsItemSelected(item)
 //    }
 
-    private inner class InstagramDirectObserver : Observer<Resource<InstagramDirects>> {
-        override fun onChanged(it: Resource<InstagramDirects>) {
+    private inner class InstagramDirectObserver : Observer<Resource<IGDirectsResponse>> {
+        override fun onChanged(it: Resource<IGDirectsResponse>) {
 
             when (it.status) {
                 Resource.Status.LOADING -> {
@@ -220,12 +219,12 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                         }
                         return
                     }
-                    if (it.data!!.message == InstagramConstants.Error.LOGIN_REQUIRED.msg) {
+                    if (it.data!!.errorType == InstagramConstants.Error.LOGIN_REQUIRED.msg) {
                         DialogHelper.createDialog(
                             context!!,
                             layoutInflater,
                             title = it.data!!.errorTitle!!,
-                            message = it.data!!.errorMessage!!,
+                            message = it.data!!.errorBody!!,
                             positiveText = getString(R.string.login),
                             positiveListener = object : DialogListener.Positive {
                                 override fun onPositiveClick() {
@@ -245,7 +244,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                         isMoreDirectExist = false
                     }
                     adapter.setLoading(isLoadingMoreDirects)
-                    val threads = it.data!!.inbox.threads
+                    val threads = it.data!!.inbox.igThreads
                     if (threads.isEmpty()) {
                         binding.txtNoDirect.visibility = View.VISIBLE
                     } else {
@@ -267,7 +266,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             if (item is LoadingEvent) {
                 return item
             }
-            item as Thread
+            item as IGThread
             val dataBinding = holder.binding as LayoutDirectBinding
             if (item.messages != null) {
                 var unreadMessage = 0
@@ -287,12 +286,12 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                     }
                 }
                 val lastItem = item.messages[0]
-                if (item.typing) {
+                if (item.bundle != null && item.bundle["typing"] == true) {
                     dataBinding.profileDec.text = getString(R.string.typing)
                     dataBinding.profileDec.setTextColor(Color.WHITE)
                     dataBinding.profileDec.setTypeface(null, Typeface.BOLD);
                     mHandler.postDelayed({
-                        item.typing = false
+                        item.bundle["typing"] = false
                         notifyDataSetChanged()
                     }, 2000)
                 } else if (unreadMessage > 1) {
@@ -312,7 +311,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                     val prefix = if (lastItem.userId == user.pk) {
                         "You: "
                     } else {
-                        if (item.isGroup) {
+                        if (item.group) {
                             shareViewModel.getUsernameByUserId(
                                 item.threadId,
                                 lastItem.userId
@@ -409,7 +408,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 }
 
 
-                if (item.typing) {
+                if (item.bundle != null && item.bundle["typing"] == true) {
                     dataBinding.lastMessageTime.visibility = View.GONE
                 } else {
                     if (unreadMessage >= 1) {
@@ -430,7 +429,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                         TimeUtils.convertTimestampToDate(context!!, lastItem.timestamp)
                 }
             }
-            if (item.isGroup && item.threadTitle == null) {
+            if (item.group && item.threadTitle == null) {
                 if (item.users.size >= 2) {
                     dataBinding.profileName.text = String.format(
                         getString(R.string.group_name),
@@ -443,7 +442,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             } else {
                 dataBinding.profileName.text = item.threadTitle
             }
-            if (item.isGroup) {
+            if (item.group) {
                 visible(dataBinding.layoutProfileImageGroup)
                 gone(dataBinding.layoutProfileImageUser)
                 if (item.users.size >= 2) {
@@ -469,7 +468,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             if (item.lastActivityAt.toString().length == 16) {
                 item.lastActivityAt /= 1000
             }
-            if (item.active) {
+            if (item.bundle != null && item.bundle["active"] == true) {
                 dataBinding.profileLastActivityAt.text = getString(R.string.online)
                 dataBinding.profileLastActivityAt.setTextColor(context!!.color(R.color.online_color))
                 dataBinding.imgIsOnline.visibility = View.VISIBLE
@@ -486,8 +485,8 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 val data = DirectBundle().apply {
                     this.threadId = item.threadId
                     this.threadTitle = item.threadTitle
-                    this.isGroup = item.isGroup
-                    this.isActive = item.active
+                    this.isGroup = item.group
+                    this.isActive = item.bundle["active"] as Boolean
                     this.lastActivityAt = item.lastActivityAt
                 }
                 val action = NavigationMainGraphDirections.actionGlobalDirectFragment(data)

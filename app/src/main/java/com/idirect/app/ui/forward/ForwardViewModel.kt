@@ -7,38 +7,51 @@ import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.datasource.model.response.InstagramRecipients
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.model.login.IGLoggedUser
+import com.sanardev.instagramapijava.response.IGRecipientsResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import java.util.logging.Handler
 import javax.inject.Inject
 
-class ForwardViewModel @Inject constructor(application: Application,var mUseCase: UseCase,var mHandler:android.os.Handler):BaseViewModel(application) {
+class ForwardViewModel @Inject constructor(application: Application,var mHandler:android.os.Handler):BaseViewModel(application) {
 
-    val recipients = MediatorLiveData<Resource<InstagramRecipients>>()
+    val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
+    val recipients = MediatorLiveData<Resource<IGRecipientsResponse>>()
     var searchWord: String = ""
     private var lastSearchedWord: String = ""
 
     init {
-        mUseCase.getRecipients(recipients)
+        instaClient.directProcessor.getRecipient()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                recipients.value = Resource.success(it)
+            },{},{})
         Thread {
             while (true) {
                 mHandler.post {
                     if (searchWord != lastSearchedWord) {
                         lastSearchedWord = searchWord
-                        mUseCase.getRecipients(recipients, searchWord)
+                        instaClient.directProcessor.getRecipient(searchWord)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe({
+                                recipients.value = Resource.success(it)
+                            },{},{})
                     }
                 }
                 Thread.sleep(1000)
             }
         }.start()
     }
-    fun getUserData(): InstagramLoggedUser {
-        return mUseCase.getUserData()!!
+    fun getUserData(): IGLoggedUser {
+        return instaClient.loggedUser
     }
 
     fun shareMediaTo(forwardBundle:ForwardBundle, selectedUsers: MutableList<String>) {
         if(forwardBundle.isStoryShare){
-            mUseCase.shareStory(forwardBundle.mediaId,forwardBundle.mediaType,forwardBundle.reelId,selectedUsers)
+            instaClient.storyProcessor.shareStory(selectedUsers,forwardBundle.mediaId,forwardBundle.mediaType,forwardBundle.reelId).subscribe({},{},{})
         }else{
-            mUseCase.shareMedia(forwardBundle.mediaId,forwardBundle.mediaType,selectedUsers)
+            instaClient.mediaProcessor.shareMedia(selectedUsers,forwardBundle.mediaId,forwardBundle.mediaType).subscribe({},{},{})
         }
     }
 }

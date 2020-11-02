@@ -9,21 +9,25 @@ import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.response.InstagramRecipients
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.response.IGRecipientsResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 
-class SearchViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
+class SearchViewModel @Inject constructor(application: Application) :
     BaseViewModel(application) {
 
-
+    private val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
     private var searchWord: String = ""
     private val mHandler = Handler()
     private var lastSearchTimestamp = 0.toLong()
+    private val result = MutableLiveData<Resource<IGRecipientsResponse>>()
+
     private val runnable = Runnable {
         if (System.currentTimeMillis() - 2000 > lastSearchTimestamp) {
-            mUseCase.getRecipients(result, searchWord)
+            getRecipients(searchWord)
         }
     }
-    private val result = MutableLiveData<Resource<InstagramRecipients>>()
     val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.SUCCESS) {
             for (index in it.data!!.recipients.indices) {
@@ -38,12 +42,23 @@ class SearchViewModel @Inject constructor(application: Application, var mUseCase
     }
 
     init {
-        mUseCase.getRecipients(result)
-
+        getRecipients()
     }
 
     fun getRecipients(query: String = "") {
-        mUseCase.getRecipients(result, query)
+        if (query.isEmpty()) {
+            instaClient.directProcessor.getRecipient()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    result.value = Resource.success(it)
+                }, {}, {})
+        } else {
+            instaClient.directProcessor.getRecipient(query)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    result.value = Resource.success(it)
+                }, {}, {})
+        }
     }
 
 

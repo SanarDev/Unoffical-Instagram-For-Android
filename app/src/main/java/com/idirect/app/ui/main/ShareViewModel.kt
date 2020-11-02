@@ -1,5 +1,6 @@
 package com.idirect.app.ui.main
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.res.Resources
 import android.media.MediaRecorder
@@ -11,15 +12,11 @@ import androidx.lifecycle.Transformations
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseApplication
 import com.idirect.app.core.BaseViewModel
-import com.idirect.app.datasource.model.*
+import com.idirect.app.datasource.model.UploadMedia
 import com.idirect.app.datasource.model.event.*
-import com.idirect.app.datasource.model.response.InstagramDirects
-import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.extensions.REGEX_FIND_URL
 import com.idirect.app.extentions.dpToPx
-import com.idirect.app.extentions.toStringList
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.realtime.commands.RealTime_SendLike
 import com.idirect.app.realtime.commands.RealTime_SendMessage
@@ -27,7 +24,17 @@ import com.idirect.app.realtime.service.RealTimeService
 import com.idirect.app.ui.direct.DirectBundle
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.*
-import okhttp3.ResponseBody
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.model.direct.IGThread
+import com.sanardev.instagramapijava.model.direct.Message
+import com.sanardev.instagramapijava.model.direct.Payload
+import com.sanardev.instagramapijava.model.direct.ThreadUser
+import com.sanardev.instagramapijava.model.direct.messagetype.Media
+import com.sanardev.instagramapijava.model.login.IGLoggedUser
+import com.sanardev.instagramapijava.response.IGDirectActionResponse
+import com.sanardev.instagramapijava.response.IGDirectsResponse
+import com.sanardev.instagramapijava.response.IGPresenceResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import org.greenrobot.eventbus.EventBus
 import java.io.File
 import java.io.IOException
@@ -36,10 +43,11 @@ import java.util.*
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class ShareViewModel @Inject constructor(
     application: Application,
-    var mUseCase: UseCase,
+    val mUseCase:UseCase,
     var mPlayManager: PlayManager
 ) :
     BaseViewModel(application) {
@@ -55,7 +63,7 @@ class ShareViewModel @Inject constructor(
     val connectionState = MutableLiveData<ConnectionStateEvent>()
 
     // current thread
-    var currentThread: Thread? = null
+    var currentIGThread: IGThread? = null
 
     //messages
     val isSeenMessageEnable = mUseCase.isSeenMessageEnable
@@ -66,70 +74,53 @@ class ShareViewModel @Inject constructor(
     // thread
     val threadChange = MutableLiveData<String>()
     val threadsPresence = MutableLiveData<List<String>>()
+    val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
 
     // inbox
-    val directs = ArrayList<Thread>().toMutableList()
-    var instagramDirect: InstagramDirects? = null
-    private val result = MediatorLiveData<Resource<InstagramDirects>>()
-    val mutableLiveData = MutableLiveData<Resource<InstagramDirects>>()
+    val directs = ArrayList<IGThread>().toMutableList()
+    var instagramDirect: IGDirectsResponse? = null
+    private val result = MediatorLiveData<Resource<IGDirectsResponse>>()
+    val mutableLiveData = MutableLiveData<Resource<IGDirectsResponse>>()
 
-    private val searchedValue = ArrayList<Thread>().toMutableList()
-    private val resultPresence = MediatorLiveData<Resource<PresenceResponse>>()
+    private val searchedValue = ArrayList<IGThread>().toMutableList()
+    private val resultPresence = MediatorLiveData<Resource<IGPresenceResponse>>()
 
 
+    @SuppressLint("CheckResult")
     val liveData = Transformations.map(result) {
         if (it.status == Resource.Status.ERROR) {
             if (it.apiError?.data != null) {
-                Log.i(InstagramConstants.DEBUG_TAG, it.apiError.message)
                 val gson = Gson()
                 val instagramInboxResult =
-                    gson.fromJson(it.apiError!!.data!!.string(), InstagramDirects::class.java)
+                    gson.fromJson(it.apiError!!.data!!.string(), IGDirectsResponse::class.java)
                 it.data = instagramInboxResult
             }
         } else if (it.status == Resource.Status.SUCCESS) {
             if (directs.isEmpty()) {
-                mUseCase.getDirectPresence(resultPresence)
+                resultPresence.value = Resource.loading()
+                instaClient.directProcessor.directPresence
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({
+                        resultPresence.value = Resource.success(it)
+                    }, {
+                        resultPresence.value = Resource.error()
+                    }, {
+
+                    })
             }
-            threadValidation(it.data!!.inbox.threads)
-            it.data!!.inbox.threads = directs
+            threadValidation(it.data!!.inbox.igThreads)
+            it.data!!.inbox.igThreads = directs
             instagramDirect = it.data!!
         }
         return@map it
     }.observeForever {
-        mutableLiveData.value = (it)
-    }
-
-
-    val liveDataPresence = Transformations.map(resultPresence) {
-        return@map it
+        mutableLiveData.value = it
     }
 
     init {
         FirebaseMessaging.getInstance().subscribeToTopic("users")
-
         mUseCase.dismissAllNotification()
         getDirects()
-        liveDataPresence.observeForever {
-            if (it.status == Resource.Status.SUCCESS) {
-                val presence = it.data!!
-                val threads = instagramDirect!!.inbox.threads
-                for (thread in threads) {
-                    for (item in presence.userPresence) {
-                        if (thread.users[0].pk.toString() == item.key) {
-                            try {
-                                thread.active = item.value["is_active"] as Boolean
-                                thread.lastActivityAt =
-                                    (item.value["last_activity_at_ms"] as Double).toLong()
-                                break
-                            } catch (e: Exception) {
-
-                            }
-                        }
-                    }
-                }
-                mutableLiveData.postValue(Resource.success(instagramDirect!!))
-            }
-        }
     }
 
     fun cancelAudioRecording() {
@@ -163,6 +154,7 @@ class ShareViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("CheckResult")
     fun stopRecording() {
         try {
             mediaRecorder.stop()
@@ -174,32 +166,32 @@ class ShareViewModel @Inject constructor(
             val clCotext = InstagramHashUtils.getClientContext()
             val message = MessageGenerator.voiceMedia(
                 getApplication(),
-                mUseCase.getUserData()!!.pk!!,
-                currentThread!!.threadId,
+                instaClient.loggedUser.pk,
+                currentIGThread!!.threadId,
                 clCotext,
                 currentVoiceFileName!!
             )
-            currentThread!!.messages.add(0, message)
-            threadNewMessageLiveData.value = Pair(currentThread!!.threadId!!, message)
-            val users = currentThread!!.users
-            mUseCase.sendMediaVoice(
-                currentThread!!.threadId,
+            currentIGThread!!.messages.add(0, message)
+            threadNewMessageLiveData.value = Pair(currentIGThread!!.threadId!!, message)
+            val users = currentIGThread!!.users
+            instaClient.directProcessor.sendMediaVoice(
+                currentIGThread!!.threadId,
                 getUsersPk(users),
                 currentVoiceFileName!!,
-                "audio/mp4",
                 clCotext
-            ).observeForever {
-                if (it.status == Resource.Status.SUCCESS) {
-                    messageChange.value = Pair(currentThread!!.threadId, message.apply {
+            ).observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    messageChange.value = Pair(currentIGThread!!.threadId, message.apply {
                         if (mPlayManager.currentPlayerId == this.itemId) {
-                            mPlayManager.currentPlayerId = it.data!!.messageMetaDatas[0].itemId
+                            mPlayManager.currentPlayerId = it.messageMetaData[0].itemId
                         }
                         isDelivered = true
-                        itemId = it.data!!.messageMetaDatas[0].itemId
-                        timestamp = it.data!!.messageMetaDatas[0].timestamp.toLong()
+                        itemId = it.messageMetaData[0].itemId
+                        timestamp = it.messageMetaData[0].timestamp.toLong()
                     })
-                }
-            }
+                }, {
+                    Log.i("TEST","TEST")
+                }, {})
         }
     }
 
@@ -220,14 +212,14 @@ class ShareViewModel @Inject constructor(
             MessageGenerator.textLink(
                 text,
                 linkList,
-                mUseCase.getUserData()!!.pk!!,
+                instaClient.loggedUser.pk,
                 threadId,
                 clientContext
             )
         } else {
             MessageGenerator.text(
                 text,
-                mUseCase.getUserData()!!.pk!!,
+                instaClient.loggedUser.pk,
                 threadId,
                 clientContext
             )
@@ -235,7 +227,6 @@ class ShareViewModel @Inject constructor(
         getThreadById(threadId).messages.add(0, message)
         threadNewMessageLiveData.value = Pair(threadId, message)
         sendMessageToCloud(arrayListOf(message))
-
     }
 
     private fun sendMessageToCloud(list: MutableList<Message>) {
@@ -245,56 +236,54 @@ class ShareViewModel @Inject constructor(
         val msg = list[0]
         when (msg.itemType) {
             InstagramConstants.MessageType.MEDIA.type -> {
-                val users = currentThread!!.users
+                val users = currentIGThread!!.users
                 if (msg.media.mediaType == 1) {
-                    mUseCase.sendMediaImage(
-                        msg.threadId,
+                    instaClient.directProcessor.sendMediaImage(
+                        msg.bundle["threadId"] as String,
                         getUsersPk(users),
-                        msg.media.localFilePath,
+                        msg.media.bundle["localFilePath"] as String,
                         msg.clientContext
-                    )
-                        .observeForever() {
-                            if (it.status == Resource.Status.SUCCESS) {
-                                changeMessageDelivery(it.data!!)
-                                list.removeAt(0)
-                                sendMessageToCloud(list)
-                            }
-                        }
+                    ).observeOn(AndroidSchedulers.mainThread())
+                        .subscribe({
+                            changeMessageDelivery(it)
+                            list.removeAt(0)
+                            sendMessageToCloud(list)
+                        }, {
+                        }, {})
                 } else {
-                    mUseCase.sendMediaVideo(
-                        msg.threadId,
+                    instaClient.directProcessor.sendMediaVideo(
+                        msg.bundle["threadId"] as String,
                         getUsersPk(users),
-                        msg.media.localFilePath,
+                        msg.media.bundle["localFilePath"] as String,
                         msg.clientContext
-                    )
-                        .observeForever {
-                            if (it.status == Resource.Status.SUCCESS) {
-                                changeMessageDelivery(it.data!!)
-                                list.removeAt(0)
-                                sendMessageToCloud(list)
-                            }
-                        }
+                    ).observeOn(AndroidSchedulers.mainThread())
+                        .subscribe({
+                            changeMessageDelivery(it)
+                            list.removeAt(0)
+                            sendMessageToCloud(list)
+                        },{
+                        },{})
                 }
             }
             InstagramConstants.MessageType.LINK.type -> {
-                mUseCase.sendLinkMessage(
-                    msg.link.text,
-                    msg.link.linkList,
-                    msg.threadId,
-                    msg.clientContext
-                ).observeForever {
-                    if (it.status == Resource.Status.SUCCESS) {
-                        changeMessageDelivery(it.data!!)
-                        list.removeAt(0)
-                        sendMessageToCloud(list)
-                    }
-                }
+//                mUseCase.sendLinkMessage(
+//                    msg.link.text,
+//                    msg.link.linkList,
+//                    msg.threadId,
+//                    msg.clientContext
+//                ).observeForever {
+//                    if (it.status == Resource.Status.SUCCESS) {
+//                        changeMessageDelivery(it.data!!)
+//                        list.removeAt(0)
+//                        sendMessageToCloud(list)
+//                    }
+//                }
             }
             InstagramConstants.MessageType.TEXT.type -> {
                 RealTimeService.run(
                     getApplication(),
                     RealTime_SendMessage(
-                        msg.threadId,
+                        msg.bundle["threadId"] as String,
                         msg.clientContext,
                         msg.text
                     )
@@ -304,16 +293,16 @@ class ShareViewModel @Inject constructor(
     }
 
 
-    private fun changeMessageDelivery(messageResponse: MessageResponse) {
-        if (messageResponse.payload.threadId != currentThread!!.threadId) {
+    private fun changeMessageDelivery(messageResponse: IGDirectActionResponse) {
+        if (messageResponse.payload.threadId != currentIGThread!!.threadId) {
             return
         }
-        for (message in currentThread!!.messages) {
+        for (message in currentIGThread!!.messages) {
             if (message.clientContext == messageResponse.payload.clientContext) {
                 message.isDelivered = true
                 message.timestamp = messageResponse.payload.timestamp.toLong()
                 message.itemId = messageResponse.payload.itemId
-                messageChange.value = Pair(messageResponse.payload.threadId, message)
+                messageChange.value = Pair(messageResponse.payload.threadId, message as Message)
             }
         }
     }
@@ -346,12 +335,11 @@ class ShareViewModel @Inject constructor(
 
 
     fun sendReaction(itemId: String, threadId: String, clientContext: String) {
-        mUseCase.sendReaction(itemId = itemId, threadId = threadId, clientContext = clientContext)
-            .observeForever {
-                if (it.status == Resource.Status.SUCCESS) {
-                    onReactionsResponse(it.data!!.payload)
-                }
-            }
+        instaClient.directProcessor.sendLikeReaction(itemId,threadId,clientContext)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                onReactionsResponse(it.payload)
+            },{},{})
     }
 
 
@@ -363,10 +351,13 @@ class ShareViewModel @Inject constructor(
         return resources.dpToPx(standardWidth) + plus
     }
 
-    fun generateUploadMediaModelFromPath(threadId: String,paths: List<String>): MutableList<UploadMedia> {
+    fun generateUploadMediaModelFromPath(
+        threadId: String,
+        paths: List<String>
+    ): MutableList<UploadMedia> {
         val uploadMedias = ArrayList<UploadMedia>().toMutableList()
-        val user = mUseCase.getUserData()
-        for(item in paths){
+        val user = instaClient.loggedUser
+        for (item in paths) {
             val clientContext = InstagramHashUtils.getClientContext()
             uploadMedias.add(UploadMedia().apply {
                 this.clientContext = clientContext
@@ -377,6 +368,7 @@ class ShareViewModel @Inject constructor(
         }
         return uploadMedias
     }
+
     fun uploadMedias(items: List<UploadMedia>) {
         if (items.isEmpty()) {
             return
@@ -386,13 +378,28 @@ class ShareViewModel @Inject constructor(
             var mimeType = MediaUtils.getMimeType(item.localPath) ?: "image/jpeg"
             val message = when {
                 mimeType!!.contains("image") -> {
-                    MessageGenerator.imageMedia(item.senderId, item.threadId,item.clientContext,item.localPath)
+                    MessageGenerator.imageMedia(
+                        item.senderId,
+                        item.threadId,
+                        item.clientContext,
+                        item.localPath
+                    )
                 }
                 mimeType!!.contains("video") -> {
-                    MessageGenerator.videoMedia(item.senderId, item.threadId,item.clientContext,item.localPath)
+                    MessageGenerator.videoMedia(
+                        item.senderId,
+                        item.threadId,
+                        item.clientContext,
+                        item.localPath
+                    )
                 }
                 else -> {
-                    MessageGenerator.imageMedia(item.senderId, item.threadId,item.clientContext,item.localPath)
+                    MessageGenerator.imageMedia(
+                        item.senderId,
+                        item.threadId,
+                        item.clientContext,
+                        item.localPath
+                    )
                 }
             }
             val thread = getThreadById(item.threadId)
@@ -429,31 +436,31 @@ class ShareViewModel @Inject constructor(
     }
 
     fun markAsSeenRavenMedia(threadId: String, itemId: String, messageClientContext: String) {
-        mUseCase.markAsSeenRavenMedia(threadId, messageClientContext, itemId)
+        instaClient.directProcessor.markAsSeenRavenMedia(threadId, itemId,messageClientContext)
     }
 
+    @SuppressLint("CheckResult")
     fun unsendMessage(threadId: String, itemId: String, clientContext: String) {
-        mUseCase.unsendMessage(threadId, itemId, clientContext).observeForever {
-            if (it.status == Resource.Status.SUCCESS) {
-                deleteMessage(threadId, itemId)
-            }
-        }
+        instaClient.directProcessor.unsendMessage(threadId, itemId, clientContext)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                deleteMessage(MessageRemoveEvent(threadId, itemId))
+            },{
+                Log.i("TEST","TEST")
+            },{})
     }
 
     fun markAsSeen(threadId: String, itemId: String) {
-        mUseCase.markAsSeen(threadId, itemId).observeForever {
-
-        }
+        instaClient.directProcessor.markAsSeenMessage(threadId, itemId).subscribe({},{},{})
     }
 
-
     fun loadMoreItem(cursor: String, threadId: String) {
-        mUseCase.loadMoreChats(cursor, threadId, instagramDirect!!.seqId).observeForever {
-            if (it.status == Resource.Status.SUCCESS) {
-                getThreadById(it.data!!.thread!!.threadId).messages.addAll(it.data!!.thread!!.messages)
+        instaClient.directProcessor.getDirectMoreChats(threadId, instagramDirect!!.seqId,cursor)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                getThreadById(it.igThread.threadId).messages.addAll(it.igThread.messages)
                 mutableLiveData.value = Resource.success(instagramDirect)
-            }
-        }
+            },{},{})
     }
 
 
@@ -472,7 +479,7 @@ class ShareViewModel @Inject constructor(
         return arrayOf(standardWidth, standardHeight)
     }
 
-    fun getThreadProfilePic(threadId: String = currentThread!!.threadId!!): String {
+    fun getThreadProfilePic(threadId: String = currentIGThread!!.threadId!!): String {
         return getThreadById(threadId)!!.users[0].profilePicUrl
     }
 
@@ -483,7 +490,7 @@ class ShareViewModel @Inject constructor(
     }
 
 
-    fun getUserProfilePic(userId: Long, threadId: String = currentThread!!.threadId!!): String? {
+    fun getUserProfilePic(userId: Long, threadId: String = currentIGThread!!.threadId!!): String? {
         val thread = getThreadById(threadId)
         for (user in thread.users) {
             if (user.pk!! == userId) {
@@ -493,7 +500,7 @@ class ShareViewModel @Inject constructor(
         return null
     }
 
-    fun getUsername(userId: Long, threadId: String = currentThread!!.threadId!!): String? {
+    fun getUsername(userId: Long, threadId: String = currentIGThread!!.threadId!!): String? {
         val thread = getThreadById(threadId)
         for (user in thread.users) {
             if (user.pk!! == userId) {
@@ -604,44 +611,48 @@ class ShareViewModel @Inject constructor(
 
      */
 
-    private fun getUsersPk(users: List<User>): String {
+    private fun getUsersPk(users: List<ThreadUser>): List<Long> {
         var pkList = ArrayList<Long>().toMutableList()
         for (i in users.indices) {
             pkList.add(users[i].pk)
         }
-        return pkList.toStringList()
+        return pkList
     }
 
 
-    fun getThreadById(threadId: String = currentThread!!.threadId!!): Thread {
-        if(currentThread != null && threadId == currentThread!!.threadId){
-            return currentThread!!
+    fun getThreadById(threadId: String = currentIGThread!!.threadId!!): IGThread {
+        if (currentIGThread != null && threadId == currentIGThread!!.threadId) {
+            return currentIGThread!!
         }
-        for (thread in instagramDirect!!.inbox.threads) {
+        for (thread in instagramDirect!!.inbox.igThreads) {
             if (thread.threadId == threadId) {
                 return thread
             }
         }
-        return Thread()
+        return IGThread()
     }
 
-    private fun threadValidation(threads: List<Thread>) {
+    private fun threadValidation(IGThreads: List<IGThread>) {
         val loggedUser = getUser()
-        for (thread in threads) {
+        for (thread in IGThreads) {
             if (thread.users == null || thread.users.size == 0) {
-                thread.users = ArrayList<User>().toMutableList().apply {
-                    add(User().apply {
+                thread.users = ArrayList<ThreadUser>().toMutableList().apply {
+                    add(ThreadUser().apply {
                         this.profilePicUrl = loggedUser.profilePicUrl
                         this.pk = loggedUser.pk!!
                         this.fullName = loggedUser.fullName
                         this.username = loggedUser.username
-                        this.isPrivate = loggedUser.isPrivate
+                        this.isPrivate = loggedUser.isPrivate.toString()
                     })
                 }
                 thread.threadTitle = loggedUser.username
             }
+            thread.bundle = HashMap<Any,Any>().apply {
+                put("active",false)
+                put("typing",false)
+            }
         }
-        for (thread in threads) {
+        for (thread in IGThreads) {
             var isThreadExist = false
             for (direct in directs) {
                 if (direct.threadId == thread.threadId) {
@@ -654,20 +665,25 @@ class ShareViewModel @Inject constructor(
     }
 
 
+    // call then need to remove user login data
     fun resetUserData() {
-        mUseCase.resetUserData()
+        instaClient.accountProcessor.logout()
     }
 
     fun getDirects() {
-        mUseCase.getDirectInbox(result)
+        instaClient.directProcessor.getInbox(20,20)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                result.value = Resource.success(it)
+            },{},{})
     }
 
-    fun getUser(): InstagramLoggedUser {
-        return mUseCase.getUserData()!!
+    fun getUser(): IGLoggedUser {
+        return instaClient.loggedUser
     }
 
     fun onMessageReceive(event: MessageItemEvent) {
-        val threads = instagramDirect!!.inbox.threads
+        val threads = instagramDirect!!.inbox.igThreads
         for (index in threads.indices) {
             val thread = threads[index]
             if (thread.threadId == event.threadId) {
@@ -688,13 +704,13 @@ class ShareViewModel @Inject constructor(
     }
 
     fun onPresenceEvent(event: PresenceEvent) {
-        val threads = instagramDirect!!.inbox.threads
+        val threads = instagramDirect!!.inbox.igThreads
         val threadUpdateList = ArrayList<String>().toMutableList()
         for (thread in threads) {
             for (user in thread.users) {
                 if (user.pk.toString() == event.userId) {
                     thread.lastActivityAt = event.lastActivityAtMs.toLong()
-                    thread.active = event.isActive
+                    thread.bundle["active"] = event.isActive
                     threadUpdateList.add(thread.threadId)
                     break
                 }
@@ -704,11 +720,11 @@ class ShareViewModel @Inject constructor(
     }
 
     fun onTyping(event: TypingEvent) {
-        val threads = instagramDirect!!.inbox.threads
+        val threads = instagramDirect!!.inbox.igThreads
         for (thread in threads) {
             if (thread.threadId == event.threadId) {
-                thread.typing = true
-                thread.typingAtMs = System.currentTimeMillis()
+                thread.bundle["typing"] = true
+                thread.bundle["typingAtMs"] = System.currentTimeMillis()
                 break
             }
         }
@@ -726,25 +742,25 @@ class ShareViewModel @Inject constructor(
         }
         if (s.isBlank()) {
             searchedValue.clear()
-            instagramDirect!!.inbox.threads = directs
+            instagramDirect!!.inbox.igThreads = directs
             mutableLiveData.postValue(Resource.success(instagramDirect))
         } else {
             searchedValue.clear()
             for (thread in directs) {
-                if (!thread.isGroup && (thread.users[0].fullName.contains(s) || thread.users[0].username.contains(
+                if (!thread.group && (thread.users[0].fullName.contains(s) || thread.users[0].username.contains(
                         s
                     ))
                 ) {
                     searchedValue.add(thread)
                 }
             }
-            instagramDirect!!.inbox.threads = searchedValue
+            instagramDirect!!.inbox.igThreads = searchedValue
             mutableLiveData.postValue(Resource.success(instagramDirect))
         }
     }
 
     fun onUpdateSeenEvent(event: UpdateSeenEvent) {
-        val threads = instagramDirect!!.inbox.threads
+        val threads = instagramDirect!!.inbox.igThreads
         for (thread in threads) {
             if (thread.threadId == event.threadId) {
                 for (item in thread.lastSeenAt.entries) {
@@ -758,10 +774,10 @@ class ShareViewModel @Inject constructor(
     }
 
     fun getUsernameByUserId(threadId: String, userId: Long): String {
-        val threads = instagramDirect!!.inbox.threads
+        val threads = instagramDirect!!.inbox.igThreads
         for (thread in threads) {
             if (thread.threadId == threadId) {
-                if (thread.isGroup) {
+                if (thread.group) {
                     for (user in thread.users) {
                         if (user.pk == userId)
                             return user.username
@@ -780,41 +796,41 @@ class ShareViewModel @Inject constructor(
 
     fun loadMoreItem() {
         if (instagramDirect!!.inbox.oldestCursor != null) {
-            mUseCase.getMoreDirectItems(
-                result,
+            instaClient.directProcessor.loadMoreInbox(
                 instagramDirect!!.seqId,
                 instagramDirect!!.inbox.oldestCursor
-            )
+            ).observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    result.value = Resource.success(it)
+                },{},{})
         }
     }
 
-
-    fun deleteMessage(threadId: String = currentThread!!.threadId!!, itemId: String) {
-        val thread = getThreadById(threadId)!!
-        val iterator = thread.messages.iterator()
-        while (iterator.hasNext()) {
-            val value = iterator.next()
-            if (value.itemId == itemId) {
-                iterator.remove()
-            }
-        }
-//        mActionListener?.removeMessage(itemId)
-    }
 
     fun deleteMessage(event: MessageRemoveEvent) {
+        // this thread if != null will must be remove
+        var threadRemovable:IGThread?=null
+
         instagramDirect?.let {
-            val threads = it.inbox.threads
+            val threads = it.inbox.igThreads
             for (thread in threads) {
                 if (thread.threadId == event.threadId) {
                     for (index in thread.messages.indices) {
                         if (thread.messages[index].itemId == event.itemId) {
                             thread.messages.removeAt(index)
+                            if(thread.messages.size == 0){
+                                threadRemovable = thread
+                            }
                             break
                         }
                     }
                 }
             }
+            if(threadRemovable != null){
+                it.inbox.igThreads.remove(threadRemovable)
+            }
         }!!
+
         threadMessageRemoved.value = event
     }
 
@@ -827,7 +843,7 @@ class ShareViewModel @Inject constructor(
                 clientContext
             )
         )
-        val message = MessageGenerator.like(mUseCase.getUserData()!!.pk!!,threadId, clientContext)
+        val message = MessageGenerator.like(instaClient.loggedUser.pk, threadId, clientContext)
         getThreadById(threadId).messages.add(0, message)
         threadNewMessageLiveData.value = Pair(threadId, message)
     }
@@ -837,24 +853,34 @@ class ShareViewModel @Inject constructor(
     }
 
     fun getThreadIdByUserId(pk: Long): String {
-        for (thread in instagramDirect!!.inbox.threads) {
-            if (!thread.isGroup && thread.users[0].pk == pk) {
+        for (thread in instagramDirect!!.inbox.igThreads) {
+            if (!thread.group && thread.users[0].pk == pk) {
                 return thread.threadId
             }
         }
         return "[[$pk]]";
     }
 
-    fun getThreadByUserId(directBundle: DirectBundle): LiveData<Resource<Thread>> {
-        val result = MutableLiveData<Resource<Thread>>()
-        for (thread in instagramDirect!!.inbox.threads) {
-            if (!thread.isGroup && thread.users[0].pk == directBundle.userId) {
+    @SuppressLint("CheckResult")
+    fun getThreadByUserId(directBundle: DirectBundle): LiveData<Resource<IGThread>> {
+        val result = MutableLiveData<Resource<IGThread>>()
+        for (thread in instagramDirect!!.inbox.igThreads) {
+            if (!thread.group && thread.users[0].pk == directBundle.userId) {
                 result.value = Resource.success(thread)
             }
         }
-        mUseCase.getUserByRecipients(directBundle.userId, instagramDirect!!.seqId).observeForever {
-            result.value = it
-        }
+        //#comment_code
+        instaClient.directProcessor.getThreadByParticipants(directBundle.userId, instagramDirect!!.seqId)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                if(it.thread == null){
+                    result.value = Resource.success(instaClient.directProcessor.createFakeThread(directBundle.userId,directBundle.threadTitle,directBundle.profileImage))
+                }else{
+                    result.value = Resource.success(it.thread)
+                }
+            },{
+                Log.i("TEST","TEST")
+            },{})
         return result
     }
 

@@ -6,32 +6,44 @@ import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.Tray
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.response.BaseResponse
+import com.sanardev.instagramapijava.response.IGSendStoryReactionResponse
+import com.sanardev.instagramapijava.response.IGStoryMediaResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import okhttp3.ResponseBody
 import javax.inject.Inject
 
-class StoryItemViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
+class StoryItemViewModel @Inject constructor(application: Application) :
     BaseViewModel(application) {
 
-    val storyMediaLiveData = MutableLiveData<Resource<Tray>>()
-    val storyReactionResult = MutableLiveData<Resource<ResponseBody>>()
+    private val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
+
+    val storyMediaLiveData =
+        MutableLiveData<Resource<com.sanardev.instagramapijava.model.story.Tray>>()
+    val storyReactionResult = MutableLiveData<Resource<BaseResponse>>()
 
     fun getStoryData(userId: Long) {
-        mUseCase.getStoryMedia(storyMediaLiveData, userId)
+        instaClient.storyProcessor.getStoryMedia(userId)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                storyMediaLiveData.value = Resource.success(it.reels[userId])
+            }, {}, {})
     }
 
     fun sendStoryReaction(threadId: String, mediaId: String, reaction: String, reelId: Long) {
-        mUseCase.sendStoryReaction(threadId, mediaId, reaction, reelId).observeForever {
-            storyReactionResult.value = it
-        }
+        instaClient.storyProcessor.sendStoryReaction(threadId, mediaId, reaction, reelId)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                storyReactionResult.value = Resource.success(it)
+            }, {}, {})
     }
 
-    fun replyStory(threadId: String,mediaId: String,mediaType:Int,text:String,reelId:Long){
-        mUseCase.sendStoryReply(threadId,mediaId,mediaType,reelId,text).observeForever {
-            storyReactionResult.value = it
-        }
-    }
-
-    fun loadNextPageStory(userId: Long) {
-        mUseCase.getNextPageStory(storyMediaLiveData, userId)
+    fun replyStory(threadId: String, mediaId: String, mediaType: Int, text: String, reelId: Long) {
+        instaClient.storyProcessor.sendStoryReply(threadId, mediaId,text, reelId,mediaType)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                storyReactionResult.value = Resource.success(it)
+            },{},{})
     }
 }

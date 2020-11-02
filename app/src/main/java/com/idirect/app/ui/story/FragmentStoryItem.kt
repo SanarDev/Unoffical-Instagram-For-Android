@@ -86,7 +86,7 @@ class FragmentStoryItem(
     private val displayHeight = DisplayUtils.getScreenHeight()
     private val centerScreenPosition = displayWidth / 2
 
-    private lateinit var items: List<Story>
+    private lateinit var items: List<com.sanardev.instagramapijava.model.story.Story>
     private val progressBars = ArrayList<ProgressBar>().toMutableList()
     var currentPosition: Int = -3
     private var actionDownTimestamp: Long = 0
@@ -97,7 +97,7 @@ class FragmentStoryItem(
     private lateinit var mGlideRequestListener: RequestListener<Bitmap>
     private var emojiPopup: EmojiPopup? = null
     private lateinit var sharedViewModel: ShareViewModel
-    private var currentTray: Tray? = null
+    private var currentTray: com.sanardev.instagramapijava.model.story.Tray? = null
     private var valueAnimatorUpdateListener =
         ValueAnimator.AnimatorUpdateListener { animation ->
             if (currentPosition != -1) {
@@ -362,7 +362,7 @@ class FragmentStoryItem(
         return emojis
     }
 
-    private fun initLayout(tray: Tray) {
+    private fun initLayout(tray: com.sanardev.instagramapijava.model.story.Tray) {
         progressBars.clear()
         binding.layoutSeekbars.removeAllViews()
         binding.txtUsername.text = tray.user.username
@@ -420,7 +420,7 @@ class FragmentStoryItem(
         }
     }
 
-    private fun loadItem(item: Story) {
+    private fun loadItem(item: com.sanardev.instagramapijava.model.story.Story) {
         if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
             mPlayManager.stopPlay()
             valueAnimator.pause()

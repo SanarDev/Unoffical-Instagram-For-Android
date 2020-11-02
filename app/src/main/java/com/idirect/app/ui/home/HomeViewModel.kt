@@ -4,23 +4,23 @@ import android.app.Application
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.idirect.app.core.BaseViewModel
-import com.idirect.app.datasource.model.Tray
-import com.idirect.app.datasource.model.UserPost
-import com.idirect.app.datasource.model.response.InstagramFeedTimeLineResponse
-import com.idirect.app.datasource.model.response.InstagramStoriesResponse
-import com.idirect.app.manager.PlayManager
-import com.idirect.app.usecase.UseCase
+import com.idirect.app.extentions.toList
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
-import okhttp3.ResponseBody
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.model.timeline.FeedItems
+import com.sanardev.instagramapijava.response.IGTimeLinePostsResponse
+import com.sanardev.instagramapijava.response.IGTimeLineStoryResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 
-class HomeViewModel @Inject constructor(application: Application,var mUseCase: UseCase):BaseViewModel(application) {
+class HomeViewModel @Inject constructor(application: Application):BaseViewModel(application) {
 
-    private val _postsLiveData = MutableLiveData<Resource<InstagramFeedTimeLineResponse>>()
-    private var instagramFeedTimeLineResponse:InstagramFeedTimeLineResponse?=null
-    private val _storiesLiveData = MutableLiveData<Resource<InstagramStoriesResponse>>()
-    val storyMediaLiveData = MutableLiveData<Resource<Tray>>()
+    private val _postsLiveData = MutableLiveData<Resource<IGTimeLinePostsResponse>>()
+    private var instagramFeedTimeLineResponse:IGTimeLinePostsResponse?=null
+    private val _storiesLiveData = MutableLiveData<Resource<IGTimeLineStoryResponse>>()
+    val storyMediaLiveData = MutableLiveData<Resource<com.sanardev.instagramapijava.model.story.Tray>>()
+    private val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
 
     val postsLiveData = Transformations.map(_postsLiveData){
         if(it.status == Resource.Status.SUCCESS){
@@ -31,12 +31,14 @@ class HomeViewModel @Inject constructor(application: Application,var mUseCase: U
                 it.data!!.feedItems = instagramFeedTimeLineResponse!!.feedItems
                 instagramFeedTimeLineResponse = it.data
             }
-            it.data!!.posts = ArrayList<UserPost>().toMutableList()
+            val posts = ArrayList<FeedItems>()
             for(item in it.data!!.feedItems){
                 if(item.mediaOrAd != null){
-                    it.data!!.posts.add(item.mediaOrAd)
+                    posts.add(item)
                 }
             }
+            it.data!!.feedItems.clear()
+            it.data!!.feedItems.addAll(posts)
         }
         return@map it
     }
@@ -45,18 +47,30 @@ class HomeViewModel @Inject constructor(application: Application,var mUseCase: U
     }
 
     init {
-        mUseCase.getTimelinePosts(_postsLiveData)
-        mUseCase.getTimelineStories(_storiesLiveData)
+        instaClient.mediaProcessor.getTimelinePosts()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                _postsLiveData.value = Resource.success(it)
+            },{},{})
+        instaClient.storyProcessor.getTimelineStory()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                _storiesLiveData.value = Resource.success(it)
+            },{},{})
     }
     fun getStoryMedia(userId:Long){
-        mUseCase.getStoryMedia(storyMediaLiveData,userId)
+        instaClient.storyProcessor.getStoryMedia(userId.toList())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                storyMediaLiveData.value = Resource.success(it.reels[userId])
+            },{},{})
     }
     fun unlikePost(id: String) {
-        mUseCase.unlikePost(id)
+        instaClient.mediaProcessor.unlikePost(id).subscribe({},{},{})
     }
 
     fun likePost(id: String) {
-        mUseCase.likePost(id)
+        instaClient.mediaProcessor.likePost(id).subscribe({},{},{})
     }
 
     fun getStandardVideoSize(width: Int, height: Int): Array<Int> {
@@ -71,14 +85,18 @@ class HomeViewModel @Inject constructor(application: Application,var mUseCase: U
 
     fun loadMorePosts() {
         instagramFeedTimeLineResponse?.let {
-            mUseCase.loadMoreTimelinePosts(_postsLiveData,it.nextMaxId)
+            instaClient.mediaProcessor.getTimelinePosts(it.nextMaxId)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    _postsLiveData.value = Resource.success(it)
+                },{},{})
         }
     }
 
     fun likeComment(id: Long) {
-        mUseCase.likeComment(id.toString())
+        instaClient.commentProcessor.likeComment(id.toString()).subscribe({},{},{})
     }
     fun unlikeComment(id: Long) {
-        mUseCase.unlikeComment(id.toString())
+        instaClient.commentProcessor.unlikeComment(id.toString()).subscribe({},{},{})
     }
 }

@@ -31,6 +31,8 @@ import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.TextUtil
+import com.sanardev.instagramapijava.model.timeline.MediaOrAd
+import com.sanardev.instagramapijava.model.user.BigUser
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import javax.inject.Inject
@@ -41,8 +43,8 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
         const val NAME_TAG = "user_profile"
     }
 
-    private var _user: User? = null
-    private val user: User get() = _user!!
+    private var _user: BigUser? = null
+    private val user: BigUser get() = _user!!
 
     private var userId: Long = 0
     private var isMoreAvailable: Boolean = false
@@ -151,7 +153,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
                     isLoading = false
                     isMoreAvailable = it.data!!.isMoreAvailable
                     if (it.data!!.numResults > 0) {
-                        mAdapter.items = it.data!!.userPosts.toMutableList()
+                        mAdapter.items = it.data!!.posts.toMutableList()
                         mAdapter.notifyDataSetChanged()
                     }
                 }
@@ -203,7 +205,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
     inner class PostsAdapter() : LoadingAdapter() {
         override fun objForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]
-            item as UserPost
+            item as MediaOrAd
             val dataBinding = holder.binding as LayoutUserPostBinding
             when (item.mediaType) {
                 InstagramConstants.MediaType.IMAGE.type -> {
@@ -218,7 +220,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
                 InstagramConstants.MediaType.VIDEO.type -> {
                     dataBinding.imgPostType.setImageDrawable(requireContext().getDrawable(R.drawable.ic_play))
                     mGlide
-                        .load(item.imageVersions2.candidates[1].url)
+                        .load(item.imageVersions2.candidates[0].url)
                         .override(picStandardSize, picStandardSize)
                         .centerCrop()
                         .placeholder(R.drawable.post_load_place_holder)
@@ -227,7 +229,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
                 InstagramConstants.MediaType.CAROUSEL_MEDIA.type -> {
                     dataBinding.imgPostType.setImageDrawable(requireContext().getDrawable(R.drawable.ic_collection))
                     mGlide
-                        .load(item.carouselMedias[0].imageVersions2.candidates[1].url)
+                        .load(item.carouselMedias[0].imageVersions2.candidates[0].url)
                         .override(picStandardSize, picStandardSize)
                         .centerCrop()
                         .placeholder(R.drawable.post_load_place_holder)

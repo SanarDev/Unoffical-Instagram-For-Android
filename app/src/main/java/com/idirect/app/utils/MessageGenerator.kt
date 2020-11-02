@@ -2,13 +2,15 @@ package com.idirect.app.utils
 
 import android.content.Context
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.datasource.model.*
+import com.sanardev.instagramapijava.model.direct.Message
+import com.sanardev.instagramapijava.model.direct.messagetype.*
 import java.util.*
+import kotlin.collections.HashMap
 
 class MessageGenerator {
 
     companion object {
-        fun like(userId: Long, threadId:String,clientContext: String): Message =
+        fun like(userId: Long, threadId: String, clientContext: String): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -18,10 +20,12 @@ class MessageGenerator {
                 this.like = "❤"
                 this.isDelivered = false
                 this.clientContext = clientContext
-                this.threadId = threadId
+                this.bundle = HashMap<Any, Any>().apply {
+                    put("threadId", threadId)
+                }
             }
 
-        fun text(text: String, userId: Long, threadId:String,clientContext: String): Message =
+        fun text(text: String, userId: Long, threadId: String, clientContext: String): Message =
             Message().apply {
                 this.text = text
                 this.timestamp = System.currentTimeMillis()
@@ -30,13 +34,15 @@ class MessageGenerator {
                 this.itemId = UUID.randomUUID().toString()
                 this.isDelivered = false
                 this.clientContext = clientContext
-                this.threadId = threadId
+                this.bundle = HashMap<Any, Any>().apply {
+                    put("threadId", threadId)
+                }
             }
 
         fun voiceMedia(
             context: Context,
             userId: Long,
-            threadId:String,
+            threadId: String,
             clientContext: String,
             localFilePath: String
         ): Message =
@@ -49,14 +55,23 @@ class MessageGenerator {
                 this.isDelivered = false
                 this.clientContext = clientContext
                 this.voiceMediaData = MediaData().apply {
-                    this.isLocal = true
-                    this.localFilePath = localFilePath
-                    this.localDuration = MediaUtils.getMediaDuration(context, localFilePath)
+                    this.bundle =  HashMap<Any,Any>().apply {
+                        put("isLocal", true)
+                        put("localFilePath", localFilePath)
+                        put("localDuration", MediaUtils.getMediaDuration(context, localFilePath))
+                    }
                 }
-                this.threadId = threadId
+                this.bundle = HashMap<Any, Any>().apply {
+                    put("threadId", threadId)
+                }
             }
 
-        fun imageMedia(userId: Long,threadId:String, clientContext: String, localFilePath: String): Message =
+        fun imageMedia(
+            userId: Long,
+            threadId: String,
+            clientContext: String,
+            localFilePath: String
+        ): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -65,15 +80,24 @@ class MessageGenerator {
                 this.itemId = UUID.randomUUID().toString()
                 this.isDelivered = false
                 this.clientContext = clientContext
-                this.threadId = threadId
-                this.media = Media().apply {
-                    this.isLocal = true
-                    this.localFilePath = localFilePath
-                    this.mediaType = 1
+                this.bundle = HashMap<Any, Any>().apply {
+                    put("threadId", threadId)
+                }
+                this.media = Media().also {
+                    it.mediaType = 1
+                    it.bundle = HashMap<Any, Any>().apply {
+                        put("isLocal", true)
+                        put("localFilePath", localFilePath)
+                    }
                 }
             }
 
-        fun videoMedia(userId: Long, threadId:String,clientContext: String, localFilePath: String): Message =
+        fun videoMedia(
+            userId: Long,
+            threadId: String,
+            clientContext: String,
+            localFilePath: String
+        ): Message =
             Message().apply {
                 this.text = ""
                 this.timestamp = System.currentTimeMillis()
@@ -82,11 +106,15 @@ class MessageGenerator {
                 this.itemId = UUID.randomUUID().toString()
                 this.isDelivered = false
                 this.clientContext = clientContext
-                this.threadId = threadId
-                this.media = Media().apply {
-                    this.isLocal = true
-                    this.localFilePath = localFilePath
-                    this.mediaType = 2
+                this.bundle = HashMap<Any, Any>().apply {
+                    put("threadId", threadId)
+                }
+                this.media = Media().also {
+                    it.mediaType = 2
+                    it.bundle = HashMap<Any, Any>().apply {
+                        put("isLocal", true)
+                        put("localFilePath", localFilePath)
+                    }
                 }
             }
 
@@ -121,14 +149,15 @@ class MessageGenerator {
             text: String,
             linkList: MutableList<String>,
             userId: Long,
-            threadId:String,
+            threadId: String,
             clientContext: String
         ): Message = Message().apply {
             this.link = Link().apply {
                 this.text = text
                 this.mutationToken = UUID.randomUUID().toString()
                 this.clientContext = clientContext
-                this.linkList = linkList
+                //#comment_code
+//                this.linkList = linkList
             }
             this.itemType = InstagramConstants.MessageType.LINK.type
             this.userId = userId
@@ -136,7 +165,9 @@ class MessageGenerator {
             this.isDelivered = false
             this.itemId = UUID.randomUUID().toString()
             this.clientContext = clientContext
-            this.threadId = threadId
+            this.bundle = HashMap<Any, Any>().apply {
+                put("threadId", threadId)
+            }
         }
     }
 }

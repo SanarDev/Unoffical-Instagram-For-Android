@@ -213,6 +213,12 @@ fun String.getLinesOf(from:Int,to:Int): String {
     }
     return strBuilder.toString()
 }
+
+fun Long.toList(): List<Long> {
+    val list = ArrayList<Long>().toMutableList()
+    list.add(this)
+    return list.toList()
+}
 val File.size get() = if (!exists()) 0.0 else length().toDouble()
 val File.sizeInKb get() = size / 1024
 val File.sizeInMb get() = sizeInKb / 1024

@@ -26,6 +26,7 @@ import com.idirect.app.ui.forward.ForwardBundle
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.model.timeline.MediaOrAd
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import javax.inject.Inject
@@ -118,8 +119,8 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
                 (requireActivity() as MainActivity).showShareWindow(forwardBundle)
             }
 
-            override fun showComments(v: View, post: UserPost) {
-                val action = NavigationMainGraphDirections.actionGlobalCommentFragment(post)
+            override fun showComments(v: View, post: MediaOrAd) {
+                val action = NavigationMainGraphDirections.actionGlobalCommentFragment(post.id)
                 findNavController().navigate(action)
             }
 
@@ -151,12 +152,12 @@ class PostsFragment : BaseFragment<FragmentPostsBinding, PostsViewModel>(),
                     isLoading = false
                     isMoreAvailable = it.data!!.isMoreAvailable
                     if (it.data!!.numResults > 0) {
-                        mAdapter.items = it.data!!.userPosts.toMutableList()
+                        mAdapter.items = it.data!!.posts.toMutableList()
                         mAdapter.notifyDataSetChanged()
                     }
                     if (scrollToItemId != null) {
-                        for (index in it.data!!.userPosts.indices) {
-                            val item = it.data!!.userPosts[index]
+                        for (index in it.data!!.posts.indices) {
+                            val item = it.data!!.posts[index]
                             if (item.id == scrollToItemId) {
                                 binding.recyclerviewPosts.scrollToPosition(index)
                                 scrollToItemId = null

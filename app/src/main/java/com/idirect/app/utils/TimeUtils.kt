@@ -16,17 +16,17 @@ class TimeUtils {
             return 16200
         }
 
-        fun convertTimestampToDate(context: Context, timestamp:Long): String {
+        fun convertTimestampToDate(context: Context, timestamp:Long,startFromDay: Boolean = false): String {
             val lenght = timestamp.toString().length
             when(lenght){
                 16 ->{
-                    return getDifferentTimeString(context,timestamp / 1000, false)
+                    return getDifferentTimeString(context,timestamp / 1000, startFromDay)
                 }
                 13 -> {
-                    return getDifferentTimeString(context,timestamp, false)
+                    return getDifferentTimeString(context,timestamp, startFromDay)
                 }
                 10 -> {
-                    return getDifferentTimeString(context,timestamp * 1000, false)
+                    return getDifferentTimeString(context,timestamp * 1000, startFromDay)
                 }
                 else ->{
                     return "false"

@@ -131,6 +131,7 @@
                 android:layout_gravity="bottom"
                 android:background="@color/theme_item"
                 android:gravity="center"
+                android:visibility="gone"
                 android:orientation="horizontal"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp">

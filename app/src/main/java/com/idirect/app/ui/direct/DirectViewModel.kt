@@ -11,12 +11,12 @@ import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
-class DirectViewModel @Inject constructor(application: Application,var mUseCase: UseCase):BaseViewModel(application) {
+class DirectViewModel @Inject constructor(application: Application):BaseViewModel(application) {
 
 
-    fun releaseMessages(it: List<Message>): List<Any> {
+    fun releaseMessages(it: List<com.sanardev.instagramapijava.model.direct.Message>): List<Any> {
         val sdf = SimpleDateFormat("yyyy-MM-dd")
-        var oldMessage: Message? = null
+        var oldMessage: com.sanardev.instagramapijava.model.direct.Message? = null
         val messagesReverse = it.reversed()
         val releasesMessage = ArrayList<Any>().toMutableList()
         for (message in messagesReverse) {
@@ -29,7 +29,7 @@ class DirectViewModel @Inject constructor(application: Application,var mUseCase:
                     releasesMessage.add(
                         DirectDate(
                             convertToStandardTimeStamp(message.timestamp),
-                            TimeUtils.convertTimestampToDate(getApplication(), message.timestamp)
+                            TimeUtils.convertTimestampToDate(getApplication(), message.timestamp,true)
                         )
                     )
                 }
@@ -38,7 +38,7 @@ class DirectViewModel @Inject constructor(application: Application,var mUseCase:
                 releasesMessage.add(
                     DirectDate(
                         convertToStandardTimeStamp(message.timestamp),
-                        TimeUtils.convertTimestampToDate(getApplication(), message.timestamp)
+                        TimeUtils.convertTimestampToDate(getApplication(), message.timestamp,true)
                     )
                 )
                 releasesMessage.add(message)

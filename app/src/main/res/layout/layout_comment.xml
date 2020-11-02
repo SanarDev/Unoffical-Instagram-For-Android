@@ -33,6 +33,7 @@
                 android:layout_toEndOf="@id/img_profile"
                 android:layout_toStartOf="@id/btn_like"
                 android:layout_marginEnd="20dp"
+                android:textColorLink="@color/text_very_light"
                 android:textColor="@color/text_very_light"
                 tools:text="Username" />
 

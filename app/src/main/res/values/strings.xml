@@ -132,4 +132,11 @@
     <string name="k">%sK</string>
     <string name="m">%sM</string>
     <string name="location_not_support">Location not supported in this version</string>
+    <string name="bad_password">Invalid Password</string>
+    <string name="too_many_tried">Too many tried</string>
+    <string name="error_in_unlikepost">Error in unlikePost</string>
+    <string name="error_in_like_post">Error in like post</string>
+    <string name="error_in_unlike_comment">Error in unlike comment</string>
+    <string name="error_in_like_comment">Error in like comment</string>
+    <string name="media">Media</string>
 </resources>

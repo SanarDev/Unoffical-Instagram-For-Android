@@ -14,8 +14,8 @@ android {
         applicationId "com.idirect.app"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 3
-        versionName "1.0.1"
+        versionCode 4
+        versionName "1.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -94,6 +94,7 @@ android {
 }
 
 dependencies {
+    implementation project(path: ':instagramforjava')
     def nav_version = "2.3.0"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -103,6 +104,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
     implementation files('libs/jaad-0.8.4.jar')
     implementation project(':emoji-ios')
+
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
@@ -198,7 +200,8 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'com.ToxicBakery.viewpager.transforms:view-pager-transforms:2.0.24'
 
-    implementation 'com.github.Sanardev:InstagramApiForJava:1.1.0'
-
+    // RxJava
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
 }
 

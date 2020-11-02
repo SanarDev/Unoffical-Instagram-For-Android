@@ -23,6 +23,7 @@ import com.idirect.app.ui.forward.ForwardFragment
 import com.idirect.app.ui.forward.ForwardListener
 import com.idirect.app.ui.home.FragmentHome
 import com.idirect.app.ui.inbox.FragmentInbox
+import com.idirect.app.ui.profile.FragmentProfile
 import com.idirect.app.ui.search.FragmentSearch
 import com.idirect.app.utils.Resource
 import org.greenrobot.eventbus.EventBus
@@ -31,13 +32,14 @@ import org.greenrobot.eventbus.ThreadMode
 
 class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
+    private var onBackPress: Boolean = false
     private lateinit var navHostFragment: NavHostFragment
 
     companion object {
         const val HOME_POSITION = 0
         const val INBOX_POSITION = 1
         const val SEARCH_POSITION = 2
-        const val PROFILE_POSITION = 3
+        const val PROFILE_POSITION = 2
     }
 
     override fun layoutRes(): Int {
@@ -79,9 +81,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
                 FragmentInbox.NAME_TAG -> {
                     binding.ahbottomNavigation.currentItem = INBOX_POSITION
                 }
-                FragmentSearch.NAME_TAG ->{
-                    binding.ahbottomNavigation.currentItem = SEARCH_POSITION
+                FragmentProfile.NAME_TAG -> {
+                    binding.ahbottomNavigation.currentItem = PROFILE_POSITION
                 }
+//                FragmentSearch.NAME_TAG ->{
+//                    binding.ahbottomNavigation.currentItem = SEARCH_POSITION
+//                }
             }
         }
         val homeItem =
@@ -99,20 +104,26 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
         binding.ahbottomNavigation.addItem(homeItem)
         binding.ahbottomNavigation.addItem(directItem)
-        binding.ahbottomNavigation.addItem(searchItem)
+//        binding.ahbottomNavigation.addItem(searchItem)
         binding.ahbottomNavigation.addItem(profileItem)
 
         binding.ahbottomNavigation.titleState = AHBottomNavigation.TitleState.ALWAYS_HIDE
-        binding.ahbottomNavigation.defaultBackgroundColor = color(R.color.theme_item)
-        binding.ahbottomNavigation.accentColor = Color.WHITE
+        binding.ahbottomNavigation.defaultBackgroundColor = color(R.color.navigation_background)
+        binding.ahbottomNavigation.inactiveColor = color(R.color.navigation_inactiveItem)
+        binding.ahbottomNavigation.accentColor = color(R.color.navigation_currentItem)
         binding.ahbottomNavigation.setOnTabSelectedListener(object :
             AHBottomNavigation.OnTabSelectedListener {
             override fun onTabSelected(position: Int, wasSelected: Boolean): Boolean {
+                if (onBackPress) {
+                    onBackPress = false
+                    return true
+                }
                 if (wasSelected) {
                     val nameTagLastFragment = getLastFragment().getNameTag()
                     if( (nameTagLastFragment == FragmentHome.NAME_TAG && position == HOME_POSITION) ||
                         (nameTagLastFragment == FragmentInbox.NAME_TAG && position == INBOX_POSITION) ||
-                        (nameTagLastFragment == FragmentSearch.NAME_TAG && position == SEARCH_POSITION)){
+                        (nameTagLastFragment == FragmentProfile.NAME_TAG && position == PROFILE_POSITION)){
+//                        (nameTagLastFragment == FragmentSearch.NAME_TAG && position == SEARCH_POSITION)){
                         return false
                     }
                 }
@@ -123,9 +134,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
                     HOME_POSITION -> {
                         navHostFragment.navController.navigate(R.id.action_global_homeFragment)
                     }
-                    SEARCH_POSITION ->{
-                        navHostFragment.navController.navigate(R.id.action_global_searchFragment)
+                    PROFILE_POSITION -> {
+                        navHostFragment.navController.navigate(R.id.action_global_profileFragment)
                     }
+//                    SEARCH_POSITION ->{
+//                        navHostFragment.navController.navigate(R.id.action_global_searchFragment)
+//                    }
                 }
                 return true
             }
@@ -253,6 +267,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
             val frg = it.childFragmentManager.fragments[0] as BaseFragment<*, *>
             frg.onKeyboardHide()
         }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        onBackPress = true
     }
 
 }

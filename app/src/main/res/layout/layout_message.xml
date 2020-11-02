@@ -4,12 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
         <variable
             name="obj"
-            type="com.idirect.app.datasource.model.Message" />
+            type="com.sanardev.instagramapijava.model.direct.Message" />
     </data>
-
     <LinearLayout
         android:id="@+id/layout_parent"
         android:layout_width="match_parent"

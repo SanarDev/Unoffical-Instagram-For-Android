@@ -17,6 +17,10 @@ import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
+import com.sanardev.instagramapijava.IGConstants
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.response.IGLoginResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -26,10 +30,10 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
 
     val intentEvent = MutableLiveData<Pair<KClass<out AppCompatActivity>, Bundle?>>()
 
-    val result =  MutableLiveData<Resource<InstagramLoginResult>>()
+    val result =  MutableLiveData<Resource<IGLoginResponse>>()
 
     init {
-        if (mUseCase.isLogged()) {
+        if (InstaClient.currentUser(application.applicationContext) != null) {
             intentEvent.value = (Pair(MainActivity::class, null))
         }
     }
@@ -43,8 +47,17 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
         if (password.isEmpty()) {
             CustomToast.show(context,context.getString(R.string.enter_password), Toast.LENGTH_LONG)
         }
-        mUseCase.instagramLogin(username,password).observeForever {
-            result.value = it
+        result.value = Resource.loading()
+        InstaClient(context.applicationContext,username,password).also {
+            it.accountProcessor.login()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                result.value = Resource.success(it)
+            },{
+                result.value = Resource.error()
+            },{
+
+            })
         }
     }
 

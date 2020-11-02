@@ -15,8 +15,10 @@ import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.playvideo.PlayVideoViewModel
 import com.idirect.app.ui.postcomments.CommentsViewModel
 import com.idirect.app.ui.posts.PostsViewModel
+import com.idirect.app.ui.profile.ProfileViewModel
 import com.idirect.app.ui.setting.SettingViewModel
 import com.idirect.app.ui.search.SearchViewModel
+import com.idirect.app.ui.singlepost.SinglePostViewModel
 import com.idirect.app.ui.story.StoryItemViewModel
 import com.idirect.app.ui.story.StoryViewModel
 import com.idirect.app.ui.twofactor.TwoFactorViewModel
@@ -116,4 +118,14 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(ForwardViewModel::class)
     abstract fun forwardViewModel(forwardViewModel: ForwardViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(ProfileViewModel::class)
+    abstract fun profileViewModel(profileViewModel: ProfileViewModel):ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(SinglePostViewModel::class)
+    abstract fun singlePostViewModel(singlePostViewModel: SinglePostViewModel):ViewModel
 }

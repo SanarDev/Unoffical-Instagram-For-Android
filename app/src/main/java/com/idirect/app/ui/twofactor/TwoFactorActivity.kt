@@ -15,6 +15,7 @@ import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.utils.Resource
 import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.utils.dialog.DialogListener
+import com.sanardev.instagramapijava.IGConstants
 
 class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding, TwoFactorViewModel>() {
     override fun layoutRes(): Int {
@@ -28,63 +29,63 @@ class TwoFactorActivity : BaseActivity<ActivityTwoFactorBinding, TwoFactorViewMo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (intent.extras != null && intent.extras!!.getParcelable<InstagramTwoFactorInfo>("two_factor_info")!= null) {
-            viewModel.initData(intent.extras!!.getParcelable("two_factor_info")!!)
-        }else{
-            finish()
-        }
+        val bundle = intent.extras!!
+        viewModel.initData(bundle.getString("username")!!, bundle.getString("password")!!)
 
-       viewModel.result.observe(this, Observer {
-           when(it.status){
-               Resource.Status.LOADING ->{
+        viewModel.result.observe(this, Observer {
+            when (it.status) {
+                Resource.Status.LOADING -> {
                     binding.btnVerify.visibility = View.INVISIBLE
                     binding.progressbar.visibility = View.VISIBLE
-               }
-               Resource.Status.ERROR ->{
-                   binding.btnVerify.visibility = View.VISIBLE
-                   binding.progressbar.visibility = View.INVISIBLE
-
-                   if(it.data?.errorType == InstagramConstants.Error.INVALID_TWO_FACTOR_CODE.msg){
-                       DialogHelper.createDialog(
-                           this@TwoFactorActivity,
-                           layoutInflater,
-                           getString(R.string.error),
-                           getString(R.string.invalid_two_factor_code),
-                           positiveText = getString(R.string.try_again),
-                           positiveListener = object :DialogListener.Positive{
-                               override fun onPositiveClick() {
-                                   finish()
-                               }
-                           }
-                       )
-                   }else if(it.data?.errorType == InstagramConstants.Error.INVALID_CODE_VALIDATION.msg){
-                       DialogHelper.createDialog(
-                           this@TwoFactorActivity,
-                           layoutInflater,
-                           getString(R.string.error),
-                           getString(R.string.invalid_code_validation),
-                           positiveText = getString(R.string.try_again)
-                       )
-                   }else if(it.apiError?.code == InstagramConstants.ErrorCode.INTERNET_CONNECTION.code){
-                       toast(getString(R.string.error_internet_connection))
-                   }
-               }
-               Resource.Status.SUCCESS ->{
-                   startActivity(
-                       Intent(
-                           this@TwoFactorActivity,
-                           MainActivity::class.java
-                       )
-                   )
-                   finish()
-               }
-           }
-       })
+                }
+                Resource.Status.ERROR -> {
+                    binding.btnVerify.visibility = View.VISIBLE
+                    binding.progressbar.visibility = View.INVISIBLE
+                    toast(getString(R.string.error_internet_connection))
+                }
+                Resource.Status.SUCCESS -> {
+                    if (it.data!!.status == IGConstants.STATUS_FAIL) {
+                        if (it.data?.errorType == IGConstants.Errors.INVALID_TWO_FACTOR_CODE) {
+                            DialogHelper.createDialog(
+                                this@TwoFactorActivity,
+                                layoutInflater,
+                                getString(R.string.error),
+                                getString(R.string.invalid_two_factor_code),
+                                positiveText = getString(R.string.try_again),
+                                positiveListener = object : DialogListener.Positive {
+                                    override fun onPositiveClick() {
+                                        finish()
+                                    }
+                                }
+                            )
+                            return@Observer
+                        } else if (it.data?.errorType == IGConstants.Errors.LOGIN_INVALID_SMS_CODE) {
+                            DialogHelper.createDialog(
+                                this@TwoFactorActivity,
+                                layoutInflater,
+                                getString(R.string.error),
+                                getString(R.string.invalid_code_validation),
+                                positiveText = getString(R.string.try_again)
+                            )
+                            return@Observer
+                        }
+                    }else {
+                        startActivity(
+                            Intent(
+                                this@TwoFactorActivity,
+                                MainActivity::class.java
+                            )
+                        )
+                        finish()
+                    }
+                }
+            }
+        })
         viewModel.isLoading.observe(this, Observer {
-            if(it){
+            if (it) {
                 binding.btnVerify.visibility = View.INVISIBLE
                 binding.progressbar.visibility = View.VISIBLE
-            }else{
+            } else {
                 binding.btnVerify.visibility = View.VISIBLE
                 binding.progressbar.visibility = View.INVISIBLE
             }

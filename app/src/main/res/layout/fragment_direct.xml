@@ -163,7 +163,7 @@
                 android:paddingTop="5dp"
                 android:paddingEnd="40dp"
                 android:paddingBottom="5dp"
-                android:textColor="@color/white"
+                android:textColor="@color/text_very_light"
                 android:textColorHint="@color/hint_light"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"

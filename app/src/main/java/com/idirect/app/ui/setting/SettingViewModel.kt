@@ -11,13 +11,18 @@ import com.idirect.app.datasource.model.User
 import com.idirect.app.ui.login.LoginActivity
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.InstaClient
+import com.sanardev.instagramapijava.model.user.BigUser
+import com.sanardev.instagramapijava.model.user.CurrentUser
+import com.sanardev.instagramapijava.response.IGUserInfoResponse
+import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
 class SettingViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
     BaseViewModel(application) {
 
-    private lateinit var userInfo: User
+    private lateinit var userInfo: BigUser
     val imageProfileUrl = ObservableField<String>()
     val accountFullName = ObservableField<String>()
     val accountBio = ObservableField<String>()
@@ -29,24 +34,26 @@ class SettingViewModel @Inject constructor(application: Application, var mUseCas
     val isEnableSeenMessage = ObservableField<Boolean>(false)
     val intentEvent = MutableLiveData<Pair<KClass<out AppCompatActivity>, Bundle?>>()
 
+    val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
+
     fun onLogOutClick(v: View) {
 
     }
 
     init {
-        val user = mUseCase.getUserData()!!
+        val user = instaClient.loggedUser
         imageProfileUrl.set(user.profilePicUrl)
         accountFullName.set(user.fullName)
         accountUserName.set(user.username)
         isEnableNotification.set(mUseCase.isNotificationEnable)
         isEnableSeenMessage.set(mUseCase.isSeenMessageEnable)
 
-        mUseCase.getMe().observeForever {
-            if (it.status == Resource.Status.SUCCESS) {
-                userInfo = it.data!!.user
+        instaClient.userProcessor.me
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                userInfo = it.user
                 initAccountData()
-            }
-        }
+            },{},{})
     }
 
     private fun initAccountData(){

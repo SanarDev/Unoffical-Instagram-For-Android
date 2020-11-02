@@ -29,6 +29,7 @@ import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.NetworkUtils
 import com.idirect.app.utils.ZlibUtis
 import com.idirect.app.datasource.model.realtime.RealtimeSubDirectDataWrapper
+import com.sanardev.instagramapijava.InstaClient
 import dagger.android.AndroidInjection
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.Unpooled
@@ -55,8 +56,7 @@ class RealTimeService : Service() {
     private lateinit var sslContext: SslContext
     var mChannel: Channel? = null
 
-    @Inject
-    lateinit var mUseCase: UseCase
+    lateinit var instaClient:InstaClient
 
     @Inject
     lateinit var mGson: Gson
@@ -110,6 +110,7 @@ class RealTimeService : Service() {
                 .sslProvider(
                     SslProvider.JDK
                 ).build()
+        instaClient = InstaClient.getInstanceCurrentUser(applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -267,8 +268,8 @@ class RealTimeService : Service() {
             this.seqID = seqID
             this.snapShotAt = snapShotAt
 
-            val cookie = mUseCase.getCookie()
-            val user = mUseCase.getUserData()
+            val cookie = instaClient.getCookie();
+            val user = instaClient.loggedUser
 
             val mqttotConnectionClientInfo =
                 MQTTotConnectionClientInfo()
@@ -361,8 +362,8 @@ class RealTimeService : Service() {
     }
 
     fun onConnAck() {
-        val user = mUseCase.getUserData()
-        val cookie = mUseCase.getCookie()
+        val user = instaClient.loggedUser
+        val cookie = instaClient.cookie
         val list = ArrayList<Pair<MqttQoS, String>>().apply {
             add(Pair(MqttQoS.AT_MOST_ONCE, InstagramConstants.RealTimeTopics.MESSAGE_SYNC.path))
             add(
