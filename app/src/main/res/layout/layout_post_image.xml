@@ -31,7 +31,7 @@
                 android:gravity="center_vertical"
                 android:orientation="vertical">
 
-                <androidx.appcompat.widget.AppCompatTextView
+                <com.idirect.app.customview.customtextview.HyperTextView
                     android:id="@+id/txt_username"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -53,12 +53,12 @@
         </LinearLayout>
 
         <com.makeramen.roundedimageview.RoundedImageView
-            android:id="@+id/photo_view"
+            android:id="@+id/imgPhoto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:adjustViewBounds="true"
-            app:riv_corner_radius="30dp"
+            app:riv_corner_radius="20dp"
             tools:src="@mipmap/example" />
 
         <RelativeLayout
@@ -89,6 +89,7 @@
                     android:tint="@color/icon" />
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txt_likes_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="586K"
@@ -119,6 +120,7 @@
                     android:tint="@color/icon" />
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txt_comment_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="586K"
@@ -141,17 +143,6 @@
 
         </RelativeLayout>
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/txt_likes_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:textColor="@color/text_very_light"
-            android:textStyle="bold"
-            android:visibility="gone"
-            tools:text="3,555 likes" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -162,7 +153,12 @@
             android:orientation="horizontal">
 
 
-            <com.idirect.app.customview.customtextview.HyperTextView
+            <com.muzafferus.imagelist.ImageList
+                android:id="@+id/imageList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/txt_caption"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

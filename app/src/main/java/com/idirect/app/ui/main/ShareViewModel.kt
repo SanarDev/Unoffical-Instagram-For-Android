@@ -195,6 +195,11 @@ class ShareViewModel @Inject constructor(
         }
     }
 
+    fun sendTextMessage(threadIds:List<String>,text: String){
+        for(thread in threadIds){
+            sendTextMessage(thread,text)
+        }
+    }
     fun sendTextMessage(threadId: String, text: String) {
         val clientContext = InstagramHashUtils.getClientContext()
 

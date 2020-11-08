@@ -27,6 +27,7 @@ import com.idirect.app.databinding.ItemDirectShareBinding
 import com.idirect.app.di.DaggerViewModelFactory
 import com.idirect.app.extentions.dpToPx
 import com.idirect.app.extentions.vibration
+import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.utils.Resource
 import com.sanardev.instagramapijava.model.explore.Recipients
 import com.vanniktech.emoji.EmojiPopup
@@ -35,6 +36,8 @@ import javax.inject.Inject
 
 
 class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
+
+    private lateinit var shareViewModel: ShareViewModel
 
     @Inject
     internal lateinit var viewModelFactory: DaggerViewModelFactory
@@ -91,6 +94,7 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel = ViewModelProvider(this, viewModelFactory).get(ForwardViewModel::class.java)
+        shareViewModel = ViewModelProvider(requireActivity(), viewModelFactory).get(ShareViewModel::class.java)
         binding.setVariable(BR.viewModel,viewModel)
 
         viewModel.recipients.observe(viewLifecycleOwner, Observer {
@@ -164,7 +168,7 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
                 }
             }
             val id = if (item.user != null) {
-                "[[${item.user}]]"
+                "[[${item.user.pk}]]"
             } else {
                 item.thread.threadId
             }
@@ -175,7 +179,7 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
             }
             dataBinding.root.setOnClickListener {
                 val id = if (item.user != null) {
-                    "[[${item.user}]]"
+                    "[[${item.user.pk}]]"
                 } else {
                     item.thread.threadId
                 }
@@ -218,6 +222,9 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
             }
             binding.btnFab.id ->{
                 viewModel.shareMediaTo(forwardBundle,selectedUsers)
+                if(binding.edtMessage.text.toString().isNotBlank()){
+                    shareViewModel.sendTextMessage(selectedUsers,binding.edtMessage.text.toString())
+                }
                 dismiss()
             }
             binding.btnBack.id ->{

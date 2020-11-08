@@ -25,7 +25,7 @@
             android:layout_alignEnd="@id/img_profile"
             android:layout_alignBottom="@id/img_profile"
             android:src="@drawable/ic_circle_check"
-            android:tint="@color/white"
+            android:tint="@color/forward_button"
             />
 
         <androidx.appcompat.widget.AppCompatTextView

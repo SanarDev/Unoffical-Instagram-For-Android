@@ -22,6 +22,7 @@ import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.customview.customtextview.HyperTextView
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
+import com.idirect.app.customview.postsrecyclerview.PostsAdapter3
 import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentHomeBinding

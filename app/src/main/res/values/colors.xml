@@ -3,16 +3,16 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
-    <color name="theme_background">#F2F2F2</color>
+    <color name="theme_background">#181819</color>
     <color name="theme_background_dialog">#2e2e2e</color>
     <color name="theme_background_incoming_message">@color/theme_item</color>
-    <color name="theme_item">#EEEEEE</color>
+    <color name="theme_item">#202022</color>
 <!--    1B1B1B-->
     <color name="theme_item_with_opacity">#aa1B1B1B</color>
     <color name="toolbar">@color/theme_background</color>
-    <color name="text_very_light">#000</color>
-    <color name="text_light">#212121</color>
-    <color name="hint_light">#313131</color>
+    <color name="text_very_light">#E9E9E9</color>
+    <color name="text_light">#838383</color>
+    <color name="hint_light">#838383</color>
     <color name="hyperText">@color/text_very_light</color>
     <color name="theme_button">#232323</color>
     <color name="online_color">#2196F3</color>
@@ -34,10 +34,11 @@
     <color name="light_button">@color/text_very_light</color>
     <color name="counter_voice_time_color">#fff</color>
     <color name="voice_mic_color">@color/text_highlight</color>
-    <color name="navigation_background">#FFFFFF</color>
-    <color name="icon">#000</color>
-    <color name="navigation_currentItem">#000</color>
-    <color name="navigation_default_color_item">#313131</color>
+    <color name="navigation_background">@color/theme_item</color>
+    <color name="icon">#fff</color>
+    <color name="navigation_currentItem">#fff</color>
+    <color name="navigation_default_color_item">#a9a9a9</color>
     <color name="navigation_inactiveItem">#aaa</color>
-    <color name="card_post">#FFFFFF</color>
+    <color name="card_post">@color/theme_item</color>
+    <color name="forward_button">#365FF4</color>
 </resources>

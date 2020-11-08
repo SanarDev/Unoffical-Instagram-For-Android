@@ -24,7 +24,7 @@
                 android:layout_height="wrap_content"
                 android:background="@null"
                 android:src="@drawable/ic_close"
-                android:tint="@color/white" />
+                android:tint="@color/icon" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
@@ -156,7 +156,7 @@
                     android:src="@drawable/ic_send"
                     android:tint="@color/white"
                     android:layout_margin="10dp"
-                    app:backgroundTint="@color/theme_item" />
+                    app:backgroundTint="@color/forward_button" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/txt_selected_count"

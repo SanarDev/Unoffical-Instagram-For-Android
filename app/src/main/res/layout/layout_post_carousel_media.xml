@@ -3,234 +3,210 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <androidx.cardview.widget.CardView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/theme_item"
-        app:cardCornerRadius="10dp"
-        app:cardUseCompatPadding="true">
+        android:orientation="vertical"
+        android:layout_margin="10dp"
+        android:background="@drawable/bg_post"
+        android:padding="10dp">
 
         <LinearLayout
-
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.tylersuehr.chips.CircleImageView
+                android:id="@+id/img_profile"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="10dp"
+                android:src="@mipmap/example" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
-                <com.tylersuehr.chips.CircleImageView
-                    android:id="@+id/img_profile"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="10dp"
-                    android:src="@mipmap/example" />
-
-                <LinearLayout
+                <com.idirect.app.customview.customtextview.HyperTextView
+                    android:id="@+id/txt_username"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:gravity="center_vertical"
-                    android:orientation="vertical">
+                    android:textColor="@color/text_very_light"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    tools:text="PageUserName" />
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/txt_username"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/text_very_light"
-                        android:textStyle="bold"
-                        tools:text="PageUserName" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/txt_locationName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/text_light"
-                        android:textSize="12sp"
-                        tools:text="Manila" />
-
-                </LinearLayout>
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txt_locationName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_light"
+                    android:textSize="12sp"
+                    tools:text="Manila" />
 
             </LinearLayout>
 
-            <RelativeLayout
-                android:id="@+id/layout_media"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="vertical">
+        </LinearLayout>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerview_medias"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                    tools:listitem="@layout/layout_carousel_image" />
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/txt_page_position"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/bg_circluar"
-                    android:layout_margin="10dp"
-                    android:paddingStart="10dp"
-                    android:paddingTop="5dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="5dp"
-                    android:textColor="@color/text_very_light"
-                    tools:text="1/3" />
+        <RelativeLayout
+            android:id="@+id/layout_media"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
 
-            </RelativeLayout>
-
-            <RelativeLayout
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerview_medias"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="5dp">
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/layout_carousel_image" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/txt_page_position"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/bg_circluar"
+                android:layout_margin="10dp"
+                android:paddingStart="10dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="5dp"
+                android:textColor="@color/text_very_light"
+                tools:text="1/3" />
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/layout_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:background="@drawable/bg_unlike"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="5dp">
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/btn_like"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
                     android:padding="5dp"
-                    android:src="@drawable/instagram_heart_outline_24"
-                    android:tint="@color/white" />
+                    android:src="@drawable/instagram_heart_filled_24"
+                    android:tint="@color/icon" />
 
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txt_likes_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="586K"
+                    android:layout_marginStart="5dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_very_light" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/layout_comment_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/layout_like"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="3dp">
 
                 <androidx.appcompat.widget.AppCompatImageView
                     android:id="@+id/btn_comment"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/btn_like"
                     android:padding="5dp"
                     android:src="@drawable/instagram_comment_outline_24"
-                    android:tint="@color/white" />
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/btn_share"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/btn_comment"
-                    android:padding="5dp"
-                    android:src="@drawable/instagram_direct_outline_24"
-                    android:tint="@color/white" />
-
-            </RelativeLayout>
-
-            <LinearLayout
-                android:id="@+id/layout_likes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:id="@+id/layout_likers_profile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                </LinearLayout>
-
+                    android:tint="@color/icon" />
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/txt_comment_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="@string/liked_by"
-                    android:textColor="@color/text_very_light" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/btn_top_liker_username"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:text="586K"
                     android:layout_marginStart="5dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:textColor="@color/text_very_light"
-                    android:textStyle="bold"
-                    tools:text="username" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:text="@string/and"
-                    android:textColor="@color/text_very_light" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/btn_others"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:textColor="@color/text_very_light"
-                    android:textStyle="bold"
-                    tools:text="211 othres" />
+                    android:textColor="@color/text_very_light"/>
             </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/txt_likes_count"
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/btn_share"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:textColor="@color/text_very_light"
-                android:textStyle="bold"
-                android:visibility="gone"
-                tools:text="3,555 likes" />
+                android:layout_centerVertical="true"
+                android:layout_toEndOf="@id/layout_comment_count"
+                android:paddingStart="10dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="3dp"
+                android:src="@drawable/instagram_direct_outline_24"
+                android:tint="@color/icon" />
+
+        </RelativeLayout>
 
 
-            <com.idirect.app.customview.customtextview.HyperTextView
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+
+            <com.muzafferus.imagelist.ImageList
+                android:id="@+id/imageList"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" />
+
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/txt_caption"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="5dp"
                 android:layout_marginEnd="10dp"
+                android:layout_weight="1"
                 android:ellipsize="end"
+                android:singleLine="true"
                 android:textColor="@color/text_very_light"
-                tools:text="What do you like? Tell me..." />
+                tools:text="What do you like? Tell come on. Im wating for you" />
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/btn_view_comments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginEnd="10dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:textColor="@color/text_light"
-                android:textSize="15sp"
-                tools:text="View all 3 comments" />
-
-            <LinearLayout
-                android:id="@+id/layout_comment"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginEnd="10dp"
-                android:orientation="vertical">
-
-
-            </LinearLayout>
-
+                android:background="@drawable/bg_post_more_detail"
+                android:paddingStart="20dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:text="@string/more"
+                android:textColor="@color/text_very_light" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
 
 </layout>

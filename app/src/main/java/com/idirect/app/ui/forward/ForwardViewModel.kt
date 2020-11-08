@@ -1,6 +1,7 @@
 package com.idirect.app.ui.forward
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.MediatorLiveData
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.response.InstagramLoggedUser
@@ -14,7 +15,10 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import java.util.logging.Handler
 import javax.inject.Inject
 
-class ForwardViewModel @Inject constructor(application: Application,var mHandler:android.os.Handler):BaseViewModel(application) {
+class ForwardViewModel @Inject constructor(
+    application: Application,
+    var mHandler: android.os.Handler
+) : BaseViewModel(application) {
 
     val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
     val recipients = MediatorLiveData<Resource<IGRecipientsResponse>>()
@@ -26,7 +30,7 @@ class ForwardViewModel @Inject constructor(application: Application,var mHandler
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 recipients.value = Resource.success(it)
-            },{},{})
+            }, {}, {})
         Thread {
             while (true) {
                 mHandler.post {
@@ -36,22 +40,36 @@ class ForwardViewModel @Inject constructor(application: Application,var mHandler
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe({
                                 recipients.value = Resource.success(it)
-                            },{},{})
+                            }, {}, {})
                     }
                 }
                 Thread.sleep(1000)
             }
         }.start()
     }
+
     fun getUserData(): IGLoggedUser {
         return instaClient.loggedUser
     }
 
-    fun shareMediaTo(forwardBundle:ForwardBundle, selectedUsers: MutableList<String>) {
-        if(forwardBundle.isStoryShare){
-            instaClient.storyProcessor.shareStory(selectedUsers,forwardBundle.mediaId,forwardBundle.mediaType,forwardBundle.reelId).subscribe({},{},{})
-        }else{
-            instaClient.mediaProcessor.shareMedia(selectedUsers,forwardBundle.mediaId,forwardBundle.mediaType).subscribe({},{},{})
+    fun shareMediaTo(forwardBundle: ForwardBundle, selectedUsers: MutableList<String>) {
+        for (user in selectedUsers) {
+            if (forwardBundle.isStoryShare) {
+                instaClient.storyProcessor.shareStory(
+                    user,
+                    forwardBundle.mediaId,
+                    forwardBundle.mediaType,
+                    forwardBundle.reelId
+                ).subscribe({}, {}, {})
+            } else {
+                instaClient.mediaProcessor.shareMedia(
+                    user,
+                    forwardBundle.mediaId,
+                    forwardBundle.mediaType
+                ).subscribe({}, {
+                    Log.i("TEST", "TEST")
+                }, {})
+            }
         }
     }
 }

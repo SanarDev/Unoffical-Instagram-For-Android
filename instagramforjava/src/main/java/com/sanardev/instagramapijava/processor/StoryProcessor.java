@@ -175,7 +175,7 @@ public class StoryProcessor {
                 .subscribeOn(Schedulers.io());
     }
 
-    public Observable<IGShareStoryResponse> shareStory(List<String> threadId, String mediaId, int mediaType, long reelId) {
+    public Observable<IGShareStoryResponse> shareStory(String threadId, String mediaId, int mediaType, long reelId) {
         if(igRequest.getLoggedUser() == null){
             throw new RuntimeException("You must login first");
         }
@@ -183,7 +183,11 @@ public class StoryProcessor {
         IGLoggedUser loggedUser = igRequest.getLoggedUser();
         HashMap<Object, Object> data = new HashMap<>();
         data.put("action", "send_item");
-        data.put("thread_ids", igRequest.getGson().toJson(threadId));
+        if(threadId.contains("[[")){
+            data.put("recipient_users", threadId);
+        }else{
+            data.put("thread_ids", String.format("[%s]",threadId));
+        }
         data.put("client_context", InstaHashUtils.getClientContext());
         data.put("_csrftoken", cookie.getCsrftoken());
         data.put("_uid", loggedUser.getPk());

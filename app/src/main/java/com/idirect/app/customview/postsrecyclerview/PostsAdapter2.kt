@@ -143,6 +143,7 @@ class PostsAdapter2(
                 RecyclerView.LayoutParams.MATCH_PARENT,
                 RecyclerView.LayoutParams.WRAP_CONTENT
             )
+            setCardBackgroundColor(context.color(R.color.card_post))
         }
 
         return when (viewType) {

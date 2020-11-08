@@ -103,14 +103,18 @@ public class MediaProcessor {
                 .subscribeOn(Schedulers.io());
     }
 
-    public Observable<IGShareMediaResponse> shareMedia(List<String> threadId, String mediaId, int mediaType) {
+    public Observable<IGShareMediaResponse> shareMedia(String threadId, String mediaId, int mediaType) {
         if (igRequest.getLoggedUser() == null) {
             throw new RuntimeException("You must login first");
         }
         Cookie cookie = igRequest.getCookie();
         HashMap<String, Object> data = new HashMap<>();
         data.put("action", "send_item");
-        data.put("thread_ids", igRequest.getGson().toJson(threadId));
+        if(threadId.contains("[[")){
+            data.put("recipient_users", threadId);
+        }else{
+            data.put("thread_ids", String.format("[%s]",threadId));
+        }
         data.put("client_context", InstaHashUtils.getClientContext());
         data.put("media_id", mediaId);
         data.put("_csrftoken", cookie.getCsrftoken());
