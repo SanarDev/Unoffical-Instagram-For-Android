@@ -5,11 +5,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.google.android.exoplayer2.upstream.DataSource
@@ -24,6 +26,7 @@ import com.idirect.app.customview.customtextview.HyperTextView
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
 import com.idirect.app.customview.postsrecyclerview.PostsAdapter3
 import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
+import com.idirect.app.customview.story.StoryWidget
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentHomeBinding
 import com.idirect.app.databinding.LayoutStoryBinding
@@ -50,16 +53,17 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
     }
 
 
-    @Inject lateinit var mPlayManager: PlayManager
+    @Inject
+    lateinit var mPlayManager: PlayManager
 
     private var currentMediaPosition: Int = PlayManager.NONE
 
-    private var _mStoryAdapter: StoriesAdapter?=null
+    private var _mStoryAdapter: StoriesAdapter? = null
     private val mStoryAdapter: StoriesAdapter get() = _mStoryAdapter!!
-    private var _mAdapter: PostsAdapter2?=null
+    private var _mAdapter: PostsAdapter2? = null
     private val mAdapter: PostsAdapter2 get() = _mAdapter!!
-    private var _mGlide:RequestManager?=null
-    private val mGlide:RequestManager get() = _mGlide!!
+    private var _mGlide: RequestManager? = null
+    private val mGlide: RequestManager get() = _mGlide!!
 
     private lateinit var dataSource: DataSource.Factory
 
@@ -110,30 +114,34 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         binding.recyclerviewPosts.adapter = mAdapter
         binding.recyclerviewPosts.mPostsRecyclerState = object : PostsRecyclerListener {
             override fun requestForLoadMore() {
-                Log.i(InstagramConstants.DEBUG_TAG,"request for load more with isLoading $isLoading")
+                Log.i(
+                    InstagramConstants.DEBUG_TAG,
+                    "request for load more with isLoading $isLoading"
+                )
                 if (!isLoading) {
                     isLoading = true
                     viewModel.loadMorePosts()
                 }
             }
-            override fun likeComment(v: View,id: kotlin.Long) {
+
+            override fun likeComment(v: View, id: kotlin.Long) {
                 viewModel.likeComment(id)
             }
 
-            override fun unlikeComment(v: View,id: kotlin.Long) {
+            override fun unlikeComment(v: View, id: kotlin.Long) {
                 viewModel.unlikeComment(id)
             }
 
-            override fun unlikePost(v: View,mediaId: String) {
+            override fun unlikePost(v: View, mediaId: String) {
                 viewModel.unlikePost(mediaId)
             }
 
-            override fun likePost(v: View,mediaId: String) {
+            override fun likePost(v: View, mediaId: String) {
                 viewModel.likePost(mediaId)
             }
 
             override fun shareMedia(v: View, mediaId: String, mediaType: Int) {
-                val forwardBundle = ForwardBundle(mediaId,mediaType,false)
+                val forwardBundle = ForwardBundle(mediaId, mediaType, false)
                 (requireActivity() as MainActivity).showShareWindow(forwardBundle)
             }
 
@@ -143,15 +151,20 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             }
 
             override fun userProfile(v: View, userId: kotlin.Long, username: String) {
-                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(UserBundle().apply {
-                    this.username = username
-                    this.userId = userId
-                })
+                val action =
+                    NavigationMainGraphDirections.actionGlobalUserProfileFragment(UserBundle().apply {
+                        this.username = username
+                        this.userId = userId
+                    })
                 findNavController().navigate(action)
             }
 
             override fun onLocationClick(v: View, location: Location) {
-                CustomToast.show(requireContext(),getString(R.string.location_not_support),Toast.LENGTH_SHORT)
+                CustomToast.show(
+                    requireContext(),
+                    getString(R.string.location_not_support),
+                    Toast.LENGTH_SHORT
+                )
             }
         }
         viewModel.postsLiveData.observe(viewLifecycleOwner, Observer {
@@ -174,7 +187,10 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         viewModel.storyMediaLiveData.observe(viewLifecycleOwner, Observer {
             if (it != null && it.status == Resource.Status.SUCCESS) {
                 val action =
-                    NavigationMainGraphDirections.actionGlobalStoryFragment(lastStoryClicked.toString(),false)
+                    NavigationMainGraphDirections.actionGlobalStoryFragment(
+                        lastStoryClicked.toString(),
+                        false
+                    )
                 findNavController().navigate(action)
                 viewModel.storyMediaLiveData.value = null
             }
@@ -196,36 +212,79 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         mPlayManager.releasePlay()
     }
 
-    inner class StoriesAdapter(var items: MutableList<com.sanardev.instagramapijava.model.story.Tray>?) : BaseAdapter() {
-        override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
-            val item = items!![position]
-            val dataBinding = holder.binding as LayoutStoryBinding
-            dataBinding.txtUsername.text = item.user.username
-            mGlide.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
-            if(item.seen == 0.toLong() || item.latestReelMedia > item.seen){
-                if(item.hasBestiesMedia){
-                    dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_close_friend_story)
-                }else{
-                    dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_new_story)
-                }
-            }else{
-                dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_story)
-            }
-            dataBinding.root.setOnClickListener {
-                viewModel.getStoryMedia(item.user.pk)
-                lastStoryClicked = item.user.pk
-            }
-            return item
-        }
+    inner class StoriesAdapter(var items: MutableList<com.sanardev.instagramapijava.model.story.Tray>?) :
+        RecyclerView.Adapter<StoriesAdapter.StoriesViewHolder>() {
 
-        override fun getLayoutIdForPosition(position: Int): Int {
-            return R.layout.layout_story
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StoriesViewHolder {
+            val parentLayout = LinearLayout(parent.context).apply {
+                layoutParams = RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.WRAP_CONTENT,
+                    RecyclerView.LayoutParams.WRAP_CONTENT
+                )
+            }
+            return StoriesViewHolder(parentLayout)
         }
 
         override fun getItemCount(): Int {
             return if (items == null) 0 else items!!.size
         }
+
+        override fun onBindViewHolder(holder: StoriesViewHolder, position: Int) {
+            val item = items!![position]
+            holder.storyWidget.setProfilePic(mGlide, item.user.profilePicUrl)
+            holder.storyWidget.setUsername(item.user.username)
+            holder.storyWidget.setStatus(item.latestReelMedia, item.hasBestiesMedia, item.seen)
+            if(lastStoryClicked == item.user.pk){
+                holder.storyWidget.setLoading(true)
+            }else{
+                holder.storyWidget.setLoading(false)
+            }
+            holder.storyWidget.setOnClickListener {
+                viewModel.getStoryMedia(item.user.pk)
+                lastStoryClicked = item.user.pk
+                notifyDataSetChanged()
+            }
+        }
+
+        inner class StoriesViewHolder(v: ViewGroup) : RecyclerView.ViewHolder(v) {
+            val storyWidget: StoryWidget
+
+            init {
+                storyWidget = StoryWidget(v.context)
+                v.addView(storyWidget)
+            }
+        }
     }
+//    inner class StoriesAdapter(var items: MutableList<com.sanardev.instagramapijava.model.story.Tray>?) : BaseAdapter() {
+//        override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
+//            val item = items!![position]
+//            val dataBinding = holder.binding as LayoutStoryBinding
+//            dataBinding.txtUsername.text = item.user.username
+//            mGlide.load(item.user.profilePicUrl).into(dataBinding.imgProfile)
+//            if(item.seen == 0.toLong() || item.latestReelMedia > item.seen){
+//                if(item.hasBestiesMedia){
+//                    dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_close_friend_story)
+//                }else{
+//                    dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_new_story)
+//                }
+//            }else{
+//                dataBinding.imgProfile.setBackgroundResource(R.drawable.bg_story)
+//            }
+//            dataBinding.root.setOnClickListener {
+//                viewModel.getStoryMedia(item.user.pk)
+//                lastStoryClicked = item.user.pk
+//            }
+//            return item
+//        }
+//
+//        override fun getLayoutIdForPosition(position: Int): Int {
+//            return R.layout.layout_story
+//        }
+//
+//        override fun getItemCount(): Int {
+//            return if (items == null) 0 else items!!.size
+//        }
+//    }
 
     override fun onClick(v: View, data: String) {
         if (data == "SeeAllLikers") {
@@ -237,7 +296,11 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
             val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
             findNavController().navigate(action)
         } else if (data.startsWith("#")) {
-            CustomToast.show(requireContext(),getString(R.string.hashtag_not_support),Toast.LENGTH_SHORT)
+            CustomToast.show(
+                requireContext(),
+                getString(R.string.hashtag_not_support),
+                Toast.LENGTH_SHORT
+            )
         } else {
             try {
                 val num = Long.parseLong(data)
