@@ -11,8 +11,8 @@
 
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:background="@color/theme_item">
+            android:layout_height="@dimen/toolbar_size"
+            android:background="@color/toolbar">
 
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/edt_search"

@@ -9,7 +9,7 @@
     <color name="theme_item">#202022</color>
 <!--    1B1B1B-->
     <color name="theme_item_with_opacity">#aa1B1B1B</color>
-    <color name="toolbar">@color/theme_background</color>
+    <color name="toolbar">@color/theme_item</color>
     <color name="text_very_light">#E9E9E9</color>
     <color name="text_light">#838383</color>
     <color name="hint_light">#838383</color>

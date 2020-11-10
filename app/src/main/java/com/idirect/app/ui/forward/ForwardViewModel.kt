@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.MediatorLiveData
 import com.idirect.app.core.BaseViewModel
+import com.idirect.app.datasource.model.event.ConnectionStateEvent
 import com.idirect.app.datasource.model.response.InstagramLoggedUser
 import com.idirect.app.datasource.model.response.InstagramRecipients
 import com.idirect.app.usecase.UseCase
@@ -12,6 +13,7 @@ import com.sanardev.instagramapijava.InstaClient
 import com.sanardev.instagramapijava.model.login.IGLoggedUser
 import com.sanardev.instagramapijava.response.IGRecipientsResponse
 import io.reactivex.android.schedulers.AndroidSchedulers
+import org.greenrobot.eventbus.EventBus
 import java.util.logging.Handler
 import javax.inject.Inject
 
@@ -25,6 +27,8 @@ class ForwardViewModel @Inject constructor(
     var searchWord: String = ""
     private var lastSearchedWord: String = ""
 
+    // for stop loop thread when share is done
+    private var stopSelf:Boolean = false
     init {
         instaClient.directProcessor.getRecipient()
             .observeOn(AndroidSchedulers.mainThread())
@@ -33,6 +37,9 @@ class ForwardViewModel @Inject constructor(
             }, {}, {})
         Thread {
             while (true) {
+                if(stopSelf){
+                    return@Thread
+                }
                 mHandler.post {
                     if (searchWord != lastSearchedWord) {
                         lastSearchedWord = searchWord
@@ -53,6 +60,7 @@ class ForwardViewModel @Inject constructor(
     }
 
     fun shareMediaTo(forwardBundle: ForwardBundle, selectedUsers: MutableList<String>) {
+        stopSelf = true
         for (user in selectedUsers) {
             if (forwardBundle.isStoryShare) {
                 instaClient.storyProcessor.shareStory(
@@ -60,7 +68,9 @@ class ForwardViewModel @Inject constructor(
                     forwardBundle.mediaId,
                     forwardBundle.mediaType,
                     forwardBundle.reelId
-                ).subscribe({}, {}, {})
+                ).subscribe({}, {}, {
+                    EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT))
+                })
             } else {
                 instaClient.mediaProcessor.shareMedia(
                     user,
@@ -68,7 +78,9 @@ class ForwardViewModel @Inject constructor(
                     forwardBundle.mediaType
                 ).subscribe({}, {
                     Log.i("TEST", "TEST")
-                }, {})
+                }, {
+                    EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT))
+                })
             }
         }
     }

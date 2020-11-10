@@ -737,7 +737,7 @@ class ShareViewModel @Inject constructor(
     }
 
     fun reloadDirects() {
-//        directs.clear()
+        directs.clear()
         getDirects()
     }
 

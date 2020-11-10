@@ -24,6 +24,7 @@ import com.idirect.app.R
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.databinding.FragmentForwardBinding
 import com.idirect.app.databinding.ItemDirectShareBinding
+import com.idirect.app.datasource.model.event.ConnectionStateEvent
 import com.idirect.app.di.DaggerViewModelFactory
 import com.idirect.app.extentions.dpToPx
 import com.idirect.app.extentions.vibration
@@ -32,6 +33,7 @@ import com.idirect.app.utils.Resource
 import com.sanardev.instagramapijava.model.explore.Recipients
 import com.vanniktech.emoji.EmojiPopup
 import dagger.android.support.AndroidSupportInjection
+import org.greenrobot.eventbus.EventBus
 import javax.inject.Inject
 
 

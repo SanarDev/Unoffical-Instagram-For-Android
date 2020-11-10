@@ -686,8 +686,10 @@ class PostsAdapter2(
 //                }
 //            }
 //        }
+
         mGlide
             .load(url)
+            .placeholder(R.drawable.placeholder_loading)
             .priority(Priority.IMMEDIATE)
             .into(imgPhoto)
     }
