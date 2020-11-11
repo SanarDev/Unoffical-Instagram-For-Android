@@ -128,6 +128,9 @@ public class Story {
     @SerializedName("show_one_tap_fb_share_tooltip")
     @Expose
     private Boolean showOneTapFbShareTooltip;
+    @SerializedName("reel_mentions")
+    @Expose
+    private List<ReelMention> reelMentions;
 
     public Long getTakenAt() {
         return takenAt;
@@ -439,5 +442,13 @@ public class Story {
 
     public void setShowOneTapFbShareTooltip(Boolean showOneTapFbShareTooltip) {
         this.showOneTapFbShareTooltip = showOneTapFbShareTooltip;
+    }
+
+    public List<ReelMention> getReelMentions() {
+        return reelMentions;
+    }
+
+    public void setReelMentions(List<ReelMention> reelMentions) {
+        this.reelMentions = reelMentions;
     }
 }
