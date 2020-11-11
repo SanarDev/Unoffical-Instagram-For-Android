@@ -393,7 +393,7 @@ class PostsAdapter2(
                 val size = getStandardVideoSize(maxWidth, maxHeight)
                 mHolder.recyclerviewMedia.layoutParams.apply {
                     width = displayWidth
-                    height = size[1]
+                    height = RecyclerView.LayoutParams.WRAP_CONTENT
                 }
 
                 adapters.put(position, CollectionMediaAdapter(position, mediaOrAd.carouselMedias))
@@ -1670,7 +1670,7 @@ class PostsAdapter2(
                     id = View.generateViewId()
                     layoutParams = FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT
+                        FrameLayout.LayoutParams.WRAP_CONTENT
                     )
                     adjustViewBounds = true
                 }

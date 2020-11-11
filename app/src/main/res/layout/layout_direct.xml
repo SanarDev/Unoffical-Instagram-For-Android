@@ -10,12 +10,14 @@
         android:clickable="true"
         android:focusable="true"
         android:orientation="vertical"
-        android:padding="15dp"
+        android:paddingStart="15dp"
+        android:paddingTop="10dp"
         tools:background="@color/theme_background">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="15dp"
             android:orientation="horizontal">
 
             <RelativeLayout
@@ -94,7 +96,7 @@
                         android:fontFamily="sans-serif"
                         android:singleLine="true"
                         android:textColor="@color/text_very_light"
-                        android:textSize="14sp"
+                        android:textSize="16sp"
                         tools:text="Ramtin" />
 
                     <LinearLayout
@@ -193,6 +195,7 @@
         <!--            app:layout_constraintStart_toEndOf="@id/profile_image"-->
         <!--            app:layout_constraintTop_toBottomOf="@id/profile_dec"/>-->
 
+
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/profile_categories"
             android:layout_width="match_parent"
@@ -203,6 +206,13 @@
 
         </com.google.android.material.chip.ChipGroup>
 
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/theme_item"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="60dp"/>
     </LinearLayout>
 
 </layout>

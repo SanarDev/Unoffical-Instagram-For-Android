@@ -121,7 +121,7 @@ public class IGThread {
     private Boolean isSpam;
     @SerializedName("last_permanent_item")
     @Expose
-    private LastPermanentItem lastPermanentItem;
+    private Message lastPermanentItem;
     private HashMap<Object,Object> bundle;
 
     public HashMap<Object, Object> getBundle() {
@@ -420,12 +420,11 @@ public class IGThread {
         isSpam = spam;
     }
 
-    public LastPermanentItem getLastPermanentItem() {
+    public Message getLastPermanentItem() {
         return lastPermanentItem;
     }
 
-    public void setLastPermanentItem(LastPermanentItem lastPermanentItem) {
+    public void setLastPermanentItem(Message lastPermanentItem) {
         this.lastPermanentItem = lastPermanentItem;
     }
-
 }

@@ -285,7 +285,6 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                         }
                     }
                 }
-                val lastItem = item.messages[0]
                 if (item.bundle != null && item.bundle["typing"] == true) {
                     dataBinding.profileDec.text = getString(R.string.typing)
                     dataBinding.profileDec.setTextColor(Color.WHITE)
@@ -308,32 +307,32 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                     dataBinding.profileDec.setTextColor(Color.WHITE)
                     dataBinding.profileDec.setTypeface(null, Typeface.BOLD);
                 } else {
-                    val prefix = if (lastItem.userId == user.pk) {
+                    val prefix = if (item.lastPermanentItem.userId == user.pk) {
                         "You: "
                     } else {
                         if (item.group) {
                             shareViewModel.getUsernameByUserId(
                                 item.threadId,
-                                lastItem.userId
+                                item.lastPermanentItem.userId
                             ) + ": "
                         } else {
                             ""
                         }
                     }
-                    when (lastItem.itemType) {
+                    when (item.lastPermanentItem.itemType) {
                         InstagramConstants.MessageType.ACTION_LOG.type -> {
-                            dataBinding.profileDec.text = lastItem.actionLog.description
+                            dataBinding.profileDec.text = item.lastPermanentItem.actionLog.description
                         }
                         InstagramConstants.MessageType.TEXT.type -> {
-                            dataBinding.profileDec.text = prefix + lastItem.text
+                            dataBinding.profileDec.text = prefix + item.lastPermanentItem.text
                         }
                         InstagramConstants.MessageType.ANIMATED_MEDIA.type -> {
                             dataBinding.profileDec.text =
                                 prefix + getString(R.string.send_a_sticker)
                         }
                         InstagramConstants.MessageType.REEL_SHARE.type -> {
-                            if (lastItem.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
-                                if (lastItem.userId == user.pk) {
+                            if (item.lastPermanentItem.reelShare.type == InstagramConstants.ReelType.REPLY.type) {
+                                if (item.lastPermanentItem.userId == user.pk) {
                                     dataBinding.profileDec.text =
                                         getString(R.string.reply_to_their_story)
                                 } else {
@@ -342,8 +341,8 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                                 }
                             }
 
-                            if (lastItem.reelShare.type == InstagramConstants.ReelType.MENTION.type) {
-                                if (lastItem.userId == user.pk) {
+                            if (item.lastPermanentItem.reelShare.type == InstagramConstants.ReelType.MENTION.type) {
+                                if (item.lastPermanentItem.userId == user.pk) {
                                     dataBinding.profileDec.text = String.format(
                                         getString(R.string.mentioned_person_in_your_story),
                                         item.users[0].username
@@ -353,8 +352,8 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                                         getString(R.string.mentioned_you_in_their_story)
                                 }
                             }
-                            if (lastItem.reelShare.type == InstagramConstants.ReelType.REACTION.type) {
-                                if (lastItem.userId == user.pk) {
+                            if (item.lastPermanentItem.reelShare.type == InstagramConstants.ReelType.REACTION.type) {
+                                if (item.lastPermanentItem.userId == user.pk) {
                                     dataBinding.profileDec.text = String.format(
                                         getString(R.string.you_reacted_to_user_story),
                                         item.users[0].username
@@ -362,7 +361,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                                 } else {
                                     dataBinding.profileDec.text = String.format(
                                         getString(R.string.reacted_to_your_story_with_reaction),
-                                        lastItem.reelShare.text
+                                        item.lastPermanentItem.reelShare.text
                                     )
                                 }
                             }
@@ -374,7 +373,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                             dataBinding.profileDec.text = prefix + getString(R.string.send_a_media)
                         }
                         InstagramConstants.MessageType.LIKE.type -> {
-                            dataBinding.profileDec.text = prefix + lastItem.like
+                            dataBinding.profileDec.text = prefix + item.lastPermanentItem.like
                         }
                         InstagramConstants.MessageType.RAVEN_MEDIA.type -> {
                             dataBinding.profileDec.text = prefix + getString(R.string.send_a_photo)
@@ -385,7 +384,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                         }
                         InstagramConstants.MessageType.VIDEO_CALL_EVENT.type -> {
                             dataBinding.profileDec.text =
-                                prefix + lastItem.videoCallEvent.description
+                                prefix + item.lastPermanentItem.videoCallEvent.description
                         }
                         InstagramConstants.MessageType.LINK.type -> {
                             dataBinding.profileDec.text = prefix +
@@ -394,7 +393,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                         InstagramConstants.MessageType.FELIX_SHARE.type -> {
                             dataBinding.profileDec.text = prefix + String.format(
                                 getString(R.string.send_user_igtv_video),
-                                lastItem.felixShare.video.user.username
+                                item.lastPermanentItem.felixShare.video.user.username
                             )
                         }
                         InstagramConstants.MessageType.STORY_SHARE.type -> {
@@ -426,18 +425,18 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                     }
                     dataBinding.lastMessageTime.visibility = View.VISIBLE
                     dataBinding.lastMessageTime.text =
-                        TimeUtils.convertTimestampToDate(context!!, lastItem.timestamp)
+                        TimeUtils.convertTimestampToDate(context!!, item.lastPermanentItem.timestamp)
                 }
             }
             if (item.group && item.threadTitle == null) {
                 if (item.users.size >= 2) {
                     dataBinding.profileName.text = String.format(
                         getString(R.string.group_name),
-                        item.users[0].username,
+                        item.users[0].fullName,
                         item.users.size - 1
                     )
                 } else {
-                    dataBinding.profileName.text = item.users[0].username
+                    dataBinding.profileName.text = item.users[0].fullName
                 }
             } else {
                 dataBinding.profileName.text = item.threadTitle

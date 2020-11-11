@@ -87,13 +87,13 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     private var isLoading = false
     private var olderMessageExist = true
 
-    private var _igThread: IGThread?=null
+    private var _igThread: IGThread? = null
     private val igThread: IGThread get() = _igThread!!
-    private var _mGlide:RequestManager?=null
-    private val mGlide:RequestManager get() = _mGlide!!
+    private var _mGlide: RequestManager? = null
+    private val mGlide: RequestManager get() = _mGlide!!
 
     private lateinit var mAudioManager: AudioManager
-    val onPreDrawListener = object: ViewTreeObserver.OnPreDrawListener{
+    val onPreDrawListener = object : ViewTreeObserver.OnPreDrawListener {
         override fun onPreDraw(): Boolean {
             startPostponedEnterTransition()
             return true
@@ -123,7 +123,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     }
 
     override fun onDestroyView() {
-        removeWaitForTransition(binding.recyclerviewChats,onPreDrawListener)
+        removeWaitForTransition(binding.recyclerviewChats, onPreDrawListener)
         emojiPopup.releaseMemory()
         shareViewModel.currentIGThread = null
         super.onDestroyView()
@@ -151,7 +151,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 
         mAdapter = ChatsAdapter(shareViewModel.getUser())
         binding.recyclerviewChats.adapter = mAdapter
-        waitForTransition(binding.recyclerviewChats,onPreDrawListener)
+        waitForTransition(binding.recyclerviewChats, onPreDrawListener)
         layoutManager = (binding.recyclerviewChats.layoutManager as LinearLayoutManager)
         mPlayManager.setRepeat(false)
 
@@ -184,12 +184,15 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         shareViewModel.mutableLiveData.observe(viewLifecycleOwner, Observer {
             when (it.status) {
                 Resource.Status.SUCCESS -> {
-                    if(shareViewModel.currentIGThread != null){
-                        val thread = shareViewModel.getThreadById(shareViewModel.currentIGThread!!.threadId!!)
+                    if (shareViewModel.currentIGThread != null) {
+                        val thread =
+                            shareViewModel.getThreadById(shareViewModel.currentIGThread!!.threadId!!)
                         gone(binding.includeLayoutNetwork.root, binding.progressbar)
                         olderMessageExist = thread.oldestCursor != null
                         if (thread.messages.size > mAdapter.items.size) {
-                            mAdapter.setItems(viewModel.releaseMessages(thread.messages).toMutableList())
+                            mAdapter.setItems(
+                                viewModel.releaseMessages(thread.messages).toMutableList()
+                            )
                         }
                         isLoading = false
                         mAdapter.setLoading(isLoading)
@@ -211,11 +214,14 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         })
 
         shareViewModel.threadMessageRemoved.observe(viewLifecycleOwner, Observer {
-            if(it == null){
+            if (it == null) {
                 return@Observer
             }
-            if(igThread.threadId == it.threadId){
-                mAdapter.setItems(viewModel.releaseMessages(shareViewModel.getThreadById(igThread.threadId).messages).toMutableList())
+            if (igThread.threadId == it.threadId) {
+                mAdapter.setItems(
+                    viewModel.releaseMessages(shareViewModel.getThreadById(igThread.threadId).messages)
+                        .toMutableList()
+                )
             }
         })
 
@@ -359,39 +365,39 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
 
     }
 
-    private fun setLoading(isLoading: Boolean){
-        if(isLoading){
+    private fun setLoading(isLoading: Boolean) {
+        if (isLoading) {
             binding.progressbar.visibility = View.VISIBLE
-        }else{
+        } else {
             binding.progressbar.visibility = View.GONE
         }
     }
 
     // data for profile name, profile iamge , last seen, is online
-    private fun initThreadData(IGThread: IGThread?=null, directBundle: DirectBundle?=null){
-        if(IGThread == null && directBundle == null){
+    private fun initThreadData(IGThread: IGThread? = null, directBundle: DirectBundle? = null) {
+        if (IGThread == null && directBundle == null) {
             return
         }
-        val threadTitle:String
-        val profilePicUrl:String
-        val profilePicUrl2:String
-        val isGroup:Boolean
+        val threadTitle: String
+        val profilePicUrl: String
+        val profilePicUrl2: String
+        val isGroup: Boolean
 
-        if(IGThread != null){
+        if (IGThread != null) {
             threadTitle = IGThread.threadTitle
             profilePicUrl = IGThread.users[0].profilePicUrl
-            profilePicUrl2 = if(IGThread.group){
+            profilePicUrl2 = if (IGThread.group) {
                 IGThread.users[1].profilePicUrl
-            }else{
+            } else {
                 ""
             }
             isGroup = IGThread.group
-        }else{
+        } else {
             threadTitle = directBundle!!.threadTitle
             profilePicUrl = directBundle.profileImage
-            if(directBundle.isGroup){
+            if (directBundle.isGroup) {
                 profilePicUrl2 = directBundle.profileImage2
-            }else{
+            } else {
                 profilePicUrl2 = ""
             }
             isGroup = directBundle.isGroup
@@ -414,20 +420,21 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 .into(binding.profileImageG2)
         }
     }
+
     private fun initThreadWithBundle(directBundle: DirectBundle) {
-        if(directBundle.threadId != null){
+        if (directBundle.threadId != null) {
             shareViewModel.currentIGThread = shareViewModel.getThreadById(directBundle.threadId)
             initThreadData(IGThread = shareViewModel.currentIGThread!!)
             _igThread = shareViewModel.currentIGThread!!
             val messages = shareViewModel.currentIGThread!!.messages
             mAdapter.setItems(viewModel.releaseMessages(messages).toMutableList())
-        }else{
+        } else {
             initThreadData(directBundle = directBundle)
             shareViewModel.getThreadByUserId(directBundle).observe(viewLifecycleOwner, Observer {
-                if(it.status == Resource.Status.LOADING){
+                if (it.status == Resource.Status.LOADING) {
                     setLoading(true)
                 }
-                if(it.status == Resource.Status.SUCCESS){
+                if (it.status == Resource.Status.SUCCESS) {
                     setLoading(false)
                     shareViewModel.currentIGThread = it.data
                     initThreadData(IGThread = shareViewModel.currentIGThread!!)
@@ -456,7 +463,8 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         this.username = user.username
                         this.fullname = user.fullName
                     }
-                    val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
+                    val action =
+                        NavigationMainGraphDirections.actionGlobalUserProfileFragment(userData)
                     val extras = FragmentNavigatorExtras(
                         binding.imgProfileImage to binding.imgProfileImage.transitionName,
                         binding.txtProfileName to binding.txtProfileName.transitionName,
@@ -489,7 +497,12 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 }
                 SelectImageDialog(object : SelectImageListener {
                     override fun onImageSelected(imagesPath: List<String>) {
-                        shareViewModel.uploadMedias(shareViewModel.generateUploadMediaModelFromPath(igThread.threadId,imagesPath))
+                        shareViewModel.uploadMedias(
+                            shareViewModel.generateUploadMediaModelFromPath(
+                                igThread.threadId,
+                                imagesPath
+                            )
+                        )
                     }
                 }).show(requireActivity().supportFragmentManager, "Dialog")
             }
@@ -539,7 +552,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
     }
 
     private fun checkUserStatus() {
-        if(_igThread == null){
+        if (_igThread == null) {
             return
         }
         // #comment_code
@@ -584,9 +597,9 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
         BaseAdapter() {
 
         var items: MutableList<Any> = ArrayList<Any>().toMutableList()
-        private set
+            private set
 
-        fun setItems(items: MutableList<Any>){
+        fun setItems(items: MutableList<Any>) {
             this.items = items
             notifyDataSetChanged()
         }
@@ -684,7 +697,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         val dataBinding = (holder.binding as LayoutStoryShareNotLinkedBinding)
                         includeTime = dataBinding.includeTime
                         layoutParent = dataBinding.layoutParent
-                        imgThreadProfileImage =dataBinding.imgThreadProfileImage
+                        imgThreadProfileImage = dataBinding.imgThreadProfileImage
                         layoutMessage = dataBinding.layoutMessage
                         includeReaction = dataBinding.includeReaction
                     }
@@ -972,7 +985,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         dataBinding.layoutStory.layoutDirection =
                             if (item.userId == igThread.viewerId) View.LAYOUT_DIRECTION_RTL else View.LAYOUT_DIRECTION_LTR
                         if (item.reelShare.media?.imageVersions2 != null) {
-                            val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
+                            val image = item.reelShare.media!!.imageVersions2!!.candidates[0]
                             val size =
                                 shareViewModel.getStandardWidthAndHeight(
                                     image.width,
@@ -1042,7 +1055,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                                 item.timestamp
                             )
                         if (item.reelShare.media.imageVersions2 != null) {
-                            val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
+                            val image = item.reelShare.media!!.imageVersions2!!.candidates[0]
                             val size =
                                 shareViewModel.getStandardWidthAndHeight(
                                     image.width,
@@ -1066,7 +1079,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                         val dataBinding = holder.binding as LayoutReactionStoryBinding
                         layoutMessage?.background = null
                         if (item.reelShare.media?.imageVersions2 != null) {
-                            val image = item.reelShare.media!!.imageVersions2!!.candidates[1]
+                            val image = item.reelShare.media!!.imageVersions2!!.candidates[0]
                             val size =
                                 shareViewModel.getStandardWidthAndHeight(
                                     image.width,
@@ -1194,7 +1207,8 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     val uri: Uri
                     val duration: Int
                     if (item.voiceMediaData.bundle != null && item.voiceMediaData.bundle["isLocal"] == true) {
-                        uri = Uri.fromFile(File(item.voiceMediaData.bundle["localFilePath"] as String))
+                        uri =
+                            Uri.fromFile(File(item.voiceMediaData.bundle["localFilePath"] as String))
                         mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
                             .createMediaSource(uri)
                         duration = item.voiceMediaData.bundle["localDuration"] as Int

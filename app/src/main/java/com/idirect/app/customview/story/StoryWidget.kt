@@ -7,6 +7,7 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -59,6 +60,9 @@ class StoryWidget(context: Context, attr: AttributeSet? = null) : LinearLayout(c
         orientation = VERTICAL
         val padding = dpToPx(5f,context.resources)
         setPadding(padding,padding,padding,padding)
+
+        // hide username and show it when setUsername called
+        txtUsername.visibility = View.GONE
     }
 
     fun setProfilePic(mGlide: RequestManager, profilePicUrl: String) {
@@ -67,6 +71,7 @@ class StoryWidget(context: Context, attr: AttributeSet? = null) : LinearLayout(c
 
     fun setUsername(username: String) {
         txtUsername.text = username
+        txtUsername.visibility = View.VISIBLE
     }
 
     fun setStatus(latestReelMedia: Long,hasBestiesMedia:Boolean, seen: Long) {
