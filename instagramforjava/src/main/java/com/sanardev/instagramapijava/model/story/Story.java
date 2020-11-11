@@ -131,6 +131,9 @@ public class Story {
     @SerializedName("reel_mentions")
     @Expose
     private List<ReelMention> reelMentions;
+    @SerializedName("story_polls")
+    @Expose
+    private List<StoryPoll> storyPolls;
 
     public Long getTakenAt() {
         return takenAt;
@@ -450,5 +453,13 @@ public class Story {
 
     public void setReelMentions(List<ReelMention> reelMentions) {
         this.reelMentions = reelMentions;
+    }
+
+    public List<StoryPoll> getStoryPolls() {
+        return storyPolls;
+    }
+
+    public void setStoryPolls(List<StoryPoll> storyPolls) {
+        this.storyPolls = storyPolls;
     }
 }
