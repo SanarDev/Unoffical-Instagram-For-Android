@@ -134,6 +134,30 @@ public class Story {
     @SerializedName("story_polls")
     @Expose
     private List<StoryPoll> storyPolls;
+    @SerializedName("story_feed_media")
+    @Expose
+    private List<StoryFeedMedia> storyFeedMedia;
+    @SerializedName("story_hashtags")
+    @Expose
+    private List<StoryHashtag> storyHashtags;
+    @SerializedName("story_locations")
+    @Expose
+    private List<StoryLocation> storyLocations;
+    @SerializedName("story_questions")
+    @Expose
+    private List<StoryQuestion> storyQuestions;
+    @SerializedName("story_quizs")
+    @Expose
+    private List<StoryQuiz> storyQuizs;
+    @SerializedName("story_countdowns")
+    @Expose
+    private List<StoryCountDown> storyCountDowns;
+    @SerializedName("story_sliders")
+    @Expose
+    private List<StorySlider> storySliders;
+    @SerializedName("story_anti_bully_stickers")
+    @Expose
+    private List<StoryAntiBullySticker> storyAntiBullyStickers;
 
     public Long getTakenAt() {
         return takenAt;
@@ -461,5 +485,69 @@ public class Story {
 
     public void setStoryPolls(List<StoryPoll> storyPolls) {
         this.storyPolls = storyPolls;
+    }
+
+    public List<StoryFeedMedia> getStoryFeedMedia() {
+        return storyFeedMedia;
+    }
+
+    public void setStoryFeedMedia(List<StoryFeedMedia> storyFeedMedia) {
+        this.storyFeedMedia = storyFeedMedia;
+    }
+
+    public List<StoryHashtag> getStoryHashtags() {
+        return storyHashtags;
+    }
+
+    public void setStoryHashtags(List<StoryHashtag> storyHashtags) {
+        this.storyHashtags = storyHashtags;
+    }
+
+    public List<StoryLocation> getStoryLocations() {
+        return storyLocations;
+    }
+
+    public void setStoryLocations(List<StoryLocation> storyLocations) {
+        this.storyLocations = storyLocations;
+    }
+
+    public List<StoryQuestion> getStoryQuestions() {
+        return storyQuestions;
+    }
+
+    public void setStoryQuestions(List<StoryQuestion> storyQuestions) {
+        this.storyQuestions = storyQuestions;
+    }
+
+    public List<StoryQuiz> getStoryQuizs() {
+        return storyQuizs;
+    }
+
+    public void setStoryQuizs(List<StoryQuiz> storyQuizs) {
+        this.storyQuizs = storyQuizs;
+    }
+
+    public List<StoryCountDown> getStoryCountDowns() {
+        return storyCountDowns;
+    }
+
+    public void setStoryCountDowns(List<StoryCountDown> storyCountDowns) {
+        this.storyCountDowns = storyCountDowns;
+    }
+
+    public List<StorySlider> getStorySliders() {
+        return storySliders;
+    }
+
+    public void setStorySliders(List<StorySlider> storySliders) {
+        this.storySliders = storySliders;
+    }
+
+    public List<StoryAntiBullySticker> getStoryAntiBullyStickers() {
+        return storyAntiBullyStickers;
+    }
+
+    public void setStoryAntiBullyStickers(List<StoryAntiBullySticker> storyAntiBullyStickers) {
+        this.storyAntiBullyStickers = storyAntiBullyStickers;
     }
 }

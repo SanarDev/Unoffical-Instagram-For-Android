@@ -66,6 +66,7 @@ public class IGConstants {
 
     public static final String BASE_API_URL = "https://i.instagram.com/";
     public static final String API_PREFIX = "api/v1/";
+    public static final String API_PREFIX_V2 = "api/v2/";
 
     public static final String IG_SET_PASSWORD_ENCRYPTION_PUB_KEY = "ig-set-password-encryption-pub-key";
     public static final String IG_SET_PASSWORD_ENCRYPTION_KEY_ID = "ig-set-password-encryption-key-id";

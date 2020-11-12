@@ -373,4 +373,13 @@ interface IGRemote {
         @Query("limit")limit: Int = 20
     ): Observable<IGParticipantsResponse>
 
+    @POST(IGConstants.API_PREFIX + "media/{media_id}/{slider_id}/story_slider_vote/")
+    fun voteSlider(@HeaderMap header: Map<String, String>,
+                   @Path("media_id") mediaId:String,
+                   @Path("slider_id") sliderId:Long,
+                   @Body requestBody: RequestBody
+    ):Observable<IGStorySliderVoteResponse>
+
+    @POST(IGConstants.API_PREFIX_V2 + "media/seen/?reel=1&live_vode=0")
+    fun markStoriesAsSeen(@HeaderMap header: Map<String, String>, @Body requestBody: RequestBody):Observable<ResponseBody>
 }

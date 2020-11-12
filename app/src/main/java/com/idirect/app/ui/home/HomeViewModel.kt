@@ -1,6 +1,7 @@
 package com.idirect.app.ui.home
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.idirect.app.core.BaseViewModel
@@ -63,7 +64,9 @@ class HomeViewModel @Inject constructor(application: Application):BaseViewModel(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 storyMediaLiveData.value = Resource.success(it.reels[userId])
-            },{},{})
+            },{
+                Log.i("TEST","TEST")
+            },{})
     }
     fun unlikePost(id: String) {
         instaClient.mediaProcessor.unlikePost(id).subscribe({},{},{})

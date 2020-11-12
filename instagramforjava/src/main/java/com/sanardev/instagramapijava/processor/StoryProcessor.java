@@ -6,10 +6,12 @@ import com.sanardev.instagramapijava.model.login.IGLoggedUser;
 import com.sanardev.instagramapijava.model.story.Story;
 import com.sanardev.instagramapijava.request.IGGetStoryMediaRequest;
 import com.sanardev.instagramapijava.request.IGGetTimelineStory;
+import com.sanardev.instagramapijava.response.BaseResponse;
 import com.sanardev.instagramapijava.response.IGSendStoryReactionResponse;
 import com.sanardev.instagramapijava.response.IGShareStoryResponse;
 import com.sanardev.instagramapijava.response.IGStoryMediaResponse;
 import com.sanardev.instagramapijava.response.IGStoryReplyResponse;
+import com.sanardev.instagramapijava.response.IGStorySliderVoteResponse;
 import com.sanardev.instagramapijava.response.IGTimeLineStoryResponse;
 import com.sanardev.instagramapijava.utils.InstaHashUtils;
 import com.sanardev.instagramapijava.utils.StorageUtils;
@@ -21,6 +23,7 @@ import java.util.List;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
 
 public class StoryProcessor {
 
@@ -231,5 +234,40 @@ public class StoryProcessor {
                 .subscribeOn(Schedulers.io());
     }
 
+    public Observable<IGStorySliderVoteResponse> voteSlider(float vote,long sliderId,String mediaId){
+        Cookie cookie = igRequest.getCookie();
+        IGLoggedUser loggedUser = igRequest.getLoggedUser();
+        HashMap<Object, Object> data = new HashMap<>();
+        data.put("_csrftoken",cookie.getCsrftoken());
+        data.put("_uid",loggedUser.getPk());
+        data.put("vote",vote);
+        data.put("_uuid",cookie.getAdid());
+        return igRequest.getRemote().voteSlider(igRequest.getHeaders(),mediaId,sliderId,igRequest.getSignaturePayload(data))
+                .subscribeOn(Schedulers.io());
+    }
+
+    public Observable<ResponseBody> markStoryAsSeen(String id, long tokanAt){
+        Cookie cookie = igRequest.getCookie();
+        IGLoggedUser loggedUser = igRequest.getLoggedUser();
+        HashMap<Object, Object> data = new HashMap<>();
+        data.put("_csrftoken",cookie.getCsrftoken());
+        data.put("_uid",loggedUser.getPk());
+        data.put("_uuid",cookie.getAdid());
+        data.put("container_module","feed_timeline");
+        data.put("live_vods_skipped",new HashMap());
+        data.put("nuxes_skipped",new HashMap());
+        data.put("nuxes",new HashMap());
+        data.put("reels",new HashMap());
+
+        String storyId = String.format("%s_%s",id,id.split("_")[1]);
+        HashMap<Object, Object> reels = new HashMap<>();
+        reels.put(storyId,new String[]{String.format("%d_%d",tokanAt,System.currentTimeMillis() / 1000)});
+        data.put("reels",reels);
+        data.put("live_vods",new HashMap());
+        data.put("reel_media_skipped",new HashMap());
+
+        return igRequest.getRemote().markStoriesAsSeen(igRequest.getHeaders(),igRequest.getSignaturePayload(data))
+                .subscribeOn(Schedulers.io());
+    }
 
 }

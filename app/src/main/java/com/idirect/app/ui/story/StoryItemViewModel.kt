@@ -1,6 +1,8 @@
 package com.idirect.app.ui.story
 
+import android.annotation.SuppressLint
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.Tray
@@ -45,5 +47,30 @@ class StoryItemViewModel @Inject constructor(application: Application) :
             .subscribe({
                 storyReactionResult.value = Resource.success(it)
             },{},{})
+    }
+
+    @SuppressLint("CheckResult")
+    fun voteSlider(storyPosition:Int,id: String, sliderId: Long, vote: Float) {
+        instaClient.storyProcessor.voteSlider(vote,sliderId,id)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+            val tray = storyMediaLiveData.value!!.data!!
+            tray.items[storyPosition] = it.story
+            storyMediaLiveData.value = Resource.success(tray)
+        },{
+            Log.i("TEST","TEST")
+        },{
+
+        })
+    }
+
+    fun markStoryAsSeen(id: String, takenAt: Long) {
+        instaClient.storyProcessor.markStoryAsSeen(id,takenAt)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                Log.i("TEST","TEST")
+            },{
+                Log.i("TEST","TEST")
+            },{})
     }
 }

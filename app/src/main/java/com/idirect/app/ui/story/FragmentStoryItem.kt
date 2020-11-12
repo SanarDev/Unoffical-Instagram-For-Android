@@ -2,25 +2,29 @@ package com.idirect.app.ui.story
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
+import android.text.Layout
 import android.text.TextWatcher
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.view.animation.LinearInterpolator
-import android.widget.LinearLayout
-import android.widget.ProgressBar
-import android.widget.Toast
+import android.widget.*
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.cardview.widget.CardView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import androidx.core.view.setMargins
+import androidx.core.view.setPadding
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
@@ -34,15 +38,20 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.google.android.material.internal.TextDrawableHelper
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
+import com.idirect.app.creator.IGStoryItemCreator
+import com.idirect.app.customview.textdrawable.TextDrawable
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentStoryItemBinding
 import com.idirect.app.databinding.LayoutEmojiBinding
+import com.idirect.app.databinding.LayoutStoryItemPopupBinding
 import com.idirect.app.datasource.model.Story
 import com.idirect.app.datasource.model.Tray
+import com.idirect.app.extensions.drawable
 import com.idirect.app.extensions.fadeIn
 import com.idirect.app.extensions.fadeOut
 import com.idirect.app.extensions.setProgressColor
@@ -56,6 +65,7 @@ import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
+import com.sanardev.instagramapijava.model.story.*
 import com.vanniktech.emoji.EmojiPopup
 import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener
 import com.vanniktech.emoji.listeners.OnEmojiPopupShownListener
@@ -99,18 +109,19 @@ class FragmentStoryItem(
     private lateinit var sharedViewModel: ShareViewModel
     private var currentTray: com.sanardev.instagramapijava.model.story.Tray? = null
     private var valueAnimatorUpdateListener =
+        // change
         ValueAnimator.AnimatorUpdateListener { animation ->
-            if (currentPosition != -1) {
-                val value = animation!!.animatedValue as Int
-                progressBars[currentPosition].progress = value
-            }
+//            if (currentPosition != -1) {
+//                val value = animation!!.animatedValue as Int
+//                progressBars[currentPosition].progress = value
+//            }
         }
 
     var _valueAnimator: ValueAnimator? = null
     val valueAnimator: ValueAnimator get() = _valueAnimator!!
 
-    private var _mGlide:RequestManager?=null
-    private val mGlide:RequestManager get() = _mGlide!!
+    private var _mGlide: RequestManager? = null
+    private val mGlide: RequestManager get() = _mGlide!!
 
     override fun getViewModelClass(): Class<StoryItemViewModel> {
         return StoryItemViewModel::class.java
@@ -147,11 +158,10 @@ class FragmentStoryItem(
         _mGlide = Glide.with(this@FragmentStoryItem)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        requireActivity().window.decorView.systemUiVisibility = 0
 
         dataSource = DefaultHttpDataSourceFactory(Util.getUserAgent(requireContext(), "Instagram"))
         sharedViewModel = ViewModelProvider(requireActivity()).get(ShareViewModel::class.java)
@@ -166,11 +176,12 @@ class FragmentStoryItem(
             binding.recyclerviewEmoji.visibility = View.INVISIBLE
         }
         valueAnimator.doOnEnd {
-            if (!isCancelValueAnimator) {
-                showNextItem()
-            } else {
-                isCancelValueAnimator = false
-            }
+            //change
+//            if (!isCancelValueAnimator) {
+//                showNextItem()
+//            } else {
+//                isCancelValueAnimator = false
+//            }
         }
 
         emojiPopup =
@@ -183,8 +194,6 @@ class FragmentStoryItem(
         binding.recyclerviewEmoji.adapter = EmojiAdapter(initEmoji())
 
         binding.imgPhoto.layoutParams.apply {
-            width = displayWidth
-            height = displayHeight
         }
 
         viewModel.getStoryData(userId)
@@ -208,7 +217,7 @@ class FragmentStoryItem(
             }
         })
 
-        binding.layoutMessage.setOnTouchListener { v, event ->
+        binding.touchableView.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_CANCEL) {
                 binding.layoutItems.fadeIn(100)
                 valueAnimator.resume()
@@ -252,7 +261,6 @@ class FragmentStoryItem(
         }
 
         binding.videoView.layoutParams.apply {
-            width = displayWidth
             height = displayHeight
         }
         mPlayManager.player.addListener(object : Player.EventListener {
@@ -323,11 +331,13 @@ class FragmentStoryItem(
         binding.btnSend.setOnClickListener {
             if (it.rotation == SEND_MESSAGE_ROTATE) {
                 val currentStory = currentTray!!.items[currentPosition]
-                viewModel.replyStory( sharedViewModel.getThreadIdByUserId(currentTray!!.user.pk),
+                viewModel.replyStory(
+                    sharedViewModel.getThreadIdByUserId(currentTray!!.user.pk),
                     currentStory.id,
                     currentStory.mediaType,
                     binding.edtMessage.text.toString(),
-                    currentStory.pk)
+                    currentStory.pk
+                )
                 binding.edtMessage.setText("")
                 emojiPopup?.dismiss()
                 requireActivity().hideKeyboard()
@@ -384,7 +394,7 @@ class FragmentStoryItem(
                 layoutParams =
                     LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.WRAP_CONTENT,
-                        resources.dpToPx(1.5f)
+                        resources.dpToPx(3f)
                     ).apply {
                         this.weight = 1f
                         this.marginStart = resources.dpToPx(2f)
@@ -421,6 +431,7 @@ class FragmentStoryItem(
     }
 
     private fun loadItem(item: com.sanardev.instagramapijava.model.story.Story) {
+        viewModel.markStoryAsSeen(item.id,item.takenAt)
         if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
             mPlayManager.stopPlay()
             valueAnimator.pause()
@@ -440,8 +451,117 @@ class FragmentStoryItem(
             binding.videoView.player = mPlayManager.player
             valueAnimator.duration = (item.videoDuration * 1000).toLong()
         }
+
     }
 
+    private fun initialaizeStoryItem(){
+        val item = currentTray!!.items[currentPosition]
+        val storyItems = ArrayList<Any>().toMutableList()
+        item.reelMentions?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyPolls?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyFeedMedia?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyHashtags?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyLocations?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyQuestions?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyQuizs?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyCountDowns?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storySliders?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+        item.storyAntiBullyStickers?.let {
+            for (`object` in it) {
+                storyItems.add(`object`)
+            }
+        }
+
+        binding.layoutStoryItems.removeAllViews()
+        for (item in storyItems) {
+            when (item::class.java.simpleName) {
+                ReelMention::class.java.simpleName -> {
+                    binding.layoutStoryItems.addView(
+                        createReelMention(
+                            binding.layoutStoryItems,
+                            item as ReelMention
+                        )
+                    )
+                }
+                StoryLocation::class.java.simpleName -> {
+                    binding.layoutStoryItems.addView(
+                        createLocation(
+                            binding.layoutStoryItems,
+                            item as StoryLocation
+                        )
+                    )
+                }
+                StoryHashtag::class.java.simpleName -> {
+                    binding.layoutStoryItems.addView(
+                        createHashtag(
+                            binding.layoutStoryItems,
+                            item as StoryHashtag
+                        )
+                    )
+                }
+                StoryPoll::class.java.simpleName -> {
+                    binding.layoutStoryItems.addView(
+                        createPoll(
+                            binding.layoutStoryItems,
+                            item as StoryPoll
+                        )
+                    )
+                }
+                StoryQuestion::class.java.simpleName -> {
+                    binding.layoutStoryItems.addView(
+                        createQuestion(
+                            binding.layoutStoryItems,
+                            item as StoryQuestion
+                        )
+                    )
+                }
+                StorySlider::class.java.simpleName -> {
+                    binding.layoutStoryItems.addView(
+                        createSlider(
+                            binding.layoutStoryItems,
+                            item as StorySlider
+                        )
+                    )
+                }
+            }
+        }
+    }
     private fun showPreviousItem() {
         currentPosition -= 1
         if (currentPosition >= progressBars.size || currentPosition < 0) {
@@ -552,5 +672,212 @@ class FragmentStoryItem(
 
     override fun onEmojiPopupShown() {
         binding.btnEmoji.setImageResource(R.drawable.ic_keyboard_outline)
+    }
+
+    fun createLocation(v: View, storyLocation: StoryLocation): FrameLayout {
+        val viewGroup = createClickableLayout(
+            v, storyLocation
+        )
+        viewGroup.setOnClickListener {
+            val popup = PopupWindow(requireContext())
+            val layout: LayoutStoryItemPopupBinding = DataBindingUtil.inflate(
+                LayoutInflater.from(context),
+                R.layout.layout_story_item_popup,
+                null,
+                false
+            )
+            layout.txtInfo.text = requireContext().getString(R.string.view_location)
+            layout.imgProfile.visibility = View.GONE
+            popup.contentView = layout.root
+            popup.isOutsideTouchable = true
+            popup.setBackgroundDrawable(
+                ColorDrawable(
+                    Color.TRANSPARENT
+                )
+            );
+            popup.showAsDropDown(viewGroup)
+        }
+        return viewGroup
+    }
+
+    fun createHashtag(v: View, storyHashtag: StoryHashtag): FrameLayout {
+        val viewGroup = createClickableLayout(v, storyHashtag)
+        viewGroup.setOnClickListener {
+            val popup = PopupWindow(context)
+            val layout: LayoutStoryItemPopupBinding = DataBindingUtil.inflate(
+                LayoutInflater.from(context),
+                R.layout.layout_story_item_popup,
+                null,
+                false
+            )
+            layout.txtInfo.text = requireContext().getString(R.string.view_hashtag)
+            layout.imgProfile.visibility = View.GONE
+            popup.contentView = layout.root
+            popup.isOutsideTouchable = true
+            popup.setBackgroundDrawable(
+                ColorDrawable(
+                    Color.TRANSPARENT
+                )
+            );
+            popup.showAsDropDown(viewGroup)
+        }
+        return viewGroup
+    }
+
+    fun createQuestion(v: View, storyQuestion: StoryQuestion): FrameLayout {
+        val viewGroup = createClickableLayout(v, storyQuestion)
+        viewGroup.setOnClickListener {
+            CustomToast.show(requireContext(), "Question")
+        }
+        return viewGroup
+    }
+
+    fun createSlider(v: View, storySlider: StorySlider): ViewGroup {
+        val displayWidth = v.width
+        val displayHeight = v.height
+        val viewGroup = CardView(requireContext()).apply {
+            val width = (storySlider.width * displayWidth).toInt()
+            val height = (storySlider.height * displayHeight).toInt()
+            layoutParams = ConstraintLayout.LayoutParams(width, height).apply {
+                this.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                this.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+                this.topMargin = (displayHeight * storySlider.y).toInt() - height / 2
+                this.leftMargin = (displayWidth * storySlider.x).toInt() - width / 2
+            }
+            this.isClickable = true
+            this.isFocusable = true
+            this.rotation = (storySlider.rotation * 360).toFloat()
+            this.radius = dpToPx(10f, resources).toFloat()
+            this.setCardBackgroundColor(Color.parseColor(storySlider.sliderSticker.backgroundColor))
+        }
+
+        val linearLayout = LinearLayout(requireContext()).apply {
+            layoutParams = ConstraintLayout.LayoutParams(
+                ConstraintLayout.LayoutParams.MATCH_PARENT,
+                ConstraintLayout.LayoutParams.MATCH_PARENT
+            ).apply {
+                setMargins(dpToPx(10f, resources))
+            }
+            this.orientation = LinearLayout.VERTICAL
+        }
+        viewGroup.addView(linearLayout)
+
+        val questionText = AppCompatTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setTextColor(Color.parseColor(storySlider.sliderSticker.textColor))
+            text = storySlider.sliderSticker.question
+            gravity = Gravity.CENTER
+        }
+        linearLayout.addView(questionText)
+
+        val seekBar = SeekBar(requireContext()).apply {
+            layoutParams =
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0).apply {
+                    weight = 1f
+                }
+            max = 10
+            thumb = TextDrawable(requireContext()).apply {
+                text = storySlider.sliderSticker.emoji
+                textAlign = Layout.Alignment.ALIGN_CENTER
+            }
+        }
+        if(storySlider.sliderSticker.viewerVote != -1.0){
+            seekBar.progress = (storySlider.sliderSticker.viewerVote * 10).toInt()
+        }
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                viewModel.voteSlider(
+                    currentPosition,
+                    currentTray!!.items[currentPosition].id,
+                    storySlider.sliderSticker.sliderId,
+                    (seekBar!!.progress.toFloat() / 10.toFloat())
+                )
+            }
+        })
+        seekBar.setOnTouchListener { v, event ->
+            return@setOnTouchListener storySlider.sliderSticker.viewerVote != -1.0
+        }
+        linearLayout.addView(seekBar)
+
+        return viewGroup
+    }
+
+    fun createReelMention(v: View, reelMention: ReelMention): FrameLayout {
+        val viewGroup = createClickableLayout(v, reelMention)
+        viewGroup.setOnClickListener {
+            val popup = PopupWindow(context)
+            val layout: LayoutStoryItemPopupBinding = DataBindingUtil.inflate(
+                LayoutInflater.from(context),
+                R.layout.layout_story_item_popup,
+                null,
+                false
+            )
+            mGlide.load(reelMention.user.profilePicUrl).into(layout.imgProfile)
+            layout.txtInfo.text = reelMention.user.fullName
+            layout.imgProfile.visibility = View.VISIBLE
+            popup.contentView = layout.root
+            popup.isOutsideTouchable = true
+            popup.setBackgroundDrawable(
+                ColorDrawable(
+                    Color.TRANSPARENT
+                )
+            );
+            popup.showAsDropDown(viewGroup)
+        }
+        return viewGroup
+    }
+
+    fun createClickableLayout(v: View, baseStoryItem: BaseStoryItem): FrameLayout {
+        val displayWidth = v.width
+        val displayHeight = v.height
+
+        val viewGroup = FrameLayout(requireContext()).apply {
+            val width = (baseStoryItem.width * displayWidth).toInt()
+            val height = (baseStoryItem.height * displayHeight).toInt()
+            layoutParams = ConstraintLayout.LayoutParams(width, height).apply {
+                this.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                this.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+                this.topMargin = (displayHeight * baseStoryItem.y).toInt() - height / 2
+                this.leftMargin = (displayWidth * baseStoryItem.x).toInt() - width / 2
+            }
+            this.isClickable = true
+            this.isFocusable = true
+            this.rotation = (baseStoryItem.rotation * 360).toFloat()
+        }
+        return viewGroup
+    }
+
+    fun createPoll(v: View, storyPoll: StoryPoll): FrameLayout {
+        val displayWidth = v.width
+        val displayHeight = v.height
+
+        val viewGroup = FrameLayout(requireContext()).apply {
+            val width = (storyPoll.width * displayWidth).toInt()
+            val height = (storyPoll.height * displayHeight).toInt()
+            layoutParams = ConstraintLayout.LayoutParams(width, height).apply {
+                this.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                this.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+                this.topMargin = (displayHeight * storyPoll.y).toInt() - height / 2
+                this.leftMargin = (displayWidth * storyPoll.x).toInt() - width / 2
+            }
+            this.isClickable = true
+            this.isFocusable = true
+            this.rotation = (storyPoll.rotation * 360).toFloat()
+        }
+        viewGroup.setOnClickListener {
+            CustomToast.show(requireContext(), "Poll", Toast.LENGTH_SHORT)
+        }
+
+        return viewGroup
     }
 }

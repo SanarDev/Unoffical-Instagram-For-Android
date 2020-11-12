@@ -251,6 +251,10 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
 
             init {
                 storyWidget = StoryWidget(v.context)
+                storyWidget.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
                 v.addView(storyWidget)
             }
         }

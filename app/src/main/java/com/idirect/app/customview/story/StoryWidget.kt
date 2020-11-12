@@ -8,6 +8,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -60,7 +61,6 @@ class StoryWidget(context: Context, attr: AttributeSet? = null) : LinearLayout(c
         orientation = VERTICAL
         val padding = dpToPx(5f,context.resources)
         setPadding(padding,padding,padding,padding)
-
         // hide username and show it when setUsername called
         txtUsername.visibility = View.GONE
     }

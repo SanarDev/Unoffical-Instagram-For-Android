@@ -140,4 +140,6 @@
     <string name="error_in_like_comment">Error in like comment</string>
     <string name="media">Media</string>
     <string name="more">More</string>
+    <string name="view_hashtag">View Hashtag</string>
+    <string name="view_location">View Location</string>
 </resources>

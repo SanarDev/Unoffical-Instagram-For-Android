@@ -3,25 +3,20 @@ package com.idirect.app.ui.story
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
-import androidx.navigation.findNavController
 import androidx.viewpager.widget.ViewPager
 import com.ToxicBakery.viewpager.transforms.RotateUpTransformer
-import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.FragmentStoryBinding
-import com.idirect.app.datasource.model.Tray
-import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.main.MainActivity
-import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import javax.inject.Inject
 
@@ -50,6 +45,15 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>() {
     private val mStoryActionListener: StoryActionListener get() = _mStoryActionListener!!
     private val fragments = HashMap<Int, FragmentStoryItem>()
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Hide status bar
+        requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -101,7 +105,7 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>() {
                     fragments[position]?.showNextItem()
                     lastPosition = position
                 } else if (lastPosition == position && position == binding.viewPager.adapter!!.count - 1) {
-                    activity?.onBackPressed()
+//                    activity?.onBackPressed()
                 }
                 fragments[binding.viewPager.currentItem]?.isTouchEnable = positionOffsetPixels == 0
             }
@@ -167,6 +171,7 @@ class FragmentStory : BaseFragment<FragmentStoryBinding, StoryViewModel>() {
     override fun onDestroyView() {
         _mAdapter = null
         _mStoryActionListener = null
+        requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
         super.onDestroyView()
     }
 
