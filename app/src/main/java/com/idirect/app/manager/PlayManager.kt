@@ -122,6 +122,9 @@ class PlayManager constructor(context: Context) {
     fun pausePlay() {
         player.playWhenReady = false
     }
+    fun replay() {
+        player.seekTo(0)
+    }
 
     fun enableSound() {
         player.volume = 1.0f

@@ -41,4 +41,6 @@
     <color name="navigation_inactiveItem">#aaa</color>
     <color name="card_post">@color/theme_item</color>
     <color name="forward_button">#365FF4</color>
+    <color name="bg_blue_apply">#1976D2</color>
+    <color name="bg_green_success">#689F38</color>
 </resources>

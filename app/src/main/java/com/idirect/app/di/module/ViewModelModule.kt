@@ -19,8 +19,8 @@ import com.idirect.app.ui.profile.ProfileViewModel
 import com.idirect.app.ui.setting.SettingViewModel
 import com.idirect.app.ui.search.SearchViewModel
 import com.idirect.app.ui.singlepost.SinglePostViewModel
-import com.idirect.app.ui.story.StoryItemViewModel
 import com.idirect.app.ui.story.StoryViewModel
+import com.idirect.app.ui.story.TrayCollectionViewModel
 import com.idirect.app.ui.twofactor.TwoFactorViewModel
 import com.idirect.app.ui.userprofile.UserProfileViewModel
 import dagger.Binds
@@ -106,13 +106,13 @@ abstract class ViewModelModule {
 
     @Binds
     @IntoMap
-    @ViewModelKey(StoryItemViewModel::class)
-    abstract fun storyItemViewModel(storyItemViewModel: StoryItemViewModel):ViewModel
+    @ViewModelKey(StoryViewModel::class)
+    abstract fun storyItemViewModel(storyViewModel: StoryViewModel):ViewModel
 
     @Binds
     @IntoMap
-    @ViewModelKey(StoryViewModel::class)
-    abstract fun storyViewModel(storyViewModel: StoryViewModel):ViewModel
+    @ViewModelKey(TrayCollectionViewModel::class)
+    abstract fun storyViewModel(trayCollectionViewModel: TrayCollectionViewModel):ViewModel
 
     @Binds
     @IntoMap

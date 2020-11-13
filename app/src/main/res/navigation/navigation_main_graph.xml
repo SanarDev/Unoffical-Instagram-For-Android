@@ -67,7 +67,7 @@
 
     <fragment
         android:id="@+id/fragmentStory"
-        android:name="com.idirect.app.ui.story.FragmentStory"
+        android:name="com.idirect.app.ui.story.FragmentTrayCollection"
         android:label="FragmentStory"
         tools:layout="@layout/fragment_story"/>
 

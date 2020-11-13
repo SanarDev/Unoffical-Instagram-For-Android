@@ -270,4 +270,19 @@ public class StoryProcessor {
                 .subscribeOn(Schedulers.io());
     }
 
+    public Observable<ResponseBody> storyQuestionResponse(String mediaId, long questionId,String response){
+        Cookie cookie = igRequest.getCookie();
+        IGLoggedUser loggedUser = igRequest.getLoggedUser();
+        HashMap<Object, Object> data = new HashMap<>();
+        data.put("_csrftoken",cookie.getCsrftoken());
+        data.put("_uid",loggedUser.getPk());
+        data.put("_uuid",cookie.getAdid());
+        data.put("client_context",InstaHashUtils.getClientContext());
+        data.put("type","text");
+        data.put("mutation_token",data.get("_csrftoken"));
+        data.put("response",response);
+        return igRequest.getRemote().storyQuestionResponse(igRequest.getHeaders(),mediaId,questionId,igRequest.getSignaturePayload(data))
+                .subscribeOn(Schedulers.io());
+    }
+
 }
