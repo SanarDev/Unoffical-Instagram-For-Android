@@ -24,13 +24,16 @@
                 android:layout_height="wrap_content"
                 android:elevation="20dp">
 
-                <androidx.recyclerview.widget.RecyclerView
+                <com.idirect.app.customview.customrecyclerview.StoryRecyclerView
                     android:id="@+id/view_pager"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:clickable="false"
                     android:focusable="false"
+                    android:focusableInTouchMode="false"
                     android:scrollbars="none"
+                    android:nestedScrollingEnabled="false"
+                    app:fastScrollEnabled="false"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                     tools:listitem="@layout/fragment_story_item"
                     tools:itemCount="10"/>

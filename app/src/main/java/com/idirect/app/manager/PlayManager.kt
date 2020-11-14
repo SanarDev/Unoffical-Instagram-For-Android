@@ -113,6 +113,7 @@ class PlayManager constructor(context: Context) {
 
     fun resumePlay() {
         player.playWhenReady = true
+        Log.i(InstagramConstants.DEBUG_TAG,"resume play")
     }
 
     fun disableSound() {
@@ -121,6 +122,7 @@ class PlayManager constructor(context: Context) {
 
     fun pausePlay() {
         player.playWhenReady = false
+        Log.i(InstagramConstants.DEBUG_TAG,"pause play")
     }
     fun replay() {
         player.seekTo(0)

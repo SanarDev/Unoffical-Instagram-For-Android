@@ -14,19 +14,12 @@
             android:scaleType="fitXY"
             tools:src="@mipmap/pic_test" />
 
-        <com.google.android.exoplayer2.ui.PlayerView
-            android:id="@+id/video_view"
+        <FrameLayout
+            android:id="@+id/layout_player"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="false"
-            android:focusable="false"
-            android:visibility="gone"
-            app:hide_on_touch="false"
-            app:repeat_toggle_modes="all"
-            app:resize_mode="fill"
-            app:show_buffering="always"
-            app:show_timeout="0"
-            app:use_controller="false" />
+            android:layout_height="match_parent">
+
+        </FrameLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layout_story_items"

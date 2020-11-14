@@ -10,14 +10,20 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
+import androidx.navigation.findNavController
 import androidx.viewpager.widget.ViewPager
 import com.ToxicBakery.viewpager.transforms.RotateUpTransformer
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.ui.PlayerView
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.FragmentStoryBinding
 import com.idirect.app.databinding.FragmentTrayCollectionBinding
+import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.main.MainActivity
+import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import javax.inject.Inject
 
@@ -28,6 +34,7 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
     private var userId: Long = 0
 
     @Inject lateinit var mHandler: Handler
+    @Inject lateinit var mPlayManager: PlayManager
 
     override fun getViewModelClass(): Class<TrayCollectionViewModel> {
         return TrayCollectionViewModel::class.java
@@ -42,12 +49,34 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
     }
 
     private var lastPosition = 0
+    private var isStarted = false
     private var _mStoryActionListener: StoryActionListener? = null
     private val mStoryActionListener: StoryActionListener get() = _mStoryActionListener!!
     private val fragments = HashMap<Int, FragmentStory>()
+    private lateinit var videoView: PlayerView
 
     override fun isHideStatusBar(): Boolean {
         return true
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        videoView = LayoutInflater.from(context)
+            .inflate(R.layout.story_player, null, false) as PlayerView
+        videoView.player = mPlayManager.player
+        mPlayManager.player.addListener(object : Player.EventListener {
+            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_BUFFERING -> {
+                        fragments[binding.viewPager.currentItem]?.pauseTimer()
+                    }
+                    Player.STATE_READY -> {
+                        fragments[binding.viewPager.currentItem]?.stateReady()
+                    }
+                }
+            }
+        })
     }
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -75,15 +104,16 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
             }
 
             override fun onProfileClick(v: View, userId: Long, username: String) {
-//                val data = UserBundle().apply {
-//                    this.userId = userId
-//                    this.username = username
-//                }
-//                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(data)
-//                v.findNavController().navigate(action)
-//                fragments[binding.viewPager.currentItem]?.mPlayManager?.stopPlay()
+                val data = UserBundle().apply {
+                    this.userId = userId
+                    this.username = username
+                }
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(data)
+                v.findNavController().navigate(action)
+                fragments[binding.viewPager.currentItem]?.mPlayManager?.stopPlay()
             }
         }
+
         _mAdapter = StoriesAdapter(null, childFragmentManager)
         binding.viewPager.adapter = mAdapter
         binding.viewPager.currentItem = lastPosition
@@ -102,9 +132,10 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
                 if (position != -1 && positionOffsetPixels == 0 && lastPosition != position) {
                     fragments[lastPosition]?.onPause()
                     fragments[lastPosition]?.apply {
-                        currentPosition -= 1
+                        this.showPreviousItem()
                         onPause()
                     }
+                    fragments[position]?.playItemAfterLoad = true
                     fragments[position]?.showNextItem()
                     lastPosition = position
                 } else if (lastPosition == position && position == binding.viewPager.adapter!!.count - 1) {
@@ -145,15 +176,21 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
         // Returns the fragment to display for that page
         override fun getItem(position: Int): Fragment {
             val item = items!![position]
+            var isPlayAfterLoad = false
+            if(!isStarted && item.user.pk == userId){
+                isPlayAfterLoad = true
+                isStarted = true
+            }else{
+                isPlayAfterLoad = false
+            }
             val fragment =
-                FragmentStory(item.user.pk, mStoryActionListener)
+                FragmentStory(item.user.pk, mStoryActionListener,mPlayManager,videoView,isPlayAfterLoad)
             fragments.put(position, fragment)
             return fragment
         }
 
         override fun destroyItem(container: ViewGroup, position: Int, `object`: Any) {
             super.destroyItem(container, position, `object`)
-            fragments[position]?.mPlayManager?.releasePlay()
             fragments[position]?.mStoryActionListener = null
             fragments.remove(position)
         }
@@ -179,13 +216,14 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
 
     override fun onDestroy() {
         super.onDestroy()
+        mPlayManager.releasePlay()
     }
 
     override fun onStop() {
         super.onStop()
         for (item in fragments.entries) {
             item.value.playItemAfterLoad = false
-            item.value.mPlayManager.stopPlay()
+            mPlayManager.stopPlay()
         }
     }
 

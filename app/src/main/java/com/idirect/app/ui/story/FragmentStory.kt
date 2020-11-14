@@ -34,6 +34,7 @@ import com.bumptech.glide.request.target.Target
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
@@ -73,6 +74,8 @@ import javax.inject.Inject
 class FragmentStory(
     var userId: Long,
     var mStoryActionListener: StoryActionListener? = null,
+    val mPlayManager: PlayManager,
+    val videoView: PlayerView,
     var playItemAfterLoad: Boolean = false,
     var isTouchEnable: Boolean = true
 ) : BaseFragment<FragmentStoryBinding, StoryViewModel>(), ForwardListener,
@@ -83,9 +86,6 @@ class FragmentStory(
 
     @Inject
     lateinit var mHandler: Handler
-
-    @Inject
-    lateinit var mPlayManager: PlayManager
 
     companion object {
         const val SEND_MESSAGE_ROTATE = 27f
@@ -203,9 +203,9 @@ class FragmentStory(
                 currentTray = it.data!!
                 initLayout(it.data!!)
                 storyAdapter.notifyDataSetChanged()
-//                if (playItemAfterLoad) {
+                if (playItemAfterLoad) {
                     showNextItem()
-//                }
+                }
             }
         })
         viewModel.storyReactionResult.observe(viewLifecycleOwner, Observer {
@@ -266,20 +266,6 @@ class FragmentStory(
 //        binding.videoView.layoutParams.apply {
 //            height = displayHeight
 //        }
-        mPlayManager.player.addListener(object : Player.EventListener {
-            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                when (playbackState) {
-                    Player.STATE_BUFFERING -> {
-                        pauseTimer()
-                    }
-                    Player.STATE_READY -> {
-                        if (!isPauseAnyThing) {
-                            resumeTimer()
-                        }
-                    }
-                }
-            }
-        })
 
         binding.btnEmoji.setOnClickListener {
             if (emojiPopup!!.isShowing) {
@@ -404,7 +390,7 @@ class FragmentStory(
             return
         }
         val item = currentTray!!.items!![currentPosition]
-        Log.i(InstagramConstants.DEBUG_TAG,currentTray!!.user!!.fullName)
+        Log.i(InstagramConstants.DEBUG_TAG,currentTray!!.user!!.username)
         Log.i(InstagramConstants.DEBUG_TAG,item.id)
         viewModel.markStoryAsSeen(item.id, item.takenAt)
         binding.layoutItems.fadeIn(0)
@@ -415,7 +401,7 @@ class FragmentStory(
         }
     }
 
-    private fun showPreviousItem() {
+    fun showPreviousItem() {
         if((valueAnimator.animatedValue as Int) > (MAX_VALUE_PROGRESS / 2)){
             resetTimer()
             return
@@ -437,11 +423,16 @@ class FragmentStory(
         }
     }
 
-    private fun pauseTimer(){
+    fun stateReady(){
+        if (!isPauseAnyThing) {
+            resumeTimer()
+        }
+    }
+    fun pauseTimer(){
         valueAnimator.pause()
         mPlayManager.pausePlay()
     }
-    private fun resumeTimer(){
+    fun resumeTimer(){
         valueAnimator.resume()
         mPlayManager.resumePlay()
     }
@@ -470,22 +461,27 @@ class FragmentStory(
             }
             if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
                 mPlayManager.stopPlay()
-                dataBinding.videoView.visibility = View.INVISIBLE
+                dataBinding.layoutPlayer.visibility = View.INVISIBLE
                 dataBinding.imgPhoto.visibility = View.VISIBLE
                 mGlide.asBitmap().load(item.imageVersions2.candidates[0].url).into(dataBinding.imgPhoto)
                 valueAnimator.duration = 5000
             }
             if (item.mediaType == InstagramConstants.MediaType.VIDEO.type) {
-                dataBinding.videoView.visibility = View.VISIBLE
+                dataBinding.layoutPlayer.visibility = View.VISIBLE
                 dataBinding.imgPhoto.visibility = View.INVISIBLE
-                dataBinding.videoView.layoutParams.apply {
-                    height = displayHeight
+                Log.i(InstagramConstants.DEBUG_TAG,"isPlayItemAfterLoad $playItemAfterLoad: "+ currentTray!!.user!!.username)
+                if(playItemAfterLoad){
+                    val mediaSource: MediaSource =
+                        ProgressiveMediaSource.Factory(dataSource)
+                            .createMediaSource(Uri.parse(item.videoVersions[0].url))
+                    videoView.parent?.let{
+                        if(it is ViewGroup){
+                            it.removeView(videoView)
+                        }
+                    }
+                    dataBinding.layoutPlayer.addView(videoView)
+                    mPlayManager.startPlay(mediaSource, item.id)
                 }
-                val mediaSource: MediaSource =
-                    ProgressiveMediaSource.Factory(dataSource)
-                        .createMediaSource(Uri.parse(item.videoVersions[0].url))
-                mPlayManager.startPlay(mediaSource, item.id)
-                dataBinding.videoView.player = mPlayManager.player
                 valueAnimator.duration = (item.videoDuration * 1000).toLong()
             }
 
@@ -686,7 +682,6 @@ class FragmentStory(
 
     override fun onDestroy() {
         super.onDestroy()
-        mPlayManager.releasePlay()
     }
 
     override fun onEmojiPopupDismiss() {

@@ -53,6 +53,7 @@ class FragmentQuestion(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         binding = DataBindingUtil.inflate(layoutInflater, R.layout.fragment_question,container,false)
         mGlide = Glide.with(this)
         return binding.root

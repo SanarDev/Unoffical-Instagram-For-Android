@@ -51,14 +51,14 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
     open fun onKeyboardHide(){
     }
 
+    open fun showStatusBar(){
+        requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+    }
     open fun isHideStatusBar():Boolean = false
     override fun onDestroyView() {
         super.onDestroyView()
         _binding?.unbind()
         _binding = null
-        if(isHideStatusBar()){
-            requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
-        }
     }
     abstract fun getViewModelClass(): Class<VM>
     abstract fun layoutRes():Int
