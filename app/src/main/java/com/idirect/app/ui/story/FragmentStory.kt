@@ -139,6 +139,7 @@ class FragmentStory(
     override fun onDestroyView() {
         valueAnimator.removeUpdateListener(valueAnimatorUpdateListener)
         emojiPopup?.releaseMemory()
+        progressBars.clear()
         _mGlide = null
         super.onDestroyView()
     }
@@ -204,7 +205,7 @@ class FragmentStory(
                 initLayout(it.data!!)
                 storyAdapter.notifyDataSetChanged()
                 if (playItemAfterLoad) {
-                    showNextItem()
+                    showCurrentItem()
                 }
             }
         })
@@ -221,6 +222,7 @@ class FragmentStory(
         binding.viewPager.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_CANCEL) {
                 binding.layoutItems.fadeIn(100)
+                binding.viewPager.isTouchMovable = false
                 resumeTimer()
                 actionDownTimestamp = 0
             }
@@ -229,23 +231,23 @@ class FragmentStory(
                 if (System.currentTimeMillis() - actionDownTimestamp < 200) {
                     Log.i(InstagramConstants.DEBUG_TAG, "175")
                     binding.layoutItems.fadeIn(0)
+                    binding.viewPager.isTouchMovable = false
                     if(isPopupShow){
                         resumeTimer()
                         isPopupShow = false
                     }else{
-                        isCancelValueAnimator = true
-                        valueAnimator.cancel()
+                        cancelTimer()
                         if (event.rawX < centerScreenPosition) {
                             // left
-                            showPreviousItem()
+                            showPreviousItem(true)
                         } else {
                             //right
                             showNextItem()
                         }
                     }
                 } else {
-                    Log.i(InstagramConstants.DEBUG_TAG, "185")
                     binding.layoutItems.fadeIn(100)
+                    binding.viewPager.isTouchMovable = false
                     resumeTimer()
                 }
                 actionDownTimestamp = 0
@@ -257,6 +259,7 @@ class FragmentStory(
                 mHandler.postDelayed({
                     if (actionDownTimestamp != 0.toLong()) {
                         binding.layoutItems.fadeOut(100)
+                        binding.viewPager.isTouchMovable = true
                     }
                 }, 500)
             }
@@ -372,6 +375,12 @@ class FragmentStory(
         return progressBar
     }
 
+    fun showCurrentItem(){
+        if(currentPosition == 0){
+            currentPosition = -1;
+        }
+        showNextItem()
+    }
     fun showNextItem() {
         if (currentTray == null) {
             return
@@ -395,13 +404,18 @@ class FragmentStory(
         viewModel.markStoryAsSeen(item.id, item.takenAt)
         binding.layoutItems.fadeIn(0)
         startProgressAnimator()
-        binding.viewPager.scrollToPosition(currentPosition)
+        showItemAtPosition(currentPosition)
         for (index in 0 until currentPosition) {
             progressBars[index].progress = 100
         }
     }
 
-    fun showPreviousItem() {
+    private fun cancelTimer() {
+        isCancelValueAnimator = true
+        valueAnimator.cancel()
+    }
+
+    fun showPreviousItem(isTouchedByUser:Boolean = false) {
         if((valueAnimator.animatedValue as Int) > (MAX_VALUE_PROGRESS / 2)){
             resetTimer()
             return
@@ -409,11 +423,16 @@ class FragmentStory(
         currentPosition -= 1
         if (currentPosition >= progressBars.size || currentPosition < 0) {
             currentPosition = 0
+            if(isTouchedByUser){
+                mStoryActionListener?.loadPreviousPage()
+            }
             return
         }
         binding.layoutItems.fadeIn(0)
         startProgressAnimator()
-        binding.viewPager.scrollToPosition(currentPosition)
+
+        // for play video need
+        showItemAtPosition(currentPosition)
 
         for (index in 0 until currentPosition) {
             progressBars[index].progress = 100
@@ -421,6 +440,15 @@ class FragmentStory(
         for (index in currentPosition until progressBars.size) {
             progressBars[index].progress = 0
         }
+    }
+
+    private fun showItemAtPosition(currentPosition: Int) {
+        currentTray?.let {
+            if(it.items[currentPosition].mediaType == InstagramConstants.MediaType.VIDEO.type){
+                storyAdapter.notifyItemChanged(currentPosition)
+            }
+        }
+        binding.viewPager.scrollToPosition(currentPosition)
     }
 
     fun stateReady(){
@@ -443,6 +471,7 @@ class FragmentStory(
     }
 
     private fun startProgressAnimator() {
+        mPlayManager.stopPlay()
         valueAnimator.start()
         valueAnimator.resume()
     }
@@ -459,17 +488,15 @@ class FragmentStory(
                 width = displayWidth
                 height = displayHeight
             }
+            Log.i(InstagramConstants.DEBUG_TAG,"item type"+item.mediaType)
             if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
                 mPlayManager.stopPlay()
-                dataBinding.layoutPlayer.visibility = View.INVISIBLE
                 dataBinding.imgPhoto.visibility = View.VISIBLE
                 mGlide.asBitmap().load(item.imageVersions2.candidates[0].url).into(dataBinding.imgPhoto)
                 valueAnimator.duration = 5000
             }
             if (item.mediaType == InstagramConstants.MediaType.VIDEO.type) {
-                dataBinding.layoutPlayer.visibility = View.VISIBLE
                 dataBinding.imgPhoto.visibility = View.INVISIBLE
-                Log.i(InstagramConstants.DEBUG_TAG,"isPlayItemAfterLoad $playItemAfterLoad: "+ currentTray!!.user!!.username)
                 if(playItemAfterLoad){
                     val mediaSource: MediaSource =
                         ProgressiveMediaSource.Factory(dataSource)

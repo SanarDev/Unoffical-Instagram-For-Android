@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.Tray
 import com.idirect.app.usecase.UseCase
@@ -68,9 +69,9 @@ class StoryViewModel @Inject constructor(application: Application) :
         instaClient.storyProcessor.markStoryAsSeen(id,takenAt)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                Log.i("TEST","TEST")
+                Log.i(InstagramConstants.DEBUG_TAG,"Seen Success")
             },{
-                Log.i("TEST","TEST")
+                Log.i(InstagramConstants.DEBUG_TAG,"Seen Fail")
             },{})
     }
 

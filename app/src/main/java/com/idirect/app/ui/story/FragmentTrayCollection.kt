@@ -103,6 +103,12 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
                 }
             }
 
+            override fun loadPreviousPage() {
+                if (binding.viewPager.currentItem > 0) {
+                    binding.viewPager.currentItem = binding.viewPager.currentItem - 1
+                }
+            }
+
             override fun onProfileClick(v: View, userId: Long, username: String) {
                 val data = UserBundle().apply {
                     this.userId = userId
@@ -116,8 +122,8 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
 
         _mAdapter = StoriesAdapter(null, childFragmentManager)
         binding.viewPager.adapter = mAdapter
+        binding.viewPager.offscreenPageLimit = 3
         binding.viewPager.currentItem = lastPosition
-        Log.i(InstagramConstants.DEBUG_TAG, "lastPosition $lastPosition")
         binding.viewPager.setPageTransformer(true, RotateUpTransformer())
         binding.viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrollStateChanged(state: Int) {
@@ -130,13 +136,15 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
                 positionOffsetPixels: Int
             ) {
                 if (position != -1 && positionOffsetPixels == 0 && lastPosition != position) {
-                    fragments[lastPosition]?.onPause()
+                    Log.i(InstagramConstants.DEBUG_TAG,"lastPosition: "+lastPosition + "| "+"position: "+position)
                     fragments[lastPosition]?.apply {
-                        this.showPreviousItem()
+                        showPreviousItem()
                         onPause()
                     }
-                    fragments[position]?.playItemAfterLoad = true
-                    fragments[position]?.showNextItem()
+                    fragments[position]?.let {
+                        it.playItemAfterLoad = true
+                        it.showCurrentItem()
+                    }
                     lastPosition = position
                 } else if (lastPosition == position && position == binding.viewPager.adapter!!.count - 1) {
 //                    activity?.onBackPressed()
@@ -223,8 +231,9 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
         super.onStop()
         for (item in fragments.entries) {
             item.value.playItemAfterLoad = false
-            mPlayManager.stopPlay()
+            item.value.pauseTimer()
         }
+        mPlayManager.stopPlay()
     }
 
 }

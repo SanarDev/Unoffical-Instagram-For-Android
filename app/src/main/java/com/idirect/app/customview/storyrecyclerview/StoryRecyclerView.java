@@ -1,4 +1,4 @@
-package com.idirect.app.customview.customrecyclerview;
+package com.idirect.app.customview.storyrecyclerview;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -9,6 +9,17 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class StoryRecyclerView extends RecyclerView {
+
+    private boolean isTouchMovable = false;
+
+    public boolean isTouchMovable() {
+        return isTouchMovable;
+    }
+
+    public void setTouchMovable(boolean touchMovable) {
+        isTouchMovable = touchMovable;
+    }
+
     public StoryRecyclerView(@NonNull Context context) {
         super(context);
     }
@@ -25,10 +36,10 @@ public class StoryRecyclerView extends RecyclerView {
     public boolean dispatchTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                getParent().requestDisallowInterceptTouchEvent(false);
+                getParent().requestDisallowInterceptTouchEvent(isTouchMovable);
                 break;
             default:
-                getParent().requestDisallowInterceptTouchEvent(true);
+                getParent().requestDisallowInterceptTouchEvent(!isTouchMovable);
                 break;
 
         }
@@ -37,6 +48,6 @@ public class StoryRecyclerView extends RecyclerView {
 
     @Override
     public boolean canScrollHorizontally(int direction) {
-        return false;
+        return isTouchMovable;
     }
 }
