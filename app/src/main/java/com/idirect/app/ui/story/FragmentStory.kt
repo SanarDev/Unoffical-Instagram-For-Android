@@ -25,6 +25,8 @@ import androidx.core.view.setMargins
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -38,11 +40,13 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.AppConstants
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
+import com.idirect.app.customview.storyrecyclerview.StoryRecyclerView
 import com.idirect.app.customview.textdrawable.TextDrawable
 import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentStoryBinding
@@ -80,7 +84,8 @@ class FragmentStory(
 ) : BaseFragment<FragmentStoryBinding, StoryViewModel>(), ForwardListener,
     OnEmojiPopupDismissListener, OnEmojiPopupShownListener {
 
-    private lateinit var storyAdapter: ViewPagerAdapter
+    private var _storyAdapter: ViewPagerAdapter?=null
+    val storyAdapter: ViewPagerAdapter get() = _storyAdapter!!
     private var moduleSource: String = "feed_timeline"
 
     @Inject
@@ -103,13 +108,13 @@ class FragmentStory(
     set(value) {
         field = value
         if(value){
-            showNextItem()
+            showCurrentItem()
         }
     }
     private var actionDownTimestamp: Long = 0
     private var isCancelValueAnimator: Boolean = false
     private var isPopupShow: Boolean = false
-    private var isPauseAnyThing = false
+    var isPauseAnyThing = false
     private var isForwardWindowShow: Boolean = false
     private lateinit var dataSource: DataSource.Factory
     private var emojiPopup: EmojiPopup? = null
@@ -119,6 +124,7 @@ class FragmentStory(
         // change
         ValueAnimator.AnimatorUpdateListener { animation ->
             if (currentPosition != -1) {
+                Log.i(InstagramConstants.DEBUG_TAG,"valueAnimator update : "+currentTray!!.user.username)
                 val value = animation!!.animatedValue as Int
                 progressBars[currentPosition].progress = value
             }
@@ -146,6 +152,8 @@ class FragmentStory(
         valueAnimator.removeUpdateListener(valueAnimatorUpdateListener)
         emojiPopup?.releaseMemory()
         progressBars.clear()
+        isCancelValueAnimator = true
+        _storyAdapter = null
         _mGlide = null
         emojiPopup = null
         super.onDestroyView()
@@ -186,6 +194,9 @@ class FragmentStory(
         }
         valueAnimator.doOnEnd {
             //change
+            Log.i(InstagramConstants.DEBUG_TAG,currentTray!!.user.username + ": DoOnEnd")
+            Log.i(InstagramConstants.DEBUG_TAG,currentTray!!.user.username + ": isCancelValueAnimator : "+isCancelValueAnimator.toString())
+            Log.i(InstagramConstants.DEBUG_TAG,"")
             if (!isCancelValueAnimator) {
                 showNextItem()
             } else {
@@ -201,7 +212,7 @@ class FragmentStory(
                 .build(binding.edtMessage);
 
         binding.recyclerviewEmoji.adapter = EmojiAdapter(initEmoji())
-        storyAdapter = ViewPagerAdapter()
+        _storyAdapter = ViewPagerAdapter()
         binding.viewPager.adapter = storyAdapter
         binding.viewPager.layoutManager = LinearLayoutManager(requireContext(),LinearLayoutManager.HORIZONTAL,false)
 
@@ -465,10 +476,16 @@ class FragmentStory(
         }
     }
     fun pauseTimer(){
+        currentTray?.let {
+            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory pauseTimer : "+it.user.username)
+        }
         valueAnimator.pause()
         mPlayManager.pausePlay()
     }
     fun resumeTimer(){
+        currentTray?.let {
+            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory resumeTimer : "+it.user.username)
+        }
         valueAnimator.resume()
         mPlayManager.resumePlay()
     }
@@ -499,7 +516,7 @@ class FragmentStory(
             }
             Log.i(InstagramConstants.DEBUG_TAG,"item type"+item.mediaType)
             if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
-                if(currentPosition == position){
+                if(playItemAfterLoad && currentPosition == position){
                     mPlayManager.stopPlay()
                 }
                 dataBinding.imgPhoto.visibility = View.VISIBLE
@@ -628,6 +645,14 @@ class FragmentStory(
                             )
                         )
                     }
+                    StoryFeedMedia::class.java.simpleName -> {
+                        dataBinding.layoutStoryItems.addView(
+                            createStoryFeedMedia(
+                                binding.viewPager,
+                                item as StoryFeedMedia
+                            )
+                        )
+                    }
                 }
             }
             return item
@@ -646,6 +671,7 @@ class FragmentStory(
         }
 
     }
+
 
     override fun onKeyboardOpen() {
         super.onKeyboardOpen()
@@ -677,10 +703,12 @@ class FragmentStory(
 
     override fun onResume() {
         super.onResume()
+        currentTray?.let {
+            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory onResume : "+it.user.username)
+        }
         if (isForwardWindowShow) {
             return
         }
-        resumeTimer()
     }
 
     inner class EmojiAdapter constructor(var items: MutableList<String>) : BaseAdapter() {
@@ -718,6 +746,12 @@ class FragmentStory(
 
     override fun onStop() {
         super.onStop()
+        currentTray?.let {
+            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory onStop : "+it.user.username)
+        }
+        isPauseAnyThing = true
+        playItemAfterLoad = false
+        pauseTimer()
     }
 
     override fun onDestroy() {
@@ -748,6 +782,39 @@ class FragmentStory(
             )
             layout.txtInfo.text = requireContext().getString(R.string.view_location)
             layout.imgProfile.visibility = View.GONE
+            popup.contentView = layout.root
+            popup.isOutsideTouchable = true
+            popup.setBackgroundDrawable(
+                ColorDrawable(
+                    Color.TRANSPARENT
+                )
+            );
+            popup.showAsDropDown(viewGroup)
+        }
+        return viewGroup
+    }
+
+    private fun createStoryFeedMedia(
+        v: View,
+        storyFeedMedia: StoryFeedMedia
+    ): View? {
+        val viewGroup = createClickableLayout(v,storyFeedMedia)
+        viewGroup.setOnClickListener {
+            pauseTimer()
+            isPopupShow = true
+            val popup = PopupWindow(context)
+            val layout: LayoutStoryItemPopupBinding = DataBindingUtil.inflate(
+                LayoutInflater.from(context),
+                R.layout.layout_story_item_popup,
+                null,
+                false
+            )
+            layout.txtInfo.text = requireContext().getString(R.string.view_post)
+            layout.imgProfile.visibility = View.GONE
+            layout.root.setOnClickListener {
+                mStoryActionListener?.viewPost(storyFeedMedia.mediaId)
+                popup.dismiss()
+            }
             popup.contentView = layout.root
             popup.isOutsideTouchable = true
             popup.setBackgroundDrawable(
@@ -899,6 +966,10 @@ class FragmentStory(
             mGlide.load(reelMention.user.profilePicUrl).into(layout.imgProfile)
             layout.txtInfo.text = reelMention.user.fullName
             layout.imgProfile.visibility = View.VISIBLE
+            layout.root.setOnClickListener {
+                mStoryActionListener?.viewPage(reelMention.user.pk,reelMention.user.username)
+                popup.dismiss()
+            }
             popup.contentView = layout.root
             popup.isOutsideTouchable = true
             popup.setBackgroundDrawable(

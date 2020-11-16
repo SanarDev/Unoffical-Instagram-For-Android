@@ -33,9 +33,6 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        if(isHideStatusBar()){
-            requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        }
         _binding = DataBindingUtil.inflate(
             inflater, layoutRes(), container, false
         )

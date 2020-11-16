@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.viewpager.widget.ViewPager
 import com.ToxicBakery.viewpager.transforms.RotateUpTransformer
 import com.google.android.exoplayer2.Player
@@ -115,7 +116,6 @@ class FragmentTrayCollection :
             }
 
             override fun onProfileClick(v: View, userId: Long, username: String) {
-                requireArguments().putString("user_id",userId.toString())
                 val data = UserBundle().apply {
                     this.userId = userId
                     this.username = username
@@ -123,6 +123,19 @@ class FragmentTrayCollection :
                 val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(data)
                 v.findNavController().navigate(action)
                 fragments[binding.viewPager.currentItem]?.mPlayManager?.stopPlay()
+            }
+
+            override fun viewPost(mediaId: String) {
+                val action = NavigationMainGraphDirections.actionGlobalSinglePostFragment(mediaId)
+                findNavController().navigate(action)
+            }
+            override fun viewPage(userId: Long,username:String) {
+                val data = UserBundle().apply {
+                    this.userId = userId
+                    this.username = username
+                }
+                val action = NavigationMainGraphDirections.actionGlobalUserProfileFragment(data)
+                findNavController().navigate(action)
             }
         }
 
@@ -142,6 +155,10 @@ class FragmentTrayCollection :
             ) {
                 if(!isStarted && lastPosition == position){
                     fragments[position]?.let {
+                        Log.i(
+                            InstagramConstants.DEBUG_TAG,
+                            "start for position: " + position
+                        )
                         var isPlayAfterLoad = false
                         if (!isStarted && position == lastPosition) {
                             isPlayAfterLoad = true
@@ -150,10 +167,10 @@ class FragmentTrayCollection :
                             isPlayAfterLoad = false
                         }
                         it.playItemAfterLoad = isPlayAfterLoad
+                        isStarted = true
                     }
-                    isStarted = true
                 }
-                if (position != -1 && positionOffsetPixels == 0 && lastPosition != position) {
+                if (isStarted && position != -1 && positionOffsetPixels == 0 && lastPosition != position) {
                     Log.i(
                         InstagramConstants.DEBUG_TAG,
                         "lastPosition: " + lastPosition + "| " + "position: " + position
@@ -163,10 +180,12 @@ class FragmentTrayCollection :
                         onPause()
                     }
                     fragments[position]?.let {
+                        it.isPauseAnyThing = false
                         it.playItemAfterLoad = true
                         it.showCurrentItem()
                     }
                     lastPosition = position
+                    requireArguments().putString("user_id",mAdapter.items!![position].user.pk.toString())
                 } else if (lastPosition == position && position == binding.viewPager.adapter!!.count - 1) {
                     requireActivity().onBackPressed()
                 }
@@ -249,12 +268,20 @@ class FragmentTrayCollection :
         mPlayManager.releasePlay()
     }
 
+    override fun onResume() {
+        super.onResume()
+        requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+        if(isStarted){
+            fragments[lastPosition]?.let {
+                it.isPauseAnyThing = false
+                it.playItemAfterLoad = true
+                it.showCurrentItem()
+            }
+        }
+    }
     override fun onStop() {
         super.onStop()
-        for (item in fragments.entries) {
-            item.value.playItemAfterLoad = false
-            item.value.pauseTimer()
-        }
+        Log.i(InstagramConstants.DEBUG_TAG,"FragmentTrayCollection: onStop")
         mPlayManager.stopPlay()
     }
 

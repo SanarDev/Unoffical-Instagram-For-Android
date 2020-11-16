@@ -143,4 +143,5 @@
     <string name="view_hashtag">View Hashtag</string>
     <string name="view_location">View Location</string>
     <string name="type_something">Type something...</string>
+    <string name="view_post">View Post</string>
 </resources>
