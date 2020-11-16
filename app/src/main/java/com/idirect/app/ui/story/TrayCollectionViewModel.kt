@@ -39,7 +39,12 @@ class TrayCollectionViewModel @Inject constructor(application: Application): Bas
             }
         }
     }
-    fun getStoryData(userId: Long,isSingle:Boolean) {
+    fun getStoryData(userId: Long,isSingle:Boolean,loadFromCache:Boolean = false) {
+        if(loadFromCache){
+            if(storiesData.value != null){
+                return
+            }
+        }
         if(isSingle){
             instaClient.storyProcessor.getStoryMedia(userId)
                 .observeOn(AndroidSchedulers.mainThread())

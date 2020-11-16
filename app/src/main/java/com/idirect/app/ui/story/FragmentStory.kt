@@ -76,7 +76,6 @@ class FragmentStory(
     var mStoryActionListener: StoryActionListener? = null,
     val mPlayManager: PlayManager,
     val videoView: PlayerView,
-    var playItemAfterLoad: Boolean = false,
     var isTouchEnable: Boolean = true
 ) : BaseFragment<FragmentStoryBinding, StoryViewModel>(), ForwardListener,
     OnEmojiPopupDismissListener, OnEmojiPopupShownListener {
@@ -100,6 +99,13 @@ class FragmentStory(
 
     private val progressBars = ArrayList<ProgressBar>().toMutableList()
     var currentPosition: Int = -3
+    var playItemAfterLoad: Boolean = false
+    set(value) {
+        field = value
+        if(value){
+            showNextItem()
+        }
+    }
     private var actionDownTimestamp: Long = 0
     private var isCancelValueAnimator: Boolean = false
     private var isPopupShow: Boolean = false
@@ -141,6 +147,7 @@ class FragmentStory(
         emojiPopup?.releaseMemory()
         progressBars.clear()
         _mGlide = null
+        emojiPopup = null
         super.onDestroyView()
     }
 
@@ -376,9 +383,7 @@ class FragmentStory(
     }
 
     fun showCurrentItem(){
-        if(currentPosition == 0){
-            currentPosition = -1;
-        }
+        currentPosition -= 1
         showNextItem()
     }
     fun showNextItem() {
@@ -416,6 +421,9 @@ class FragmentStory(
     }
 
     fun showPreviousItem(isTouchedByUser:Boolean = false) {
+        if(isNullBinding() || _valueAnimator == null){
+            return
+        }
         if((valueAnimator.animatedValue as Int) > (MAX_VALUE_PROGRESS / 2)){
             resetTimer()
             return
@@ -471,6 +479,7 @@ class FragmentStory(
     }
 
     private fun startProgressAnimator() {
+        Log.i(InstagramConstants.DEBUG_TAG,"startProgressAnimator")
         mPlayManager.stopPlay()
         valueAnimator.start()
         valueAnimator.resume()
@@ -490,9 +499,13 @@ class FragmentStory(
             }
             Log.i(InstagramConstants.DEBUG_TAG,"item type"+item.mediaType)
             if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
-                mPlayManager.stopPlay()
+                if(currentPosition == position){
+                    mPlayManager.stopPlay()
+                }
                 dataBinding.imgPhoto.visibility = View.VISIBLE
-                mGlide.asBitmap().load(item.imageVersions2.candidates[0].url).into(dataBinding.imgPhoto)
+                mGlide.asBitmap()
+                    .load(item.imageVersions2.candidates[0].url)
+                    .into(dataBinding.imgPhoto)
                 valueAnimator.duration = 5000
             }
             if (item.mediaType == InstagramConstants.MediaType.VIDEO.type) {

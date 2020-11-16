@@ -105,6 +105,7 @@ class PlayManager constructor(context: Context) {
     }
 
     fun stopPlay() {
+        Log.i(InstagramConstants.DEBUG_TAG,"stop play")
         pausePlay()
         player.stop()
         playChangeLiveData.postValue(PlayProperties(player.playWhenReady, currentPlayerId, null))

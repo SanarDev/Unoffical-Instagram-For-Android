@@ -19,7 +19,6 @@ import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.databinding.FragmentStoryBinding
 import com.idirect.app.databinding.FragmentTrayCollectionBinding
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.main.MainActivity
@@ -27,14 +26,18 @@ import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
 import javax.inject.Inject
 
-class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayCollectionViewModel>() {
+class FragmentTrayCollection :
+    BaseFragment<FragmentTrayCollectionBinding, TrayCollectionViewModel>() {
 
     private var _mAdapter: StoriesAdapter? = null
     private val mAdapter: StoriesAdapter get() = _mAdapter!!
     private var userId: Long = 0
 
-    @Inject lateinit var mHandler: Handler
-    @Inject lateinit var mPlayManager: PlayManager
+    @Inject
+    lateinit var mHandler: Handler
+
+    @Inject
+    lateinit var mPlayManager: PlayManager
 
     override fun getViewModelClass(): Class<TrayCollectionViewModel> {
         return TrayCollectionViewModel::class.java
@@ -48,7 +51,7 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
         return "story"
     }
 
-    private var lastPosition = 0
+    private var lastPosition = -1
     private var isStarted = false
     private var _mStoryActionListener: StoryActionListener? = null
     private val mStoryActionListener: StoryActionListener get() = _mStoryActionListener!!
@@ -78,6 +81,7 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
             }
         })
     }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -86,12 +90,13 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
         // Hide status bar
         return super.onCreateView(inflater, container, savedInstanceState)
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         userId = requireArguments().getString("user_id")!!.toLong()
         val isSingle = requireArguments().getBoolean("is_single")
-        viewModel.getStoryData(userId, isSingle)
+        viewModel.getStoryData(userId, isSingle,true)
         (requireActivity() as MainActivity).isHideNavigationBottom(true)
 
         _mStoryActionListener = object : StoryActionListener {
@@ -110,6 +115,7 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
             }
 
             override fun onProfileClick(v: View, userId: Long, username: String) {
+                requireArguments().putString("user_id",userId.toString())
                 val data = UserBundle().apply {
                     this.userId = userId
                     this.username = username
@@ -122,8 +128,7 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
 
         _mAdapter = StoriesAdapter(null, childFragmentManager)
         binding.viewPager.adapter = mAdapter
-        binding.viewPager.offscreenPageLimit = 3
-        binding.viewPager.currentItem = lastPosition
+        binding.viewPager.offscreenPageLimit = 2
         binding.viewPager.setPageTransformer(true, RotateUpTransformer())
         binding.viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrollStateChanged(state: Int) {
@@ -135,8 +140,24 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
                 positionOffset: Float,
                 positionOffsetPixels: Int
             ) {
+                if(!isStarted && lastPosition == position){
+                    fragments[position]?.let {
+                        var isPlayAfterLoad = false
+                        if (!isStarted && position == lastPosition) {
+                            isPlayAfterLoad = true
+                            isStarted = true
+                        } else {
+                            isPlayAfterLoad = false
+                        }
+                        it.playItemAfterLoad = isPlayAfterLoad
+                    }
+                    isStarted = true
+                }
                 if (position != -1 && positionOffsetPixels == 0 && lastPosition != position) {
-                    Log.i(InstagramConstants.DEBUG_TAG,"lastPosition: "+lastPosition + "| "+"position: "+position)
+                    Log.i(
+                        InstagramConstants.DEBUG_TAG,
+                        "lastPosition: " + lastPosition + "| " + "position: " + position
+                    )
                     fragments[lastPosition]?.apply {
                         showPreviousItem()
                         onPause()
@@ -147,7 +168,7 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
                     }
                     lastPosition = position
                 } else if (lastPosition == position && position == binding.viewPager.adapter!!.count - 1) {
-//                    activity?.onBackPressed()
+                    requireActivity().onBackPressed()
                 }
 //                fragments[binding.viewPager.currentItem]?.isTouchEnable = positionOffsetPixels == 0
             }
@@ -160,15 +181,18 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
             if (it.status == Resource.Status.SUCCESS) {
                 mAdapter.items = it.data!!
                 mAdapter.notifyDataSetChanged()
-                for (index in it.data!!.indices) {
-                    if (it.data!![index].user.pk == userId) {
-                        binding.viewPager.currentItem = index
+                isStarted = false
+                    for (index in it.data!!.indices) {
+                        if (it.data!![index].user.pk == userId) {
+                            lastPosition = index
+                        }
                     }
-                }
+                binding.viewPager.currentItem = lastPosition
             }
         })
 
     }
+
 
     inner class StoriesAdapter(
         var items: List<com.sanardev.instagramapijava.model.story.Tray>?,
@@ -184,15 +208,13 @@ class FragmentTrayCollection : BaseFragment<FragmentTrayCollectionBinding, TrayC
         // Returns the fragment to display for that page
         override fun getItem(position: Int): Fragment {
             val item = items!![position]
-            var isPlayAfterLoad = false
-            if(!isStarted && item.user.pk == userId){
-                isPlayAfterLoad = true
-                isStarted = true
-            }else{
-                isPlayAfterLoad = false
-            }
             val fragment =
-                FragmentStory(item.user.pk, mStoryActionListener,mPlayManager,videoView,isPlayAfterLoad)
+                FragmentStory(
+                    item.user.pk,
+                    mStoryActionListener,
+                    mPlayManager,
+                    videoView
+                )
             fragments.put(position, fragment)
             return fragment
         }

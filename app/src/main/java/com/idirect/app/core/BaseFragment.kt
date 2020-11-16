@@ -54,6 +54,7 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
     open fun showStatusBar(){
         requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
     }
+    fun isNullBinding():Boolean = _binding == null
     open fun isHideStatusBar():Boolean = false
     override fun onDestroyView() {
         super.onDestroyView()
