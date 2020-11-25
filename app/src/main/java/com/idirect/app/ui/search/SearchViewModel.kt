@@ -14,10 +14,9 @@ import com.sanardev.instagramapijava.response.IGRecipientsResponse
 import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 
-class SearchViewModel @Inject constructor(application: Application) :
+class SearchViewModel @Inject constructor(application: Application, val mUseCase: UseCase) :
     BaseViewModel(application) {
 
-    private val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
     private var searchWord: String = ""
     private val mHandler = Handler()
     private var lastSearchTimestamp = 0.toLong()
@@ -46,19 +45,10 @@ class SearchViewModel @Inject constructor(application: Application) :
     }
 
     fun getRecipients(query: String = "") {
-        if (query.isEmpty()) {
-            instaClient.directProcessor.getRecipient()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    result.value = Resource.success(it)
-                }, {}, {})
-        } else {
-            instaClient.directProcessor.getRecipient(query)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    result.value = Resource.success(it)
-                }, {}, {})
-        }
+        mUseCase.getRecipient(query)
+            .subscribe({
+                result.value = Resource.success(it)
+            }, {}, {})
     }
 
 

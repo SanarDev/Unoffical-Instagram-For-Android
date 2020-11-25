@@ -2,10 +2,12 @@ package com.idirect.app.ui.story
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
+import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.ColorStateListDrawable
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -13,60 +15,52 @@ import android.text.Editable
 import android.text.Layout
 import android.text.TextWatcher
 import android.util.Log
+import android.util.TypedValue
 import android.view.*
 import android.view.animation.LinearInterpolator
 import android.widget.*
+import androidx.appcompat.widget.AppCompatButton
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.view.setMargins
+import androidx.core.view.setPadding
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.findNavController
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
-import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
-import com.idirect.app.constants.AppConstants
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.customview.storyrecyclerview.StoryRecyclerView
-import com.idirect.app.customview.textdrawable.TextDrawable
-import com.idirect.app.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentStoryBinding
 import com.idirect.app.databinding.FragmentStoryItemBinding
 import com.idirect.app.databinding.LayoutEmojiBinding
 import com.idirect.app.databinding.LayoutStoryItemPopupBinding
-import com.idirect.app.extensions.fadeIn
-import com.idirect.app.extensions.fadeOut
-import com.idirect.app.extensions.setProgressColor
+import com.idirect.app.extensions.*
+import com.idirect.app.extentions.SizeExtention.dpToPx
 import com.idirect.app.extentions.color
-import com.idirect.app.extentions.dpToPx
 import com.idirect.app.extentions.hideKeyboard
 import com.idirect.app.manager.PlayManager
+import com.idirect.app.ui.customview.textdrawable.TextDrawable
+import com.idirect.app.ui.customview.toast.CustomToast
 import com.idirect.app.ui.forward.ForwardBundle
 import com.idirect.app.ui.forward.ForwardListener
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.story.question.ActionListener
 import com.idirect.app.ui.story.question.FragmentQuestion
-import com.idirect.app.utils.BitmapUtils
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
 import com.sanardev.instagramapijava.model.story.*
@@ -84,7 +78,7 @@ class FragmentStory(
 ) : BaseFragment<FragmentStoryBinding, StoryViewModel>(), ForwardListener,
     OnEmojiPopupDismissListener, OnEmojiPopupShownListener {
 
-    private var _storyAdapter: ViewPagerAdapter?=null
+    private var _storyAdapter: ViewPagerAdapter? = null
     val storyAdapter: ViewPagerAdapter get() = _storyAdapter!!
     private var moduleSource: String = "feed_timeline"
 
@@ -105,12 +99,12 @@ class FragmentStory(
     private val progressBars = ArrayList<ProgressBar>().toMutableList()
     var currentPosition: Int = -3
     var playItemAfterLoad: Boolean = false
-    set(value) {
-        field = value
-        if(value){
-            showCurrentItem()
+        set(value) {
+            field = value
+            if (value) {
+                showCurrentItem()
+            }
         }
-    }
     private var actionDownTimestamp: Long = 0
     private var isCancelValueAnimator: Boolean = false
     private var isPopupShow: Boolean = false
@@ -124,7 +118,10 @@ class FragmentStory(
         // change
         ValueAnimator.AnimatorUpdateListener { animation ->
             if (currentPosition != -1) {
-                Log.i(InstagramConstants.DEBUG_TAG,"valueAnimator update : "+currentTray!!.user.username)
+                Log.i(
+                    InstagramConstants.DEBUG_TAG,
+                    "valueAnimator update : " + currentTray!!.user.username
+                )
                 val value = animation!!.animatedValue as Int
                 progressBars[currentPosition].progress = value
             }
@@ -194,9 +191,12 @@ class FragmentStory(
         }
         valueAnimator.doOnEnd {
             //change
-            Log.i(InstagramConstants.DEBUG_TAG,currentTray!!.user.username + ": DoOnEnd")
-            Log.i(InstagramConstants.DEBUG_TAG,currentTray!!.user.username + ": isCancelValueAnimator : "+isCancelValueAnimator.toString())
-            Log.i(InstagramConstants.DEBUG_TAG,"")
+            Log.i(InstagramConstants.DEBUG_TAG, currentTray!!.user.username + ": DoOnEnd")
+            Log.i(
+                InstagramConstants.DEBUG_TAG,
+                currentTray!!.user.username + ": isCancelValueAnimator : " + isCancelValueAnimator.toString()
+            )
+            Log.i(InstagramConstants.DEBUG_TAG, "")
             if (!isCancelValueAnimator) {
                 showNextItem()
             } else {
@@ -214,12 +214,14 @@ class FragmentStory(
         binding.recyclerviewEmoji.adapter = EmojiAdapter(initEmoji())
         _storyAdapter = ViewPagerAdapter()
         binding.viewPager.adapter = storyAdapter
-        binding.viewPager.layoutManager = LinearLayoutManager(requireContext(),LinearLayoutManager.HORIZONTAL,false)
+        binding.viewPager.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
 
         viewModel.getStoryData(userId)
         viewModel.storyMediaLiveData.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
                 currentTray = it.data!!
+                currentPosition = currentTray!!.bundle["current_position"] as Int
                 initLayout(it.data!!)
                 storyAdapter.notifyDataSetChanged()
                 if (playItemAfterLoad) {
@@ -250,10 +252,10 @@ class FragmentStory(
                     Log.i(InstagramConstants.DEBUG_TAG, "175")
                     binding.layoutItems.fadeIn(0)
                     binding.viewPager.isTouchMovable = false
-                    if(isPopupShow){
+                    if (isPopupShow) {
                         resumeTimer()
                         isPopupShow = false
-                    }else{
+                    } else {
                         cancelTimer()
                         if (event.rawX < centerScreenPosition) {
                             // left
@@ -393,10 +395,11 @@ class FragmentStory(
         return progressBar
     }
 
-    fun showCurrentItem(){
+    fun showCurrentItem() {
         currentPosition -= 1
         showNextItem()
     }
+
     fun showNextItem() {
         if (currentTray == null) {
             return
@@ -415,9 +418,9 @@ class FragmentStory(
             return
         }
         val item = currentTray!!.items!![currentPosition]
-        Log.i(InstagramConstants.DEBUG_TAG,currentTray!!.user!!.username)
-        Log.i(InstagramConstants.DEBUG_TAG,item.id)
-        viewModel.markStoryAsSeen(item.id, item.takenAt)
+        Log.i(InstagramConstants.DEBUG_TAG, currentTray!!.user!!.username)
+        Log.i(InstagramConstants.DEBUG_TAG, item.id)
+        viewModel.markStoryAsSeen(currentTray!!.id, item.id, item.takenAt)
         binding.layoutItems.fadeIn(0)
         startProgressAnimator()
         showItemAtPosition(currentPosition)
@@ -431,18 +434,18 @@ class FragmentStory(
         valueAnimator.cancel()
     }
 
-    fun showPreviousItem(isTouchedByUser:Boolean = false) {
-        if(isNullBinding() || _valueAnimator == null){
+    fun showPreviousItem(isTouchedByUser: Boolean = false) {
+        if (isNullBinding() || _valueAnimator == null) {
             return
         }
-        if((valueAnimator.animatedValue as Int) > (MAX_VALUE_PROGRESS / 2)){
+        if ((valueAnimator.animatedValue as Int) > (MAX_VALUE_PROGRESS / 2)) {
             resetTimer()
             return
         }
         currentPosition -= 1
         if (currentPosition >= progressBars.size || currentPosition < 0) {
             currentPosition = 0
-            if(isTouchedByUser){
+            if (isTouchedByUser) {
                 mStoryActionListener?.loadPreviousPage()
             }
             return
@@ -462,41 +465,46 @@ class FragmentStory(
     }
 
     private fun showItemAtPosition(currentPosition: Int) {
+        valueAnimator.duration = PROGRESS_DURATION_MILI_SECONDS
         currentTray?.let {
-            if(it.items[currentPosition].mediaType == InstagramConstants.MediaType.VIDEO.type){
+            if (it.items[currentPosition].mediaType == InstagramConstants.MediaType.VIDEO.type) {
                 storyAdapter.notifyItemChanged(currentPosition)
             }
+            binding.layoutMessage.visibility = if (it.canReply) View.VISIBLE else View.GONE
         }
         binding.viewPager.scrollToPosition(currentPosition)
     }
 
-    fun stateReady(){
+    fun stateReady() {
         if (!isPauseAnyThing) {
             resumeTimer()
         }
     }
-    fun pauseTimer(){
+
+    fun pauseTimer() {
         currentTray?.let {
-            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory pauseTimer : "+it.user.username)
+            Log.i(InstagramConstants.DEBUG_TAG, "fragmentStory pauseTimer : " + it.user.username)
         }
         valueAnimator.pause()
         mPlayManager.pausePlay()
     }
-    fun resumeTimer(){
+
+    fun resumeTimer() {
         currentTray?.let {
-            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory resumeTimer : "+it.user.username)
+            Log.i(InstagramConstants.DEBUG_TAG, "fragmentStory resumeTimer : " + it.user.username)
         }
         valueAnimator.resume()
         mPlayManager.resumePlay()
     }
-    private fun resetTimer(){
+
+    private fun resetTimer() {
         valueAnimator.cancel()
         mPlayManager.replay()
         startProgressAnimator()
     }
 
     private fun startProgressAnimator() {
-        Log.i(InstagramConstants.DEBUG_TAG,"startProgressAnimator")
+        Log.i(InstagramConstants.DEBUG_TAG, "startProgressAnimator")
         mPlayManager.stopPlay()
         valueAnimator.start()
         valueAnimator.resume()
@@ -514,25 +522,24 @@ class FragmentStory(
                 width = displayWidth
                 height = displayHeight
             }
-            Log.i(InstagramConstants.DEBUG_TAG,"item type"+item.mediaType)
+            Log.i(InstagramConstants.DEBUG_TAG, "item type" + item.mediaType)
             if (item.mediaType == InstagramConstants.MediaType.IMAGE.type) {
-                if(playItemAfterLoad && currentPosition == position){
+                if (playItemAfterLoad && currentPosition == position) {
                     mPlayManager.stopPlay()
                 }
                 dataBinding.imgPhoto.visibility = View.VISIBLE
                 mGlide.asBitmap()
                     .load(item.imageVersions2.candidates[0].url)
                     .into(dataBinding.imgPhoto)
-                valueAnimator.duration = 5000
             }
             if (item.mediaType == InstagramConstants.MediaType.VIDEO.type) {
                 dataBinding.imgPhoto.visibility = View.INVISIBLE
-                if(playItemAfterLoad){
+                if (playItemAfterLoad) {
                     val mediaSource: MediaSource =
                         ProgressiveMediaSource.Factory(dataSource)
                             .createMediaSource(Uri.parse(item.videoVersions[0].url))
-                    videoView.parent?.let{
-                        if(it is ViewGroup){
+                    videoView.parent?.let {
+                        if (it is ViewGroup) {
                             it.removeView(videoView)
                         }
                     }
@@ -596,60 +603,69 @@ class FragmentStory(
             }
 
             for (item in storyItems) {
-                when (item::class.java.simpleName) {
-                    ReelMention::class.java.simpleName -> {
+                when (item) {
+                    is ReelMention -> {
                         dataBinding.layoutStoryItems.addView(
                             createReelMention(
                                 binding.viewPager,
-                                item as ReelMention
+                                item
                             )
                         )
                     }
-                    StoryLocation::class.java.simpleName -> {
+                    is StoryLocation -> {
                         dataBinding.layoutStoryItems.addView(
                             createLocation(
                                 binding.viewPager,
-                                item as StoryLocation
+                                item
                             )
                         )
                     }
-                    StoryHashtag::class.java.simpleName -> {
+                    is StoryHashtag -> {
                         dataBinding.layoutStoryItems.addView(
                             createHashtag(
                                 binding.viewPager,
-                                item as StoryHashtag
+                                item
                             )
                         )
                     }
-                    StoryPoll::class.java.simpleName -> {
+                    is StoryPoll -> {
                         dataBinding.layoutStoryItems.addView(
                             createPoll(
                                 binding.viewPager,
-                                item as StoryPoll
+                                item
                             )
                         )
                     }
-                    StoryQuestion::class.java.simpleName -> {
+                    is StoryQuestion -> {
                         dataBinding.layoutStoryItems.addView(
                             createQuestion(
                                 binding.viewPager,
-                                item as StoryQuestion
+                                item
                             )
                         )
                     }
-                    StorySlider::class.java.simpleName -> {
+                    is StorySlider -> {
                         dataBinding.layoutStoryItems.addView(
                             createSlider(
                                 binding.viewPager,
-                                item as StorySlider
+                                item
                             )
                         )
                     }
-                    StoryFeedMedia::class.java.simpleName -> {
+                    is StoryFeedMedia -> {
                         dataBinding.layoutStoryItems.addView(
                             createStoryFeedMedia(
                                 binding.viewPager,
-                                item as StoryFeedMedia
+                                item
+                            )
+                        )
+                    }
+                    is StoryQuiz -> {
+                        dataBinding.layoutStoryItems.addView(
+                            createStoryQuiz(
+                                dataBinding.layoutStoryItems,
+                                binding.viewPager,
+                                item
                             )
                         )
                     }
@@ -663,9 +679,9 @@ class FragmentStory(
         }
 
         override fun getItemCount(): Int {
-            return if(currentTray == null){
-                 0
-            }else{
+            return if (currentTray == null) {
+                0
+            } else {
                 currentTray!!.items.size
             }
         }
@@ -704,7 +720,7 @@ class FragmentStory(
     override fun onResume() {
         super.onResume()
         currentTray?.let {
-            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory onResume : "+it.user.username)
+            Log.i(InstagramConstants.DEBUG_TAG, "fragmentStory onResume : " + it.user.username)
         }
         if (isForwardWindowShow) {
             return
@@ -747,7 +763,7 @@ class FragmentStory(
     override fun onStop() {
         super.onStop()
         currentTray?.let {
-            Log.i(InstagramConstants.DEBUG_TAG,"fragmentStory onStop : "+it.user.username)
+            Log.i(InstagramConstants.DEBUG_TAG, "fragmentStory onStop : " + it.user.username)
         }
         isPauseAnyThing = true
         playItemAfterLoad = false
@@ -771,6 +787,7 @@ class FragmentStory(
             v, storyLocation
         )
         viewGroup.setOnClickListener {
+            isPauseAnyThing = true
             pauseTimer()
             isPopupShow = true
             val popup = PopupWindow(requireContext())
@@ -798,8 +815,9 @@ class FragmentStory(
         v: View,
         storyFeedMedia: StoryFeedMedia
     ): View? {
-        val viewGroup = createClickableLayout(v,storyFeedMedia)
+        val viewGroup = createClickableLayout(v, storyFeedMedia)
         viewGroup.setOnClickListener {
+            isPauseAnyThing = true
             pauseTimer()
             isPopupShow = true
             val popup = PopupWindow(context)
@@ -830,6 +848,7 @@ class FragmentStory(
     fun createHashtag(v: View, storyHashtag: StoryHashtag): FrameLayout {
         val viewGroup = createClickableLayout(v, storyHashtag)
         viewGroup.setOnClickListener {
+            isPauseAnyThing = true
             pauseTimer()
             isPopupShow = true
             val popup = PopupWindow(context)
@@ -856,17 +875,23 @@ class FragmentStory(
     fun createQuestion(v: View, storyQuestion: StoryQuestion): FrameLayout {
         val viewGroup = createClickableLayout(v, storyQuestion)
         viewGroup.setOnClickListener {
+            isPauseAnyThing = true
             pauseTimer()
-            val fragmentQuestion = FragmentQuestion(storyQuestion.questionSticker,object:ActionListener{
-                override fun onDismiss() {
-                    resumeTimer()
-                }
+            val fragmentQuestion =
+                FragmentQuestion(storyQuestion.questionSticker, object : ActionListener {
+                    override fun onDismiss() {
+                        resumeTimer()
+                    }
 
-                override fun onSendResponse(response: String) {
-                    viewModel.sendStoryQuestionResponse(currentTray!!.items[currentPosition].id,storyQuestion.questionSticker.questionId,response)
-                }
-            })
-            fragmentQuestion.show(childFragmentManager,null)
+                    override fun onSendResponse(response: String) {
+                        viewModel.sendStoryQuestionResponse(
+                            currentTray!!.items[currentPosition].id,
+                            storyQuestion.questionSticker.questionId,
+                            response
+                        )
+                    }
+                })
+            fragmentQuestion.show(childFragmentManager, null)
         }
         return viewGroup
     }
@@ -886,7 +911,7 @@ class FragmentStory(
             this.isClickable = true
             this.isFocusable = true
             this.rotation = (storySlider.rotation * 360).toFloat()
-            this.radius = dpToPx(10f, resources).toFloat()
+            this.radius = resources.dpToPx(10f).toFloat()
             this.setCardBackgroundColor(Color.parseColor(storySlider.sliderSticker.backgroundColor))
         }
 
@@ -895,7 +920,7 @@ class FragmentStory(
                 ConstraintLayout.LayoutParams.MATCH_PARENT,
                 ConstraintLayout.LayoutParams.MATCH_PARENT
             ).apply {
-                setMargins(dpToPx(10f, resources))
+                setMargins(resources.dpToPx(10f))
             }
             this.orientation = LinearLayout.VERTICAL
         }
@@ -923,7 +948,7 @@ class FragmentStory(
                 textAlign = Layout.Alignment.ALIGN_CENTER
             }
         }
-        if(storySlider.sliderSticker.viewerVote != -1.0){
+        if (storySlider.sliderSticker.viewerVote != -1.0) {
             seekBar.progress = (storySlider.sliderSticker.viewerVote * 10).toInt()
         }
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -954,6 +979,7 @@ class FragmentStory(
     fun createReelMention(v: View, reelMention: ReelMention): FrameLayout {
         val viewGroup = createClickableLayout(v, reelMention)
         viewGroup.setOnClickListener {
+            isPauseAnyThing = true
             pauseTimer()
             isPopupShow = true
             val popup = PopupWindow(context)
@@ -967,7 +993,7 @@ class FragmentStory(
             layout.txtInfo.text = reelMention.user.fullName
             layout.imgProfile.visibility = View.VISIBLE
             layout.root.setOnClickListener {
-                mStoryActionListener?.viewPage(reelMention.user.pk,reelMention.user.username)
+                mStoryActionListener?.viewPage(reelMention.user.pk, reelMention.user.username)
                 popup.dismiss()
             }
             popup.contentView = layout.root
@@ -1002,23 +1028,296 @@ class FragmentStory(
         return viewGroup
     }
 
-    fun createPoll(v: View, storyPoll: StoryPoll): FrameLayout {
+    @SuppressLint("RestrictedApi")
+    fun createStoryQuiz(parentView: ViewGroup,v: View, storyQuiz: StoryQuiz): ViewGroup {
         val displayWidth = v.width
         val displayHeight = v.height
+        val width = (storyQuiz.width * displayWidth).toInt()
+        val height = (storyQuiz.height * displayHeight).toInt()
+        val viewGroup = CardView(requireContext()).apply {
+            layoutParams = ConstraintLayout.LayoutParams(width, height).apply {
+                this.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                this.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
+                this.topMargin = (displayHeight * storyQuiz.y).toInt() - height / 2
+                this.leftMargin = (displayWidth * storyQuiz.x).toInt() - width / 2
+            }
+            this.rotation = (storyQuiz.rotation * 360).toFloat()
+            this.radius = resources.dpToPx(10f).toFloat()
+            this.setCardBackgroundColor(color(R.color.bg_poll_story))
+        }
 
-        val viewGroup = FrameLayout(requireContext()).apply {
-            val width = (storyPoll.width * displayWidth).toInt()
-            val height = (storyPoll.height * displayHeight).toInt()
+        val linearLayout = LinearLayout(requireContext()).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.VERTICAL
+        }
+        viewGroup.addView(linearLayout)
+
+        val txtQuestion = AppCompatTextView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0
+            ).also {
+                it.weight = 1f
+            }
+            text = storyQuiz.quizSticker.question
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setTextColor(Color.parseColor(storyQuiz.quizSticker.textColor))
+            setPadding(resources.dpToPx(width.toFloat() / 60))
+            setAutoSizeTextTypeUniformWithConfiguration(
+                5, 44,
+                1, TypedValue.COMPLEX_UNIT_DIP
+            )
+            background = GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(
+                    Color.parseColor(storyQuiz.quizSticker.startBackgroundColor),
+                    Color.parseColor(storyQuiz.quizSticker.endBackgroundColor)
+                )
+            )
+        }
+        linearLayout.addView(txtQuestion)
+
+        val leftAndRightMargin = resources.dpToPx(width.toFloat() / 50)
+        val topAndBottomMargin = resources.dpToPx(width.toFloat() / 150)
+
+        val layoutAnswers = LinearLayout(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0
+            ).also {
+                it.weight = storyQuiz.quizSticker.tallies.size.toFloat()
+            }
+            setPadding(
+                leftAndRightMargin,
+                topAndBottomMargin,
+                leftAndRightMargin,
+                topAndBottomMargin
+            )
+            setBackgroundColor(Color.WHITE)
+            orientation = LinearLayout.VERTICAL
+        }
+        linearLayout.addView(layoutAnswers)
+
+        for (index in storyQuiz.quizSticker.tallies.indices) {
+            val tally = storyQuiz.quizSticker.tallies[index]
+            val layoutAnswer = LinearLayout(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    0
+                ).also {
+                    it.topMargin = topAndBottomMargin
+                    it.bottomMargin = topAndBottomMargin
+                    it.weight = 1f
+                }
+                if (storyQuiz.quizSticker.viewerAnswer == -1) {
+                    setBackgroundResource(R.drawable.bg_story_answer)
+                } else {
+                    when (index) {
+                        storyQuiz.quizSticker.viewerAnswer -> {
+                            if (storyQuiz.quizSticker.correctAnswer == storyQuiz.quizSticker.viewerAnswer) {
+                                setBackgroundResource(R.drawable.bg_story_quiz_correct_answer)
+                            } else {
+                                setBackgroundResource(R.drawable.bg_story_quiz_incorrect_answer)
+                            }
+                        }
+                        storyQuiz.quizSticker.correctAnswer -> {
+                            setBackgroundResource(R.drawable.bg_story_quiz_correct_option)
+                        }
+                        else -> {
+                            setBackgroundResource(R.drawable.bg_story_quiz_incorrect_option)
+                        }
+                    }
+                }
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER
+                setPadding(resources.dpToPx(width.toFloat() / 100))
+            }
+            if(storyQuiz.quizSticker.viewerAnswer == -1){
+                layoutAnswer.setOnClickListener {
+                    viewModel.storyQuizAnswer(currentTray!!.items[currentPosition].id,storyQuiz.quizSticker.quizId,index)
+                    storyQuiz.quizSticker.viewerAnswer = index
+                    parentView.removeView(viewGroup)
+                    parentView.addView(createStoryQuiz(parentView,v,storyQuiz))
+                }
+            }
+            layoutAnswers.addView(layoutAnswer)
+
+            val imgIcon = AppCompatImageView(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    width / 10,
+                    width / 10
+                )
+                if (storyQuiz.quizSticker.viewerAnswer == -1) {
+                    when(index){
+                        0 -> {
+                            setBackgroundResource(R.drawable.ic_circled_a)
+                        }
+                        1 ->{
+                            setBackgroundResource(R.drawable.ic_circled_b)
+                        }
+                        2 -> {
+                            setBackgroundResource(R.drawable.ic_circled_c)
+                        }
+                        3 ->{
+                            setBackgroundResource(R.drawable.ic_circled_d)
+                        }
+                    }
+                } else {
+                    when (index) {
+                        storyQuiz.quizSticker.viewerAnswer -> {
+                            if (storyQuiz.quizSticker.correctAnswer == storyQuiz.quizSticker.viewerAnswer) {
+                                this.setImageResource(R.drawable.ic_check_circle)
+                                this.setColorFilter(Color.WHITE)
+                            } else {
+                                setImageResource(R.drawable.ic_incorrect)
+                                this.setColorFilter(Color.WHITE)
+                            }
+                        }
+                        storyQuiz.quizSticker.correctAnswer -> {
+                            this.setImageResource(R.drawable.ic_circle_check_outline)
+                            this.setColorFilter(Color.WHITE)
+                        }
+                        else -> {
+                            this.setImageResource(R.drawable.ic_incorrect_outline)
+                            this.setColorFilter(color(R.color.story_quiz_incorrect_answer))
+                        }
+                    }
+                }
+
+            }
+            layoutAnswer.addView(imgIcon)
+            val txtAnswer = AppCompatTextView(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).also {
+                    it.weight = 1f
+                    it.leftMargin = resources.dpToPx(width.toFloat() / 100)
+                    it.rightMargin = resources.dpToPx(width.toFloat() / 100)
+                }
+                if (storyQuiz.quizSticker.viewerAnswer == -1) {
+                    setTextColor(Color.BLACK)
+                } else {
+                    when (index) {
+                        storyQuiz.quizSticker.viewerAnswer -> {
+                            if (storyQuiz.quizSticker.correctAnswer == storyQuiz.quizSticker.viewerAnswer) {
+                                setTextColor(Color.WHITE)
+                            } else {
+                                setTextColor(Color.WHITE)
+                            }
+                        }
+                        storyQuiz.quizSticker.correctAnswer -> {
+                            setTextColor(Color.WHITE)
+                        }
+                        else -> {
+                            setTextColor(Color.GRAY)
+                        }
+                    }
+                }
+                text = tally.text
+                setAutoSizeTextTypeUniformWithConfiguration(
+                    5, 34,
+                    1, TypedValue.COMPLEX_UNIT_DIP
+                )
+            }
+            layoutAnswer.addView(txtAnswer)
+        }
+        return viewGroup
+    }
+
+    private fun getWordByIndex(index: Int): String {
+        return when (index) {
+            0 -> {
+                "A"
+            }
+            1 -> {
+                "B"
+            }
+            2 -> {
+                "C"
+            }
+            3 -> {
+                "D"
+            }
+            else -> {
+                "Z"
+            }
+        }
+    }
+
+    @SuppressLint("ResourceType")
+    fun createPoll(v: View, storyPoll: StoryPoll): ViewGroup {
+
+        val displayWidth = v.width
+        val displayHeight = v.height
+        val width = (storyPoll.width * displayWidth).toInt()
+        val height = (storyPoll.height * displayHeight).toInt()
+        val viewGroup = CardView(requireContext()).apply {
             layoutParams = ConstraintLayout.LayoutParams(width, height).apply {
                 this.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
                 this.leftToLeft = ConstraintLayout.LayoutParams.PARENT_ID
                 this.topMargin = (displayHeight * storyPoll.y).toInt() - height / 2
                 this.leftMargin = (displayWidth * storyPoll.x).toInt() - width / 2
             }
-            this.isClickable = true
-            this.isFocusable = true
             this.rotation = (storyPoll.rotation * 360).toFloat()
+            this.radius = resources.dpToPx(10f).toFloat()
+            this.setCardBackgroundColor(color(R.color.bg_poll_story))
         }
+
+        val linearLayout = LinearLayout(requireContext()).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.HORIZONTAL
+        }
+        viewGroup.addView(linearLayout)
+
+        val firstTally = storyPoll.pollSticker.tallies[0]
+        val btnFirstTally = AppCompatTextView(requireContext()).apply {
+            layoutParams =
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT).apply {
+                    weight = 1f
+                    rightMargin = 3
+                }
+            text = firstTally.text
+            isClickable = true
+            isFocusable = true
+            setBackgroundColor(Color.WHITE)
+            setTextColor(color(R.color.positive_tally))
+            gravity = Gravity.CENTER
+            setPadding(resources.dpToPx(height.toFloat() / 20))
+            setAutoSizeTextTypeUniformWithConfiguration(
+                10, 34,
+                1, TypedValue.COMPLEX_UNIT_DIP
+            )
+        }
+        linearLayout.addView(btnFirstTally)
+
+        val secondTally = storyPoll.pollSticker.tallies[1]
+        val btnSecondTally = AppCompatTextView(requireContext()).apply {
+            layoutParams =
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT).apply {
+                    weight = 1f
+                    leftMargin = 3
+                }
+            text = secondTally.text
+            isClickable = true
+            isFocusable = true
+            setBackgroundColor(Color.WHITE)
+            setTextColor(color(R.color.negative_tally))
+            gravity = Gravity.CENTER
+            setPadding(resources.dpToPx(height.toFloat() / 20))
+            setAutoSizeTextTypeUniformWithConfiguration(
+                10, 34,
+                1, TypedValue.COMPLEX_UNIT_DIP
+            )
+        }
+        linearLayout.addView(btnSecondTally)
         viewGroup.setOnClickListener {
             CustomToast.show(requireContext(), "Poll", Toast.LENGTH_SHORT)
         }

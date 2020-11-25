@@ -82,7 +82,7 @@
                         android:visibility="gone"
                         android:text="@string/send"
                         android:textAllCaps="false"
-                        android:background="@drawable/bg_question_send_button"/>
+                        android:background="@drawable/bg_question_send_dark_button"/>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

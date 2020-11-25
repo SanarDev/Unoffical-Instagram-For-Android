@@ -49,7 +49,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"/>
 
-            <com.idirect.app.customview.postsrecyclerview.PostsRecyclerview
+            <com.idirect.app.ui.customview.postsrecyclerview.PostsRecyclerview
                 android:id="@+id/recyclerview_posts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

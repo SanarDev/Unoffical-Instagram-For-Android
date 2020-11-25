@@ -1,32 +1,25 @@
 package com.idirect.app.ui.postcomments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.fasterxml.jackson.core.io.NumberInput
 import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
-import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.customview.loadingadapter.LoadingAdapter
+import com.idirect.app.ui.customview.customtextview.HyperTextView
+import com.idirect.app.ui.customview.loadingadapter.LoadingAdapter
 import com.idirect.app.databinding.FragmentCommentBinding
 import com.idirect.app.databinding.LayoutCommentBinding
 import com.idirect.app.databinding.LayoutCommentReplyBinding
 import com.idirect.app.extensions.color
-import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
@@ -34,7 +27,6 @@ import com.idirect.app.utils.TimeUtils
 import com.sanardev.instagramapijava.model.media.Comment
 import com.vanniktech.emoji.EmojiPopup
 import java.lang.Long
-import javax.inject.Inject
 
 class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>() {
 

@@ -2,25 +2,17 @@ package com.idirect.app.ui.login
 
 import android.app.Application
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.ObservableField
 import androidx.lifecycle.MutableLiveData
 import com.idirect.app.R
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.core.BaseApplication
-import com.idirect.app.customview.toast.CustomToast
-import com.idirect.app.datasource.model.response.InstagramLoginResult
+import com.idirect.app.ui.customview.toast.CustomToast
 import com.idirect.app.utils.Resource
-import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.usecase.UseCase
-import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
-import com.sanardev.instagramapijava.IGConstants
-import com.sanardev.instagramapijava.InstaClient
 import com.sanardev.instagramapijava.response.IGLoginResponse
-import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -33,7 +25,7 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
     val result =  MutableLiveData<Resource<IGLoginResponse>>()
 
     init {
-        if (InstaClient.currentUser(application.applicationContext) != null) {
+        if (mUseCase.getCurrentUser() != null) {
             intentEvent.value = (Pair(MainActivity::class, null))
         }
     }
@@ -48,17 +40,15 @@ class LoginViewModel @Inject constructor(application: Application, var mUseCase:
             CustomToast.show(context,context.getString(R.string.enter_password), Toast.LENGTH_LONG)
         }
         result.value = Resource.loading()
-        InstaClient(context.applicationContext,username,password).also {
-            it.accountProcessor.login()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                result.value = Resource.success(it)
-            },{
-                result.value = Resource.error()
-            },{
+        mUseCase.login(username,password)
+            .subscribe({
+            result.value = Resource.success(it)
+        },{
+            result.value = Resource.error()
+        },{
 
-            })
-        }
+        })
+
     }
 
 }

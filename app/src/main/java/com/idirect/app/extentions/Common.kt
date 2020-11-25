@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Resources
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,14 +22,11 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.idirect.app.R
-import com.vanniktech.emoji.EmojiPopup
 import java.io.File
-import java.lang.StringBuilder
 
 
 fun Context.toast(message: CharSequence) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -139,10 +137,6 @@ fun Dialog.openFromBottom(height: Int = ViewGroup.LayoutParams.MATCH_PARENT) {
     window!!.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, height)
 }
 
-fun Resources.dpToPx(dp: Float): Int {
-    return dpToPx(dp, this)
-}
-
 private const val HTTPS = "https://"
 private const val HTTP = "http://"
 
@@ -185,11 +179,6 @@ fun Activity.hideKeyboard() {
     imm.hideSoftInputFromWindow(view!!.windowToken, 0)
 }
 
-fun dpToPx(dp: Float, resources: Resources): Int {
-    val px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, resources.displayMetrics)
-    return px.toInt()
-}
-
 fun Application.openSharedPref(name: String): SharedPreferences? {
     return getSharedPreferences(name, Context.MODE_PRIVATE)
 }
@@ -219,8 +208,9 @@ fun Long.toList(): List<Long> {
     list.add(this)
     return list.toList()
 }
-val File.size get() = if (!exists()) 0.0 else length().toDouble()
-val File.sizeInKb get() = size / 1024
-val File.sizeInMb get() = sizeInKb / 1024
-val File.sizeInGb get() = sizeInMb / 1024
-val File.sizeInTb get() = sizeInGb / 1024
+
+fun isColorDark(color: Int): Boolean {
+    val darkness: Double =
+        1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
+    return darkness >= 0.5
+}

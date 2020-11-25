@@ -25,7 +25,7 @@
                 android:layout_alignParentTop="true"
                 tools:src="@mipmap/example" />
 
-            <com.idirect.app.customview.customtextview.HyperTextView
+            <com.idirect.app.ui.customview.customtextview.HyperTextView
                 android:id="@+id/txt_comment"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -50,7 +50,7 @@
                             android:layout_marginTop="5dp"
                             android:clipToPadding="false"
                             android:orientation="horizontal"
-                            android:paddingStart="20dp"
+                            android:paddingStart="10dp"
                             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                             tools:listitem="@layout/layout_story" />
 
@@ -60,7 +60,7 @@
 
             </com.google.android.material.appbar.AppBarLayout>
 
-            <com.idirect.app.customview.postsrecyclerview.PostsRecyclerview
+            <com.idirect.app.ui.customview.postsrecyclerview.PostsRecyclerview
                 android:id="@+id/recyclerview_posts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

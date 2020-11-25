@@ -34,22 +34,20 @@ class SettingViewModel @Inject constructor(application: Application, var mUseCas
     val isEnableSeenMessage = ObservableField<Boolean>(false)
     val intentEvent = MutableLiveData<Pair<KClass<out AppCompatActivity>, Bundle?>>()
 
-    val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
 
     fun onLogOutClick(v: View) {
 
     }
 
     init {
-        val user = instaClient.loggedUser
+        val user = mUseCase.getLoggedUser()!!
         imageProfileUrl.set(user.profilePicUrl)
         accountFullName.set(user.fullName)
         accountUserName.set(user.username)
         isEnableNotification.set(mUseCase.isNotificationEnable)
         isEnableSeenMessage.set(mUseCase.isSeenMessageEnable)
 
-        instaClient.userProcessor.me
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.getMe()
             .subscribe({
                 userInfo = it.user
                 initAccountData()
@@ -71,9 +69,10 @@ class SettingViewModel @Inject constructor(application: Application, var mUseCas
     }
 
     fun logout() {
-        mUseCase.logout().observeForever {
-            intentEvent.postValue(Pair(LoginActivity::class,null))
-        }
+        //change
+//        mUseCase.logout().observeForever {
+//            intentEvent.postValue(Pair(LoginActivity::class,null))
+//        }
     }
 
 

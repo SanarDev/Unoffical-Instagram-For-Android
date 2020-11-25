@@ -48,8 +48,11 @@ abstract class BaseFragment<B: ViewDataBinding,VM: BaseViewModel> :DaggerFragmen
     open fun onKeyboardHide(){
     }
 
-    open fun showStatusBar(){
+    fun showStatusBar(){
         requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+    }
+    fun hideStatusBar(){
+        requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
     }
     fun isNullBinding():Boolean = _binding == null
     open fun isHideStatusBar():Boolean = false

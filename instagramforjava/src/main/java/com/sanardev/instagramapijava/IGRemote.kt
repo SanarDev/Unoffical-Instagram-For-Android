@@ -5,7 +5,6 @@ import com.sanardev.instagramapijava.response.*
 import io.reactivex.Observable
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -390,7 +389,7 @@ interface IGRemote {
         @Path("media_id") mediaId: String,
         @Path("slider_id") sliderId: Long,
         @Body requestBody: RequestBody
-    ): Observable<IGStorySliderVoteResponse>
+    ): Observable<IGStoryUpdateResponse>
 
     @POST(IGConstants.API_PREFIX_V2 + "media/seen/?reel=1&live_vode=0")
     fun markStoriesAsSeen(
@@ -405,4 +404,13 @@ interface IGRemote {
         @Path("question_id") questionId: Long,
         @Body requestBody: RequestBody
     ): Observable<ResponseBody>
+
+    @POST(IGConstants.API_PREFIX + "media/{media_id}/{quiz_id}/story_quiz_answer/")
+    fun storyQuizAnswer(
+        @HeaderMap header: Map<String, String>,
+        @Path("media_id") mediaId: String,
+        @Path("quiz_id") quizId: Long,
+        @Body requestBody: RequestBody
+    ): Observable<IGStoryUpdateResponse>
+
 }

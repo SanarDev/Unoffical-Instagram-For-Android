@@ -3,13 +3,11 @@ package com.idirect.app.di.module
 import android.app.Application
 import android.content.Context
 import android.os.Handler
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import com.google.gson.Gson
 import com.idirect.app.datasource.local.MessageDataSource
 import com.idirect.app.datasource.remote.InstagramRemote
 import com.idirect.app.manager.PlayManager
-import com.idirect.app.repository.InstagramRepository
+import com.idirect.app.datasource.repository.InstagramRepository
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.CookieUtils
 import dagger.Module
@@ -50,8 +48,8 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideInstagramRepository(mInstagramRemote: InstagramRemote,messageDataSource: MessageDataSource):InstagramRepository{
-        return InstagramRepository(mInstagramRemote,messageDataSource)
+    fun provideInstagramRepository(application: Application,messageDataSource: MessageDataSource):InstagramRepository{
+        return InstagramRepository(application,messageDataSource)
     }
 
 
@@ -72,7 +70,7 @@ class AppModule {
 
     @Provides
     fun provideUseCase(application: Application,mInstagramRepository: InstagramRepository,cookieUtils: CookieUtils,gson: Gson): UseCase {
-        return UseCase(application,mInstagramRepository,cookieUtils,Handler(),gson)
+        return UseCase(application,mInstagramRepository,Handler(),gson)
     }
 
     @Provides

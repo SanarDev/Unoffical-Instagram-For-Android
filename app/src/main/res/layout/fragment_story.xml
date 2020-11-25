@@ -24,7 +24,7 @@
                 android:layout_height="wrap_content"
                 android:elevation="20dp">
 
-                <com.idirect.app.customview.storyrecyclerview.StoryRecyclerView
+                <com.idirect.app.ui.customview.storyrecyclerview.StoryRecyclerView
                     android:id="@+id/view_pager"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

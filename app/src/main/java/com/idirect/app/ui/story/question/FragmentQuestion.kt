@@ -17,6 +17,8 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.idirect.app.R
 import com.idirect.app.databinding.FragmentQuestionBinding
+import com.idirect.app.extensions.color
+import com.idirect.app.extentions.isColorDark
 import com.idirect.app.utils.BitmapUtils
 import com.sanardev.instagramapijava.model.story.QuestionSticker
 import dagger.android.support.AndroidSupportInjection
@@ -66,6 +68,16 @@ class FragmentQuestion(
         binding.txtQuestion.text = questionSticker.question
         binding.cardView.setCardBackgroundColor(Color.parseColor(questionSticker.backgroundColor))
         binding.txtQuestion.setTextColor(Color.parseColor(questionSticker.textColor))
+        binding.edtAnswer.setTextColor(Color.parseColor(questionSticker.textColor))
+        binding.edtAnswer.setHintTextColor(Color.parseColor(questionSticker.textColor))
+
+        if(isColorDark(Color.parseColor(questionSticker.backgroundColor))){
+            binding.btnSend.setTextColor(color(R.color.bg_blue_apply))
+            binding.btnSend.setBackgroundResource(R.drawable.bg_question_send_light_button)
+        }else{
+            binding.btnSend.setTextColor(Color.WHITE)
+            binding.btnSend.setBackgroundResource(R.drawable.bg_question_send_dark_button)
+        }
 
         binding.edtAnswer.addTextChangedListener(object:TextWatcher{
             override fun afterTextChanged(s: Editable?) {
@@ -87,7 +99,12 @@ class FragmentQuestion(
         binding.btnSend.setOnClickListener {
             callback.onSendResponse(binding.edtAnswer.text.toString())
             binding.edtAnswer.isEnabled = false
-            binding.btnSend.setBackgroundResource(R.drawable.bg_question_send_success)
+            binding.btnSend.setText(R.string.question_response_sent)
+            if(isColorDark(Color.parseColor(questionSticker.backgroundColor))){
+                binding.btnSend.setTextColor(color(R.color.positive_tally))
+            }else{
+                binding.btnSend.setBackgroundResource(R.drawable.bg_question_send_success)
+            }
             mHandler.postDelayed({
                 dismiss()
             },1000)

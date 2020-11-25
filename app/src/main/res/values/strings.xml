@@ -144,4 +144,5 @@
     <string name="view_location">View Location</string>
     <string name="type_something">Type something...</string>
     <string name="view_post">View Post</string>
+    <string name="question_response_sent">Sent!</string>
 </resources>

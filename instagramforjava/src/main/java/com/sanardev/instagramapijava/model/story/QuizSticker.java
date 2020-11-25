@@ -18,6 +18,8 @@ public class QuizSticker {
     private int correctAnswer;
     @SerializedName("viewer_can_answer")
     private boolean viewerCanAnswer;
+    @SerializedName("viewer_answer")
+    private int viewerAnswer = -1;
     @SerializedName("finished")
     private boolean finished;
     @SerializedName("text_color")
@@ -26,6 +28,14 @@ public class QuizSticker {
     private String startBackgroundColor;
     @SerializedName("end_background_color")
     private String endBackgroundColor;
+
+    public int getViewerAnswer() {
+        return viewerAnswer;
+    }
+
+    public void setViewerAnswer(int viewerAnswer) {
+        this.viewerAnswer = viewerAnswer;
+    }
 
     public String getId() {
         return id;

@@ -10,18 +10,14 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import com.idirect.app.core.BaseActivity
 import com.idirect.app.R
-import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.customview.toast.CustomToast
+import com.idirect.app.ui.customview.toast.CustomToast
 import com.idirect.app.databinding.ActivityLoginBinding
-import com.idirect.app.ui.inbox.FragmentInbox
 import com.idirect.app.utils.Resource
-import com.idirect.app.utils.dialog.DialogHelper
 import com.idirect.app.ui.twofactor.TwoFactorActivity
 import com.idirect.app.extentions.hideKeyboard
 import com.idirect.app.extentions.toast
 import com.idirect.app.ui.main.MainActivity
 import com.sanardev.instagramapijava.IGConstants
-import com.sanardev.instagramapijava.InstaClient
 
 class LoginActivity : BaseActivity<ActivityLoginBinding, LoginViewModel>() {
 

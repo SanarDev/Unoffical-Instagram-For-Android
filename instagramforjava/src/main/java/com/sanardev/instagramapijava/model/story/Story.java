@@ -5,10 +5,10 @@ import com.google.gson.annotations.SerializedName;
 import com.sanardev.instagramapijava.model.media.ImageVersions2;
 import com.sanardev.instagramapijava.model.media.VideoVersion;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class Story {
-
 
 
     @SerializedName("taken_at")

@@ -22,7 +22,6 @@ import javax.inject.Inject
 class TwoFactorViewModel @Inject constructor(application: Application, var mUseCase: UseCase) :
     BaseViewModel(application) {
 
-    private lateinit var instaClient: InstaClient
     val isLoading = MutableLiveData<Boolean>(false)
     val result = MutableLiveData<Resource<IGLoginResponse>>()
 
@@ -47,9 +46,13 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
     var timer: Int = 0
     lateinit var instagramTwoFactorInfo: IGTwoFactorInfo
 
+    lateinit var username:String
+    lateinit var password:String
+
     fun initData(username:String,password:String) {
-        instaClient = InstaClient((getApplication() as Application).applicationContext,username,password);
-        this@TwoFactorViewModel.instagramTwoFactorInfo = instaClient.accountProcessor.twoStepAuthInfo
+        this.username = username
+        this.password = password
+        this@TwoFactorViewModel.instagramTwoFactorInfo = mUseCase.getTwoStepAuthInfo(username,password)
         endOfPhoneNumber.set(instagramTwoFactorInfo.obfuscatedPhoneNumber)
         if (instagramTwoFactorInfo.phoneVerificationSettings != null) {
             timer = instagramTwoFactorInfo.phoneVerificationSettings!!.resendSmsDelaySec
@@ -112,8 +115,7 @@ class TwoFactorViewModel @Inject constructor(application: Application, var mUseC
             .append(textCodeSix.get())
             .toString()
 
-        instaClient.accountProcessor.twoStepAuth(code)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.twoStepAuth(username,password,code)
             .subscribe({
             result.value = Resource.success(it)
         },{

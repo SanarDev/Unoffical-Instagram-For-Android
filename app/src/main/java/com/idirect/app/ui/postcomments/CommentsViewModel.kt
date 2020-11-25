@@ -16,9 +16,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import okhttp3.ResponseBody
 import javax.inject.Inject
 
-class CommentsViewModel @Inject constructor(application: Application):BaseViewModel(application){
+class CommentsViewModel @Inject constructor(application: Application,val mUseCase: UseCase):BaseViewModel(application){
 
-    private val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
     private val _comments = MutableLiveData<Resource<IGCommentsResponse>>()
     private var instagramCommentResponse:IGCommentsResponse?=null
     private lateinit var mediaId:String
@@ -39,7 +38,7 @@ class CommentsViewModel @Inject constructor(application: Application):BaseViewMo
     }
     fun init(mediaId:String){
         this.mediaId = mediaId
-        instaClient.commentProcessor.getPostComments(mediaId)
+        mUseCase.getPostsComments(mediaId)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 _comments.value = Resource.success(it)
@@ -47,11 +46,11 @@ class CommentsViewModel @Inject constructor(application: Application):BaseViewMo
     }
 
     fun getUser(): IGLoggedUser {
-        return instaClient.loggedUser
+        return mUseCase.getLoggedUser()!!
     }
 
     fun loadMoreComments() {
-        instaClient.commentProcessor.getPostComments(mediaId,instagramCommentResponse!!.nextMinId)
+        mUseCase.getPostsMoreComments(mediaId,instagramCommentResponse!!.nextMinId)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 _comments.value = Resource.success(it)
@@ -59,10 +58,10 @@ class CommentsViewModel @Inject constructor(application: Application):BaseViewMo
     }
 
     fun unlikeComment(pk: Long) {
-        instaClient.commentProcessor.unlikeComment(pk.toString()).subscribe({},{},{})
+        mUseCase.unlikeComment(pk).subscribe({},{},{})
     }
     fun likeComment(pk: Long) {
-        instaClient.commentProcessor.likeComment(pk.toString()).subscribe()
+        mUseCase.likeComment(pk).subscribe()
     }
 
 }

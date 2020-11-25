@@ -6,22 +6,19 @@ import com.sanardev.instagramapijava.model.login.IGLoggedUser;
 import com.sanardev.instagramapijava.model.story.Story;
 import com.sanardev.instagramapijava.request.IGGetStoryMediaRequest;
 import com.sanardev.instagramapijava.request.IGGetTimelineStory;
-import com.sanardev.instagramapijava.response.BaseResponse;
 import com.sanardev.instagramapijava.response.IGSendStoryReactionResponse;
 import com.sanardev.instagramapijava.response.IGShareStoryResponse;
 import com.sanardev.instagramapijava.response.IGStoryMediaResponse;
 import com.sanardev.instagramapijava.response.IGStoryReplyResponse;
-import com.sanardev.instagramapijava.response.IGStorySliderVoteResponse;
+import com.sanardev.instagramapijava.response.IGStoryUpdateResponse;
 import com.sanardev.instagramapijava.response.IGTimeLineStoryResponse;
 import com.sanardev.instagramapijava.utils.InstaHashUtils;
-import com.sanardev.instagramapijava.utils.StorageUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
 
@@ -234,7 +231,7 @@ public class StoryProcessor {
                 .subscribeOn(Schedulers.io());
     }
 
-    public Observable<IGStorySliderVoteResponse> voteSlider(float vote,long sliderId,String mediaId){
+    public Observable<IGStoryUpdateResponse> voteSlider(float vote, long sliderId, String mediaId){
         Cookie cookie = igRequest.getCookie();
         IGLoggedUser loggedUser = igRequest.getLoggedUser();
         HashMap<Object, Object> data = new HashMap<>();
@@ -282,6 +279,16 @@ public class StoryProcessor {
         data.put("mutation_token",data.get("_csrftoken"));
         data.put("response",response);
         return igRequest.getRemote().storyQuestionResponse(igRequest.getHeaders(),mediaId,questionId,igRequest.getSignaturePayload(data))
+                .subscribeOn(Schedulers.io());
+    }
+
+    public Observable<IGStoryUpdateResponse> storyQuizAnswer(String mediaId,long quizId,int answer){
+        Cookie cookie = igRequest.getCookie();
+        HashMap<Object, Object> data = new HashMap<>();
+        data.put("_csrftoken",cookie.getCsrftoken());
+        data.put("_uuid",cookie.getAdid());
+        data.put("answer",answer);
+        return igRequest.getRemote().storyQuizAnswer(igRequest.getHeaders(),mediaId.split("_")[0],quizId,igRequest.formUrlEncode(data))
                 .subscribeOn(Schedulers.io());
     }
 

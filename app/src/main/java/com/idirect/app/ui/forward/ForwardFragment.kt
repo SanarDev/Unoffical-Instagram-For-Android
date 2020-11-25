@@ -26,7 +26,6 @@ import com.idirect.app.databinding.FragmentForwardBinding
 import com.idirect.app.databinding.ItemDirectShareBinding
 import com.idirect.app.datasource.model.event.ConnectionStateEvent
 import com.idirect.app.di.DaggerViewModelFactory
-import com.idirect.app.extentions.dpToPx
 import com.idirect.app.extentions.vibration
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.utils.Resource

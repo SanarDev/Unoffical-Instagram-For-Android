@@ -9,9 +9,9 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.idirect.app.R
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
-import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
+import com.idirect.app.ui.customview.customtextview.HyperTextView
+import com.idirect.app.ui.customview.postsrecyclerview.PostsAdapter2
+import com.idirect.app.ui.customview.postsrecyclerview.PostsRecyclerListener
 import com.idirect.app.databinding.FragmentSinglePostBinding
 import com.idirect.app.datasource.model.Location
 import com.idirect.app.manager.PlayManager

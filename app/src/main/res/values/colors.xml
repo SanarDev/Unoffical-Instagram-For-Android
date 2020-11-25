@@ -39,8 +39,15 @@
     <color name="navigation_currentItem">#fff</color>
     <color name="navigation_default_color_item">#a9a9a9</color>
     <color name="navigation_inactiveItem">#aaa</color>
-    <color name="card_post">@color/theme_item</color>
+    <color name="card_post">#00FFFFFF</color>
     <color name="forward_button">#365FF4</color>
     <color name="bg_blue_apply">#1976D2</color>
     <color name="bg_green_success">#689F38</color>
+    <color name="positive_tally">#28DC28</color>
+    <color name="negative_tally">#FF3F9C</color>
+    <color name="bg_poll_story">#D8D8D8</color>
+    <color name="story_quiz_incorrect_answer">#ED4956</color>
+    <color name="story_quiz_correct_option">#B8E0A8</color>
+    <color name="story_quiz_incorrect_option">#FFF</color>
+    <color name="story_quiz_correct_answer">#70c050</color>
 </resources>

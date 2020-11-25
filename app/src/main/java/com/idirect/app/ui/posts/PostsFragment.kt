@@ -12,13 +12,12 @@ import com.bumptech.glide.RequestManager
 import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
-import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
-import com.idirect.app.customview.toast.CustomToast
+import com.idirect.app.ui.customview.customtextview.HyperTextView
+import com.idirect.app.ui.customview.postsrecyclerview.PostsAdapter2
+import com.idirect.app.ui.customview.postsrecyclerview.PostsRecyclerListener
+import com.idirect.app.ui.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentPostsBinding
 import com.idirect.app.datasource.model.Location
-import com.idirect.app.datasource.model.UserPost
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
 import com.idirect.app.manager.PlayManager

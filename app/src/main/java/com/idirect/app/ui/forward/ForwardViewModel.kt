@@ -19,10 +19,10 @@ import javax.inject.Inject
 
 class ForwardViewModel @Inject constructor(
     application: Application,
+    val mUseCase: UseCase,
     var mHandler: android.os.Handler
 ) : BaseViewModel(application) {
 
-    val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
     val recipients = MediatorLiveData<Resource<IGRecipientsResponse>>()
     var searchWord: String = ""
     private var lastSearchedWord: String = ""
@@ -30,8 +30,7 @@ class ForwardViewModel @Inject constructor(
     // for stop loop thread when share is done
     private var stopSelf:Boolean = false
     init {
-        instaClient.directProcessor.getRecipient()
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.getRecipient()
             .subscribe({
                 recipients.value = Resource.success(it)
             }, {}, {})
@@ -43,8 +42,7 @@ class ForwardViewModel @Inject constructor(
                 mHandler.post {
                     if (searchWord != lastSearchedWord) {
                         lastSearchedWord = searchWord
-                        instaClient.directProcessor.getRecipient(searchWord)
-                            .observeOn(AndroidSchedulers.mainThread())
+                        mUseCase.getRecipient(searchWord)
                             .subscribe({
                                 recipients.value = Resource.success(it)
                             }, {}, {})
@@ -56,14 +54,14 @@ class ForwardViewModel @Inject constructor(
     }
 
     fun getUserData(): IGLoggedUser {
-        return instaClient.loggedUser
+        return mUseCase.getLoggedUser()!!
     }
 
     fun shareMediaTo(forwardBundle: ForwardBundle, selectedUsers: MutableList<String>) {
         stopSelf = true
         for (user in selectedUsers) {
             if (forwardBundle.isStoryShare) {
-                instaClient.storyProcessor.shareStory(
+                mUseCase.shareStory(
                     user,
                     forwardBundle.mediaId,
                     forwardBundle.mediaType,
@@ -72,7 +70,7 @@ class ForwardViewModel @Inject constructor(
                     EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT))
                 })
             } else {
-                instaClient.mediaProcessor.shareMedia(
+                mUseCase.shareMedia(
                     user,
                     forwardBundle.mediaId,
                     forwardBundle.mediaType

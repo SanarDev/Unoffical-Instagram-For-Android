@@ -16,11 +16,11 @@ import com.idirect.app.databinding.ItemSelectingImageBinding
 import com.idirect.app.databinding.LayoutSelectImageBinding
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
+import com.idirect.app.extentions.SizeExtention.sizeInKb
 import com.idirect.app.ui.fullscreen.FullScreenFragment
 import com.idirect.app.ui.playvideo.PlayVideoActivity
 import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.MediaUtils
-import com.idirect.app.extentions.sizeInKb
 import com.idirect.app.extentions.toast
 import com.idirect.app.extentions.vibration
 import java.io.File

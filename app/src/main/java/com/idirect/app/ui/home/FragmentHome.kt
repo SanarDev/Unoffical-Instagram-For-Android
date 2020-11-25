@@ -8,9 +8,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.lifecycle.Observer
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -20,23 +18,18 @@ import com.google.android.exoplayer2.util.Util
 import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.customview.customtextview.HyperTextView
-import com.idirect.app.customview.postsrecyclerview.PostsAdapter2
-import com.idirect.app.customview.postsrecyclerview.PostsAdapter3
-import com.idirect.app.customview.postsrecyclerview.PostsRecyclerListener
-import com.idirect.app.customview.story.StoryWidget
-import com.idirect.app.customview.toast.CustomToast
+import com.idirect.app.ui.customview.customtextview.HyperTextView
+import com.idirect.app.ui.customview.postsrecyclerview.PostsAdapter2
+import com.idirect.app.ui.customview.postsrecyclerview.PostsRecyclerListener
+import com.idirect.app.ui.customview.story.StoryWidget
+import com.idirect.app.ui.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentHomeBinding
-import com.idirect.app.databinding.LayoutStoryBinding
 import com.idirect.app.datasource.model.*
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.ui.forward.ForwardBundle
 import com.idirect.app.ui.main.MainActivity
-import com.idirect.app.ui.postcomments.CommentsFragmentDirections
 import com.idirect.app.ui.userprofile.UserBundle
-import com.idirect.app.utils.DisplayUtils
 import com.idirect.app.utils.Resource
 import com.sanardev.instagramapijava.model.timeline.MediaOrAd
 import com.vanniktech.emoji.EmojiManager
@@ -84,6 +77,10 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
         _mStoryAdapter = null
         _mGlide = null
         super.onDestroyView()
+    }
+
+    override fun isHideStatusBar(): Boolean {
+        return false
     }
 
     override fun onCreateView(
@@ -204,6 +201,7 @@ class FragmentHome : BaseFragment<FragmentHomeBinding, HomeViewModel>(),
 
     override fun onResume() {
         super.onResume()
+        showStatusBar()
         mPlayManager.resumePlay()
     }
 

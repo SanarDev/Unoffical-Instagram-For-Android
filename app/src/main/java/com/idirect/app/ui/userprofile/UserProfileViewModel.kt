@@ -26,6 +26,7 @@ import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 open class UserProfileViewModel @Inject constructor(
     application: Application,
+    val mUseCase: UseCase,
     var gson: Gson
 ) : BaseViewModel(application) {
 
@@ -44,7 +45,7 @@ open class UserProfileViewModel @Inject constructor(
 
     fun init(username: String?, userId: Long) {
         if (userId == 0.toLong()) {
-            instaClient.userProcessor.getUserInfoByUsername(username!!).observeOn(AndroidSchedulers.mainThread())
+            mUseCase.getUserInfoByUsername(username!!)
                 .subscribe({
                     _userLiveData.value = Resource.success(it)
                 },{
@@ -56,7 +57,7 @@ open class UserProfileViewModel @Inject constructor(
     }
 
     private fun getUserProfile(userId: Long) {
-        instaClient.userProcessor.getUserInfo(userId).observeOn(AndroidSchedulers.mainThread())
+        mUseCase.getUserInfo(userId)
             .subscribe({
                 _userLiveData.value = Resource.success(it)
             },{
@@ -65,8 +66,7 @@ open class UserProfileViewModel @Inject constructor(
     }
 
     private fun getUserPosts(userId: Long) {
-        instaClient.userProcessor.getPosts(userId)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.getPosts(userId)
             .subscribe({
                 instagramPostsResponse = it
                 resultUsePosts.value = Resource.success(it)
@@ -78,8 +78,7 @@ open class UserProfileViewModel @Inject constructor(
     fun loadMorePosts() {
         val posts = instagramPostsResponse!!.posts
         val previousPostId = posts[posts.size - 1].id
-        instaClient.userProcessor.getMorePosts(userId, previousPostId)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.getMorePosts(userId, previousPostId)
             .subscribe({
                 instagramPostsResponse!!.numResults += it.numResults
                 instagramPostsResponse!!.posts.addAll(it.posts)

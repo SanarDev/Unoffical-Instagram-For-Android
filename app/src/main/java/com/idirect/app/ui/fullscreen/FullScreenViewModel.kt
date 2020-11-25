@@ -11,14 +11,12 @@ import com.sanardev.instagramapijava.response.IGMediaResponse
 import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 
-class FullScreenViewModel @Inject constructor(application: Application): BaseViewModel(application) {
+class FullScreenViewModel @Inject constructor(application: Application,val mUseCase: UseCase): BaseViewModel(application) {
 
-    val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
     val liveDataPost = MediatorLiveData<Resource<IGMediaResponse>>()
 
     fun getMediaById(mediaId:String){
-        instaClient.mediaProcessor.getMediaById(mediaId)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.getMediaById(mediaId)
             .subscribe({
                 liveDataPost.value = Resource.success(it)
             },{},{})

@@ -14,6 +14,7 @@ import android.text.SpannableStringBuilder
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.URLSpan
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.ProgressBar
@@ -158,4 +159,14 @@ fun Fragment.removeWaitForTransition(v:View,onPreDrawListener:ViewTreeObserver.O
 fun ProgressBar.setProgressColor(color:Int){
     indeterminateTintList = ColorStateList.valueOf(color)
     progressTintList = ColorStateList.valueOf(color)
+}
+
+fun View.addRipple() = with(TypedValue()) {
+    context.theme.resolveAttribute(android.R.attr.selectableItemBackground, this, true)
+    setBackgroundResource(resourceId)
+}
+
+fun View.addCircleRipple() = with(TypedValue()) {
+    context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, this, true)
+    setBackgroundResource(resourceId)
 }

@@ -41,13 +41,14 @@ import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.customview.doubleclick.DoubleClick
-import com.idirect.app.customview.doubleclick.DoubleClickListener
+import com.idirect.app.ui.customview.doubleclick.DoubleClick
+import com.idirect.app.ui.customview.doubleclick.DoubleClickListener
 import com.idirect.app.databinding.*
 import com.idirect.app.datasource.model.DirectDate
 import com.idirect.app.datasource.model.event.*
 import com.idirect.app.extensions.*
 import com.idirect.app.extentions.*
+import com.idirect.app.extentions.SizeExtention.dpToPx
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.realtime.commands.*
 import com.idirect.app.realtime.service.RealTimeService

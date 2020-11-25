@@ -16,7 +16,7 @@ import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.UploadMedia
 import com.idirect.app.datasource.model.event.*
 import com.idirect.app.extensions.REGEX_FIND_URL
-import com.idirect.app.extentions.dpToPx
+import com.idirect.app.extentions.SizeExtention.dpToPx
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.realtime.commands.RealTime_SendLike
 import com.idirect.app.realtime.commands.RealTime_SendMessage
@@ -74,7 +74,6 @@ class ShareViewModel @Inject constructor(
     // thread
     val threadChange = MutableLiveData<String>()
     val threadsPresence = MutableLiveData<List<String>>()
-    val instaClient = InstaClient.getInstanceCurrentUser(application.applicationContext)
 
     // inbox
     val directs = ArrayList<IGThread>().toMutableList()
@@ -98,8 +97,7 @@ class ShareViewModel @Inject constructor(
         } else if (it.status == Resource.Status.SUCCESS) {
             if (directs.isEmpty()) {
                 resultPresence.value = Resource.loading()
-                instaClient.directProcessor.directPresence
-                    .observeOn(AndroidSchedulers.mainThread())
+                mUseCase.getDirectPresence()
                     .subscribe({
                         resultPresence.value = Resource.success(it)
                     }, {
@@ -166,7 +164,7 @@ class ShareViewModel @Inject constructor(
             val clCotext = InstagramHashUtils.getClientContext()
             val message = MessageGenerator.voiceMedia(
                 getApplication(),
-                instaClient.loggedUser.pk,
+                mUseCase.getLoggedUser()!!.pk,
                 currentIGThread!!.threadId,
                 clCotext,
                 currentVoiceFileName!!
@@ -174,12 +172,12 @@ class ShareViewModel @Inject constructor(
             currentIGThread!!.messages.add(0, message)
             threadNewMessageLiveData.value = Pair(currentIGThread!!.threadId!!, message)
             val users = currentIGThread!!.users
-            instaClient.directProcessor.sendMediaVoice(
+            mUseCase.sendMediaVoice(
                 currentIGThread!!.threadId,
                 getUsersPk(users),
                 currentVoiceFileName!!,
                 clCotext
-            ).observeOn(AndroidSchedulers.mainThread())
+            )
                 .subscribe({
                     messageChange.value = Pair(currentIGThread!!.threadId, message.apply {
                         if (mPlayManager.currentPlayerId == this.itemId) {
@@ -217,14 +215,14 @@ class ShareViewModel @Inject constructor(
             MessageGenerator.textLink(
                 text,
                 linkList,
-                instaClient.loggedUser.pk,
+                mUseCase.getLoggedUser()!!.pk,
                 threadId,
                 clientContext
             )
         } else {
             MessageGenerator.text(
                 text,
-                instaClient.loggedUser.pk,
+                mUseCase.getLoggedUser()!!.pk,
                 threadId,
                 clientContext
             )
@@ -243,7 +241,7 @@ class ShareViewModel @Inject constructor(
             InstagramConstants.MessageType.MEDIA.type -> {
                 val users = currentIGThread!!.users
                 if (msg.media.mediaType == 1) {
-                    instaClient.directProcessor.sendMediaImage(
+                    mUseCase.sendMediaImage(
                         msg.bundle["threadId"] as String,
                         getUsersPk(users),
                         msg.media.bundle["localFilePath"] as String,
@@ -256,13 +254,12 @@ class ShareViewModel @Inject constructor(
                         }, {
                         }, {})
                 } else {
-                    instaClient.directProcessor.sendMediaVideo(
+                   mUseCase.sendMediaVideo(
                         msg.bundle["threadId"] as String,
                         getUsersPk(users),
                         msg.media.bundle["localFilePath"] as String,
                         msg.clientContext
-                    ).observeOn(AndroidSchedulers.mainThread())
-                        .subscribe({
+                    ).subscribe({
                             changeMessageDelivery(it)
                             list.removeAt(0)
                             sendMessageToCloud(list)
@@ -340,8 +337,7 @@ class ShareViewModel @Inject constructor(
 
 
     fun sendReaction(itemId: String, threadId: String, clientContext: String) {
-        instaClient.directProcessor.sendLikeReaction(itemId,threadId,clientContext)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.sendLikeReaction(itemId,threadId,clientContext)
             .subscribe({
                 onReactionsResponse(it.payload)
             },{},{})
@@ -361,7 +357,7 @@ class ShareViewModel @Inject constructor(
         paths: List<String>
     ): MutableList<UploadMedia> {
         val uploadMedias = ArrayList<UploadMedia>().toMutableList()
-        val user = instaClient.loggedUser
+        val user = mUseCase.getLoggedUser()
         for (item in paths) {
             val clientContext = InstagramHashUtils.getClientContext()
             uploadMedias.add(UploadMedia().apply {
@@ -441,13 +437,12 @@ class ShareViewModel @Inject constructor(
     }
 
     fun markAsSeenRavenMedia(threadId: String, itemId: String, messageClientContext: String) {
-        instaClient.directProcessor.markAsSeenRavenMedia(threadId, itemId,messageClientContext)
+        mUseCase.markAsSeenRavenMedia(threadId, itemId,messageClientContext).subscribe()
     }
 
     @SuppressLint("CheckResult")
     fun unsendMessage(threadId: String, itemId: String, clientContext: String) {
-        instaClient.directProcessor.unsendMessage(threadId, itemId, clientContext)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.unsendMessage(threadId, itemId, clientContext)
             .subscribe({
                 deleteMessage(MessageRemoveEvent(threadId, itemId))
             },{
@@ -456,12 +451,11 @@ class ShareViewModel @Inject constructor(
     }
 
     fun markAsSeen(threadId: String, itemId: String) {
-        instaClient.directProcessor.markAsSeenMessage(threadId, itemId).subscribe({},{},{})
+        mUseCase.markAsSeenMessage(threadId, itemId).subscribe({},{},{})
     }
 
     fun loadMoreItem(cursor: String, threadId: String) {
-        instaClient.directProcessor.getDirectMoreChats(threadId, instagramDirect!!.seqId,cursor)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase.getDirectMoreChats(threadId, instagramDirect!!.seqId,cursor)
             .subscribe({
                 getThreadById(it.igThread.threadId).messages.addAll(it.igThread.messages)
                 mutableLiveData.value = Resource.success(instagramDirect)
@@ -672,19 +666,19 @@ class ShareViewModel @Inject constructor(
 
     // call then need to remove user login data
     fun resetUserData() {
-        instaClient.accountProcessor.logout()
+        mUseCase.logout().subscribe()
     }
 
     fun getDirects() {
-        instaClient.directProcessor.getInbox(20,20)
-            .observeOn(AndroidSchedulers.mainThread())
+        mUseCase
+            .getDirectInbox(20,20)
             .subscribe({
                 result.value = Resource.success(it)
             },{},{})
     }
 
     fun getUser(): IGLoggedUser {
-        return instaClient.loggedUser
+        return mUseCase.getLoggedUser()!!
     }
 
     fun onMessageReceive(event: MessageItemEvent) {
@@ -801,7 +795,7 @@ class ShareViewModel @Inject constructor(
 
     fun loadMoreItem() {
         if (instagramDirect!!.inbox.oldestCursor != null) {
-            instaClient.directProcessor.loadMoreInbox(
+            mUseCase.getMoreDirectInbox(
                 instagramDirect!!.seqId,
                 instagramDirect!!.inbox.oldestCursor
             ).observeOn(AndroidSchedulers.mainThread())
@@ -848,7 +842,7 @@ class ShareViewModel @Inject constructor(
                 clientContext
             )
         )
-        val message = MessageGenerator.like(instaClient.loggedUser.pk, threadId, clientContext)
+        val message = MessageGenerator.like(getUser().pk, threadId, clientContext)
         getThreadById(threadId).messages.add(0, message)
         threadNewMessageLiveData.value = Pair(threadId, message)
     }
@@ -875,11 +869,11 @@ class ShareViewModel @Inject constructor(
             }
         }
         //#comment_code
-        instaClient.directProcessor.getThreadByParticipants(directBundle.userId, instagramDirect!!.seqId)
+        mUseCase.getThreadByParticipants(directBundle.userId, instagramDirect!!.seqId)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 if(it.thread == null){
-                    result.value = Resource.success(instaClient.directProcessor.createFakeThread(directBundle.userId,directBundle.threadTitle,directBundle.profileImage))
+                    result.value = Resource.success(mUseCase.createFakeThread(directBundle.userId,directBundle.threadTitle,directBundle.profileImage))
                 }else{
                     result.value = Resource.success(it.thread)
                 }

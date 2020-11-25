@@ -18,13 +18,10 @@ import com.idirect.app.NavigationMainGraphDirections
 import com.idirect.app.R
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseFragment
-import com.idirect.app.customview.loadingadapter.LoadingAdapter
-import com.idirect.app.customview.toast.CustomToast
+import com.idirect.app.ui.customview.loadingadapter.LoadingAdapter
+import com.idirect.app.ui.customview.toast.CustomToast
 import com.idirect.app.databinding.FragmentUserProfileBinding
 import com.idirect.app.databinding.LayoutUserPostBinding
-import com.idirect.app.datasource.model.User
-import com.idirect.app.datasource.model.UserPost
-import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
 import com.idirect.app.ui.direct.DirectBundle
 import com.idirect.app.ui.main.MainActivity
@@ -35,7 +32,6 @@ import com.sanardev.instagramapijava.model.timeline.MediaOrAd
 import com.sanardev.instagramapijava.model.user.BigUser
 import com.vanniktech.emoji.EmojiManager
 import com.vanniktech.emoji.ios.IosEmojiProvider
-import javax.inject.Inject
 
 class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfileViewModel>() {
 

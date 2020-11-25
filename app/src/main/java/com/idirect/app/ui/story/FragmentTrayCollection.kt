@@ -30,6 +30,7 @@ import javax.inject.Inject
 class FragmentTrayCollection :
     BaseFragment<FragmentTrayCollectionBinding, TrayCollectionViewModel>() {
 
+    private var isSingle: Boolean = false
     private var _mAdapter: StoriesAdapter? = null
     private val mAdapter: StoriesAdapter get() = _mAdapter!!
     private var userId: Long = 0
@@ -95,9 +96,10 @@ class FragmentTrayCollection :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        userId = requireArguments().getString("user_id")!!.toLong()
-        val isSingle = requireArguments().getBoolean("is_single")
-        viewModel.getStoryData(userId, isSingle,true)
+        requireArguments().let {
+            userId = it.getString("user_id")!!.toLong()
+            isSingle = it.getBoolean("is_single")
+        }
         (requireActivity() as MainActivity).isHideNavigationBottom(true)
 
         _mStoryActionListener = object : StoryActionListener {
@@ -129,7 +131,8 @@ class FragmentTrayCollection :
                 val action = NavigationMainGraphDirections.actionGlobalSinglePostFragment(mediaId)
                 findNavController().navigate(action)
             }
-            override fun viewPage(userId: Long,username:String) {
+
+            override fun viewPage(userId: Long, username: String) {
                 val data = UserBundle().apply {
                     this.userId = userId
                     this.username = username
@@ -153,7 +156,7 @@ class FragmentTrayCollection :
                 positionOffset: Float,
                 positionOffsetPixels: Int
             ) {
-                if(!isStarted && lastPosition == position){
+                if (!isStarted && lastPosition == position) {
                     fragments[position]?.let {
                         Log.i(
                             InstagramConstants.DEBUG_TAG,
@@ -185,7 +188,10 @@ class FragmentTrayCollection :
                         it.showCurrentItem()
                     }
                     lastPosition = position
-                    requireArguments().putString("user_id",mAdapter.items!![position].user.pk.toString())
+                    requireArguments().putString(
+                        "user_id",
+                        mAdapter.items!![position].user.pk.toString()
+                    )
                 } else if (lastPosition == position && position == binding.viewPager.adapter!!.count - 1) {
                     requireActivity().onBackPressed()
                 }
@@ -201,15 +207,16 @@ class FragmentTrayCollection :
                 mAdapter.items = it.data!!
                 mAdapter.notifyDataSetChanged()
                 isStarted = false
-                    for (index in it.data!!.indices) {
-                        if (it.data!![index].user.pk == userId) {
-                            lastPosition = index
-                        }
+                it.data!!.forEachIndexed { index, tray ->
+                    if (tray.user.pk == userId) {
+                        lastPosition = index
                     }
+                }
                 binding.viewPager.currentItem = lastPosition
             }
         })
 
+        viewModel.getStoryData(userId, isSingle, true)
     }
 
 
@@ -270,8 +277,8 @@ class FragmentTrayCollection :
 
     override fun onResume() {
         super.onResume()
-        requireActivity().window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        if(isStarted){
+        hideStatusBar()
+        if (isStarted) {
             fragments[lastPosition]?.let {
                 it.isPauseAnyThing = false
                 it.playItemAfterLoad = true
@@ -279,9 +286,10 @@ class FragmentTrayCollection :
             }
         }
     }
+
     override fun onStop() {
         super.onStop()
-        Log.i(InstagramConstants.DEBUG_TAG,"FragmentTrayCollection: onStop")
+        Log.i(InstagramConstants.DEBUG_TAG, "FragmentTrayCollection: onStop")
         mPlayManager.stopPlay()
     }
 
