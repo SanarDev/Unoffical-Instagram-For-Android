@@ -7,15 +7,10 @@ import androidx.lifecycle.MutableLiveData
 import com.idirect.app.R
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.core.BaseApplication
-import com.idirect.app.datasource.model.response.InstagramLoginResult
-import com.idirect.app.datasource.model.response.InstagramTwoFactorInfo
 import com.idirect.app.utils.Resource
 import com.idirect.app.usecase.UseCase
-import com.sanardev.instagramapijava.IGConstants
-import com.sanardev.instagramapijava.InstaClient
 import com.sanardev.instagramapijava.model.login.IGTwoFactorInfo
 import com.sanardev.instagramapijava.response.IGLoginResponse
-import io.reactivex.android.schedulers.AndroidSchedulers
 import java.lang.StringBuilder
 import javax.inject.Inject
 

@@ -2,27 +2,16 @@ package com.idirect.app.ui.userprofile
 
 import android.app.Application
 import android.util.Log
-import androidx.databinding.ObservableField
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.google.gson.Gson
-import com.idirect.app.R
-import com.idirect.app.core.BaseApplication
 import com.idirect.app.core.BaseViewModel
-import com.idirect.app.datasource.model.APIErrors
-import com.idirect.app.datasource.model.User
-import com.idirect.app.datasource.model.payload.StatusResult
-import com.idirect.app.datasource.model.response.InstagramPostsResponse
-import com.idirect.app.datasource.model.response.InstagramUserInfo
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
 import com.sanardev.instagramapijava.InstaClient
 import com.sanardev.instagramapijava.response.IGPostsResponse
 import com.sanardev.instagramapijava.response.IGUserInfoResponse
-import io.reactivex.android.schedulers.AndroidSchedulers
-import okhttp3.ResponseBody
 import javax.inject.Inject
-import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 open class UserProfileViewModel @Inject constructor(
     application: Application,

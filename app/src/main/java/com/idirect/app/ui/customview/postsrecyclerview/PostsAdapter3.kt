@@ -374,7 +374,7 @@ class PostsAdapter3(
                         mListener?.userProfile(v, mediaOrAd.user.pk, mediaOrAd.user.username)
                     }
                     btnComment.id -> {
-                        mListener?.showComments(v!!, mediaOrAd)
+                        mListener?.showComments(v, mediaOrAd)
                     }
                     btnShare.id -> {
                         mListener?.shareMedia(v, mediaOrAd.id, mediaOrAd.mediaType)
@@ -417,9 +417,7 @@ class PostsAdapter3(
         txtUsername.mHyperTextClick = mHyperTextClick
 
         if (mediaOrAd.caption != null) {
-            txtCaption.setText(
-                mediaOrAd.caption.text
-            )
+            txtCaption.text = mediaOrAd.caption.text
         }
         mGlide.load(mediaOrAd.user.profilePicUrl).into(imgProfile)
         if (!mediaOrAd.isCommentThreadingEnabled) {
@@ -599,7 +597,7 @@ class PostsAdapter3(
                 val dataSource =
                     DefaultHttpDataSourceFactory(
                         Util.getUserAgent(
-                            context!!,
+                            context,
                             "Instagram"
                         )
                     )

@@ -193,7 +193,7 @@ class FbnsPacketDecoderJava : ReplayingDecoder<ParseState?>() {
         }
     }
 
-    private class Result<T> internal constructor(val value: T, val numberOfBytesConsumed: Int)
+    private class Result<T>(val value: T, val numberOfBytesConsumed: Int)
 
     private fun invalidMessage(cause: Throwable): MqttMessage {
         checkpoint(ParseState.BAD_MESSAGE)
@@ -242,7 +242,7 @@ class FbnsPacketDecoderJava : ReplayingDecoder<ParseState?>() {
                         0
                     )
                 else -> {
-                    null;
+                    null
                 }
             }
             return Result<Any?>(

@@ -1,6 +1,6 @@
 package com.idirect.app.datasource.model.response
 
-class InstagramChallenge() {
+class InstagramChallenge {
     var url: String? = null
     var api_path: String? = null
     var hide_webview_header: Boolean? = null

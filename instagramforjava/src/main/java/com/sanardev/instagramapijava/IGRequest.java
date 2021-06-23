@@ -271,7 +271,7 @@ public class IGRequest {
                     headersUploadFinish.put("retry_context", gson.toJson(InstaHashUtils.getRetryContext()));
                     return remote.uploadFinish(headersUploadFinish, getSignaturePayload(data));
                 })
-                .map((Function<IGUploadFinishResponse, IGUploadFinishResponse>) igUploadFinishResponse -> {
+                .map(igUploadFinishResponse -> {
                     igUploadFinishResponse.setUploadId(uploadId);
                     return igUploadFinishResponse;
                 });
@@ -330,7 +330,7 @@ public class IGRequest {
                     headersUploadFinish.put("retry_context", gson.toJson(InstaHashUtils.getRetryContext()));
                     return remote.uploadFinish(headersUploadFinish, getSignaturePayload(data));
                 })
-                .map((Function<IGUploadFinishResponse, IGUploadFinishResponse>) igUploadFinishResponse -> {
+                .map(igUploadFinishResponse -> {
                     igUploadFinishResponse.setUploadId(uploadId);
                     return igUploadFinishResponse;
                 });

@@ -240,12 +240,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
     override fun onStart() {
         super.onStart()
-        EventBus.getDefault().register(this);
+        EventBus.getDefault().register(this)
     }
 
     override fun onStop() {
         super.onStop()
-        EventBus.getDefault().unregister(this);
+        EventBus.getDefault().unregister(this)
     }
 
     override fun onDestroy() {
@@ -255,7 +255,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
     override fun onShowKeyboard(keyboardHeight: Int) {
         super.onShowKeyboard(keyboardHeight)
-        navHostFragment?.let {
+        navHostFragment.let {
             val frg = it.childFragmentManager.fragments[0] as BaseFragment<*, *>
             frg.onKeyboardOpen()
         }
@@ -263,7 +263,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, ShareViewModel>() {
 
     override fun onHideKeyboard() {
         super.onHideKeyboard()
-        navHostFragment?.let {
+        navHostFragment.let {
             val frg = it.childFragmentManager.fragments[0] as BaseFragment<*, *>
             frg.onKeyboardHide()
         }

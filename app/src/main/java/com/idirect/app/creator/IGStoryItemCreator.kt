@@ -1,10 +1,7 @@
 package com.idirect.app.creator
 
-class IGStoryItemCreator() {
+class IGStoryItemCreator {
 
-    companion object {
-
-
-    }
+    companion object
 
 }

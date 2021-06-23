@@ -54,7 +54,7 @@ fun AppCompatActivity.replaceFragment(
     @IdRes container: Int,
     addToBackStack: Boolean = false
 ) {
-    val backStateName: String = fragment.javaClass.getName()
+    val backStateName: String = fragment.javaClass.name
 
     val manager: FragmentManager = supportFragmentManager
     val fragmentPopped: Boolean = manager.popBackStackImmediate(backStateName, 0)
@@ -67,7 +67,7 @@ fun AppCompatActivity.replaceFragment(
             R.anim.exit_to_left,
             R.anim.enter_from_left,
             R.anim.exit_to_right
-        );
+        )
         ft.addToBackStack(backStateName)
         ft.commit()
     }
@@ -78,7 +78,7 @@ fun Fragment.replaceFragment(
     @IdRes container: Int,
     addToBackStack: Boolean = false
 ) {
-    val backStateName: String = fragment.javaClass.getName()
+    val backStateName: String = fragment.javaClass.name
 
     val manager: FragmentManager = activity!!.supportFragmentManager
     val fragmentPopped: Boolean = manager.popBackStackImmediate(backStateName, 0)
@@ -90,7 +90,7 @@ fun Fragment.replaceFragment(
             R.anim.exit_to_left,
             R.anim.enter_from_left,
             R.anim.exit_to_right
-        );
+        )
         ft.replace(container, fragment, backStateName)
         ft.addToBackStack(backStateName)
         ft.commit()
@@ -102,7 +102,7 @@ val View.realHeight: Int
         val widthSpec = View.MeasureSpec.makeMeasureSpec(
             width,
             View.MeasureSpec.EXACTLY
-        );
+        )
         val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         measure(widthSpec, heightSpec)
         return measuredHeight
@@ -176,7 +176,7 @@ fun Activity.hideKeyboard() {
     if (view == null) {
         view = View(this)
     }
-    imm.hideSoftInputFromWindow(view!!.windowToken, 0)
+    imm.hideSoftInputFromWindow(view.windowToken, 0)
 }
 
 fun Application.openSharedPref(name: String): SharedPreferences? {

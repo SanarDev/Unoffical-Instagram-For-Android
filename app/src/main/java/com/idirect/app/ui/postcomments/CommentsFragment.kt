@@ -112,7 +112,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
                     binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
                 }.setOnEmojiPopupShownListener {
                     binding.btnEmoji.setImageResource(R.drawable.ic_keyboard_outline)
-                }.build(binding.edtComment);
+                }.build(binding.edtComment)
 
         binding.edtComment.setOnClickListener {
             emojiPopup.dismiss()
@@ -172,7 +172,7 @@ class CommentsFragment : BaseFragment<FragmentCommentBinding, CommentsViewModel>
         })
     }
 
-    inner class CommentAdapter() : LoadingAdapter() {
+    inner class CommentAdapter : LoadingAdapter() {
 
         override fun objForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]

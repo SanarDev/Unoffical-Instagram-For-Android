@@ -23,7 +23,7 @@ abstract class LoadingAdapter(var items:MutableList<Any> = ArrayList<Any>().toMu
     }
 
     override fun getObjForPosition(holder: BaseViewHolder, position: Int): Any {
-        val item = items!![position]
+        val item = items[position]
         if(item is LoadingEvent){
             return item
         }
@@ -31,7 +31,7 @@ abstract class LoadingAdapter(var items:MutableList<Any> = ArrayList<Any>().toMu
     }
 
     override fun getLayoutIdForPosition(position: Int): Int {
-        val item = items!![position]
+        val item = items[position]
         if(item is LoadingEvent){
             return R.layout.layout_loading
         }
@@ -39,7 +39,7 @@ abstract class LoadingAdapter(var items:MutableList<Any> = ArrayList<Any>().toMu
     }
 
     override fun getItemCount(): Int {
-        return if(items == null)0 else items!!.size
+        return if(items == null)0 else items.size
     }
 
     abstract fun objForPosition(holder: BaseViewHolder, position: Int):Any

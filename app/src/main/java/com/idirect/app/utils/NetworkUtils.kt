@@ -7,7 +7,7 @@ import android.os.Build
 
 class NetworkUtils {
 
-    enum class NetworkType(){
+    enum class NetworkType {
         NONE,
         MOBILE_DATA,
         WIFI,

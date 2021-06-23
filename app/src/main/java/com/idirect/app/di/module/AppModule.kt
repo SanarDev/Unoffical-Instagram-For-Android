@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Handler
 import com.google.gson.Gson
 import com.idirect.app.datasource.local.MessageDataSource
-import com.idirect.app.datasource.remote.InstagramRemote
 import com.idirect.app.manager.PlayManager
 import com.idirect.app.datasource.repository.InstagramRepository
 import com.idirect.app.usecase.UseCase

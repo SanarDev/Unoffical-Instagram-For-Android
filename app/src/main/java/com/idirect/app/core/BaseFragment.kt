@@ -6,8 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.ViewDataBinding
 import dagger.android.support.DaggerFragment
-import com.idirect.app.BR
 import android.content.Context
+import com.idirect.app.BR
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import com.idirect.app.di.DaggerViewModelFactory

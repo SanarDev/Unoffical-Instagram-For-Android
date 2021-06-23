@@ -9,6 +9,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.idirect.app.BR
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
@@ -19,7 +20,6 @@ import com.bumptech.glide.RequestManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.idirect.app.BR
 import com.idirect.app.R
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.databinding.FragmentForwardBinding
@@ -96,7 +96,7 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
 
         viewModel = ViewModelProvider(this, viewModelFactory).get(ForwardViewModel::class.java)
         shareViewModel = ViewModelProvider(requireActivity(), viewModelFactory).get(ShareViewModel::class.java)
-        binding.setVariable(BR.viewModel,viewModel)
+        val variable = binding.setVariable(BR.viewModel, viewModel)
 
         viewModel.recipients.observe(viewLifecycleOwner, Observer {
             if (it.status == Resource.Status.SUCCESS) {
@@ -116,7 +116,7 @@ class ForwardFragment : BottomSheetDialogFragment(),View.OnClickListener {
                     binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
                 }.setOnEmojiPopupShownListener {
                     binding.btnEmoji.setImageResource(R.drawable.ic_keyboard_outline)
-                }.build(binding.edtMessage);
+                }.build(binding.edtMessage)
 
         binding.btnEmoji.setOnClickListener(this)
         binding.edtMessage.setOnClickListener(this)

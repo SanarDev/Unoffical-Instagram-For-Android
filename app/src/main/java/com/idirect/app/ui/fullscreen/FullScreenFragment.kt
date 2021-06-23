@@ -16,7 +16,6 @@ import com.idirect.app.core.BaseApplication
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.ActivityFullScreenBinding
 import com.idirect.app.extensions.visible
-import com.idirect.app.ui.posts.FragmentCollection
 import com.idirect.app.utils.Resource
 import java.io.File
 
@@ -28,7 +27,7 @@ class FullScreenFragment : BaseFragment<ActivityFullScreenBinding, FullScreenVie
         const val TYPE_FILE = 2
         const val TYPE_POST = 3
     }
-    val fragments = ArrayList<FragmentCollection>().toMutableList()
+//    val fragments = ArrayList<FragmentCollection>().toMutableList()
 
     override fun layoutRes(): Int {
         return R.layout.activity_full_screen
@@ -153,10 +152,6 @@ class FullScreenFragment : BaseFragment<ActivityFullScreenBinding, FullScreenVie
 //        }
 //    }
 
-
-    override fun onStop() {
-        super.onStop()
-    }
 
     override fun getNameTag(): String {
         return "full_screen_fragment"

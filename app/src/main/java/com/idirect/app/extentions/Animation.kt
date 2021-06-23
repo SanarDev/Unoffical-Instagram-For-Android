@@ -12,7 +12,7 @@ import androidx.transition.TransitionManager
 fun ConstraintLayout.changePosition(constraintSet: ConstraintSet){
     val transition = ChangeBounds()
     transition.duration = 300
-    transition.interpolator = AccelerateDecelerateInterpolator() as TimeInterpolator?
+    transition.interpolator = AccelerateDecelerateInterpolator()
 
     TransitionManager.beginDelayedTransition(this,transition)
     constraintSet.applyTo(this)
@@ -21,7 +21,7 @@ fun View.changeHeight(height:Int,duration:Long = 700){
     val currentHeight = measuredHeight
     val animator = ValueAnimator()
     animator.setIntValues(currentHeight,height)
-    animator.addUpdateListener() {
+    animator.addUpdateListener {
         val size = it.animatedValue as Int
         val param = layoutParams
         param.height = size
@@ -36,14 +36,14 @@ fun View.changeHeightToRealHeight(duration:Long = 700){
     val widthSpec = View.MeasureSpec.makeMeasureSpec(
         width,
         View.MeasureSpec.EXACTLY
-    );
+    )
     val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
     measure(widthSpec, heightSpec)
 
     val currentHeight = measuredHeight
     val animator = ValueAnimator()
     animator.setIntValues(oldHeight ,currentHeight)
-    animator.addUpdateListener() {
+    animator.addUpdateListener {
         val size = it.animatedValue as Int
         val param = layoutParams
         param.height = size

@@ -15,7 +15,7 @@ public class ProgressRequestBody extends RequestBody {
 
     private final RequestBody mRequestBody;
     private File mFile;
-    private UploadCallbacks mListener;
+    private final UploadCallbacks mListener;
 
     private static final int DEFAULT_BUFFER_SIZE = 2048;
 
@@ -61,8 +61,8 @@ public class ProgressRequestBody extends RequestBody {
     }
 
     private class ProgressUpdater implements Runnable {
-        private long mUploaded;
-        private long mTotal;
+        private final long mUploaded;
+        private final long mTotal;
 
         public ProgressUpdater(long uploaded, long total) {
             mUploaded = uploaded;

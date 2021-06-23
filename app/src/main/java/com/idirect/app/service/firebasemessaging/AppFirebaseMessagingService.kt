@@ -18,11 +18,6 @@ import com.idirect.app.utils.NotificationUtils
 
 class AppFirebaseMessagingService : FirebaseMessagingService() {
 
-    override fun onCreate() {
-        super.onCreate()
-
-    }
-
     override fun onNewToken(p0: String) {
         applicationContext.getSharedPreferences(InstagramConstants.SharedPref.SETTING.name, Context.MODE_PRIVATE)
             .edit().putString("notification_token",p0).apply()

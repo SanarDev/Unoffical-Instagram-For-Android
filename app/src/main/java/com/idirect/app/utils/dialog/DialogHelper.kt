@@ -7,8 +7,8 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import com.idirect.app.datasource.model.DialogModel
-import com.idirect.app.BR
 import com.idirect.app.R
+import com.idirect.app.BR
 import kotlinx.android.synthetic.main.layout_dialog.view.*
 
 class DialogHelper {

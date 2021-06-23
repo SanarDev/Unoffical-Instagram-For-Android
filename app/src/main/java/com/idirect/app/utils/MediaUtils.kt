@@ -59,17 +59,17 @@ class MediaUtils {
                     + MediaStore.Files.FileColumns.MEDIA_TYPE + "="
                     + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO)
 
-            val orderBy = MediaStore.Files.FileColumns.DATE_ADDED;
+            val orderBy = MediaStore.Files.FileColumns.DATE_ADDED
             val projection =
                 arrayOf(MediaStore.MediaColumns.DATA, MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
 
             cursor = context.contentResolver.query(uri, projection, selection, null, orderBy)
 
             column_index_data = cursor!!.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
-            column_index_folder_name = cursor!!
+            column_index_folder_name = cursor
                 .getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
-            while (cursor!!.moveToNext()) {
-                absolutePathOfImage = cursor!!.getString(column_index_data)
+            while (cursor.moveToNext()) {
+                absolutePathOfImage = cursor.getString(column_index_data)
                 listOfAllImages.add(absolutePathOfImage)
             }
             return listOfAllImages
@@ -108,13 +108,13 @@ class MediaUtils {
             val paint = Paint()
             val rect = Rect(0, 0, bitmap.width, bitmap.height)
             val rectF = RectF(rect)
-            paint.setAntiAlias(true)
+            paint.isAntiAlias = true
             canvas.drawARGB(0, 0, 0, 0)
-            paint.setColor(color)
+            paint.color = color
             canvas.drawOval(rectF, paint)
-            paint.setXfermode(PorterDuffXfermode(PorterDuff.Mode.SRC_IN))
+            paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
             canvas.drawBitmap(bitmap, rect, rect, paint)
-            bitmap.recycle();
+            bitmap.recycle()
             return output
         }
     }

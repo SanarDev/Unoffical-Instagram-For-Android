@@ -5,5 +5,4 @@ data class ForwardBundle(
     var mediaType: Int,
     var isStoryShare: Boolean,
     var reelId:Long = 0
-) {
-}
+)

@@ -20,8 +20,8 @@ public class StatusResult2 {
     private String errorTitle;
     private String checkpoint_url;
 
-    private boolean spam = false;
-    private boolean lock = false;
+    private final boolean spam = false;
+    private final boolean lock = false;
 
     public static void setValues(StatusResult2 to, StatusResult2 from) {
         to.setStatus(from.getStatus());

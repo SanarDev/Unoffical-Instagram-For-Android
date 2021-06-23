@@ -451,7 +451,7 @@ class PostsAdapter2(
                         mListener?.userProfile(v, mediaOrAd.user.pk, mediaOrAd.user.username)
                     }
                     btnComment.id -> {
-                        mListener?.showComments(v!!, mediaOrAd)
+                        mListener?.showComments(v, mediaOrAd)
                     }
                     btnShare.id -> {
                         mListener?.shareMedia(v, mediaOrAd.id, mediaOrAd.mediaType)
@@ -493,12 +493,10 @@ class PostsAdapter2(
         layoutLikersProfile.removeAllViews()
         if (mediaOrAd.facepileTopLikers != null && mediaOrAd.facepileTopLikers.isNotEmpty()) {
             layoutLikersProfile.visibility = View.VISIBLE
-            txtLikesCount.setText(
-                HyperTextView.getLikedByHyperText(
-                    mediaOrAd.facepileTopLikers[0].username,
-                    mediaOrAd.facepileTopLikers[0].pk,
-                    TextUtil.getStringNumber(context, mediaOrAd.likeCount)
-                )
+            txtLikesCount.text = HyperTextView.getLikedByHyperText(
+                mediaOrAd.facepileTopLikers[0].username,
+                mediaOrAd.facepileTopLikers[0].pk,
+                TextUtil.getStringNumber(context, mediaOrAd.likeCount)
             )
             for (liker in mediaOrAd.facepileTopLikers) {
                 val likerProfile = CircleImageView(context)
@@ -511,12 +509,10 @@ class PostsAdapter2(
             }
         } else {
             layoutLikersProfile.visibility = View.GONE
-            txtLikesCount.setText(
-                HyperTextView.getLikersCountHyperText(
-                    TextUtil.getStringNumber(
-                        context,
-                        mediaOrAd.likeCount
-                    )
+            txtLikesCount.text = HyperTextView.getLikersCountHyperText(
+                TextUtil.getStringNumber(
+                    context,
+                    mediaOrAd.likeCount
                 )
             )
         }
@@ -527,12 +523,10 @@ class PostsAdapter2(
         layoutLikersProfile.removeAllViews()
         if (mediaOrAd.facepileTopLikers != null && mediaOrAd.facepileTopLikers.isNotEmpty()) {
             layoutLikersProfile.visibility = View.VISIBLE
-            txtLikesCount.setText(
-                HyperTextView.getLikedByHyperText(
-                    mediaOrAd.facepileTopLikers[0].username,
-                    mediaOrAd.facepileTopLikers[0].pk,
-                    TextUtil.getStringNumber(context, mediaOrAd.likeCount)
-                )
+            txtLikesCount.text = HyperTextView.getLikedByHyperText(
+                mediaOrAd.facepileTopLikers[0].username,
+                mediaOrAd.facepileTopLikers[0].pk,
+                TextUtil.getStringNumber(context, mediaOrAd.likeCount)
             )
             for (liker in mediaOrAd.facepileTopLikers) {
                 val likerProfile = CircleImageView(context)
@@ -545,12 +539,10 @@ class PostsAdapter2(
             }
         } else {
             layoutLikersProfile.visibility = View.GONE
-            txtLikesCount.setText(
-                HyperTextView.getLikersCountHyperText(
-                    TextUtil.getStringNumber(
-                        context,
-                        mediaOrAd.likeCount
-                    )
+            txtLikesCount.text = HyperTextView.getLikersCountHyperText(
+                TextUtil.getStringNumber(
+                    context,
+                    mediaOrAd.likeCount
                 )
             )
         }
@@ -699,7 +691,7 @@ class PostsAdapter2(
         return arrayOf(displayWidth, height)
     }
 
-    inner class LoadingViewHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {}
+    inner class LoadingViewHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView)
     inner class PostVideoHolder(itemView: ViewGroup) : RecyclerView.ViewHolder(itemView) {
 
         val imgProfile: CircleImageView
@@ -770,7 +762,7 @@ class PostsAdapter2(
                 )
                 setLinkTextColor(context.color(R.color.text_very_light))
                 setTextColor(context.color(R.color.text_very_light))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                 id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtUsername)
@@ -1074,7 +1066,7 @@ class PostsAdapter2(
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                 id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtLocation)
@@ -1338,7 +1330,7 @@ class PostsAdapter2(
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
                 setTextColor(context.color(R.color.text_very_light))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                 id = View.generateViewId()
             }
             linearLayoutUsernameLocation.addView(txtLocation)
@@ -1611,7 +1603,7 @@ class PostsAdapter2(
                 val dataSource =
                     DefaultHttpDataSourceFactory(
                         Util.getUserAgent(
-                            context!!,
+                            context,
                             "Instagram"
                         )
                     )

@@ -25,7 +25,7 @@ class HyperTextView constructor(context: Context, attr: AttributeSet? = null) :
     EmojiTextView(context, attr) {
 
     init {
-        setLinkTextColor(context!!.color(R.color.white))
+        setLinkTextColor(context.color(R.color.white))
     }
 
     interface OnHyperTextClick {

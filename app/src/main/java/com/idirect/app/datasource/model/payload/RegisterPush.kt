@@ -24,5 +24,4 @@ data class RegisterPush (
     @SerializedName("family_device_id")
     var familyDeviceID:String
 
-    ){
-}
+    )

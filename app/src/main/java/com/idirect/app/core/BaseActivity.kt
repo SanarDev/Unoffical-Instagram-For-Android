@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import com.idirect.app.BR
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
@@ -12,7 +13,6 @@ import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.idirect.app.BR
 import com.idirect.app.R
 import com.idirect.app.databinding.ActivityMainBinding
 import com.idirect.app.di.DaggerViewModelFactory

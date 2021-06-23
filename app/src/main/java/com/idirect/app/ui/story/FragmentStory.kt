@@ -209,7 +209,7 @@ class FragmentStory(
                 .fromRootView(binding.root)
                 .setOnEmojiPopupDismissListener(this@FragmentStory)
                 .setOnEmojiPopupShownListener(this@FragmentStory)
-                .build(binding.edtMessage);
+                .build(binding.edtMessage)
 
         binding.recyclerviewEmoji.adapter = EmojiAdapter(initEmoji())
         _storyAdapter = ViewPagerAdapter()
@@ -770,10 +770,6 @@ class FragmentStory(
         pauseTimer()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
     override fun onEmojiPopupDismiss() {
         binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
     }
@@ -805,7 +801,7 @@ class FragmentStory(
                 ColorDrawable(
                     Color.TRANSPARENT
                 )
-            );
+            )
             popup.showAsDropDown(viewGroup)
         }
         return viewGroup
@@ -839,7 +835,7 @@ class FragmentStory(
                 ColorDrawable(
                     Color.TRANSPARENT
                 )
-            );
+            )
             popup.showAsDropDown(viewGroup)
         }
         return viewGroup
@@ -866,7 +862,7 @@ class FragmentStory(
                 ColorDrawable(
                     Color.TRANSPARENT
                 )
-            );
+            )
             popup.showAsDropDown(viewGroup)
         }
         return viewGroup
@@ -1002,7 +998,7 @@ class FragmentStory(
                 ColorDrawable(
                     Color.TRANSPARENT
                 )
-            );
+            )
             popup.showAsDropDown(viewGroup)
         }
         return viewGroup

@@ -10,11 +10,11 @@ class DisplayUtils {
 
     companion object {
         fun getScreenWidth(): Int {
-            return Resources.getSystem().getDisplayMetrics().widthPixels
+            return Resources.getSystem().displayMetrics.widthPixels
         }
 
         fun getScreenHeight(): Int {
-            return Resources.getSystem().getDisplayMetrics().heightPixels
+            return Resources.getSystem().displayMetrics.heightPixels
         }
         fun getStatusBarHeight(window: Window): Int {
             val rectangle = Rect()

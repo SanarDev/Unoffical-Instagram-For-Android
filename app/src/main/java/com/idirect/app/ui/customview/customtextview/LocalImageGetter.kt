@@ -11,7 +11,7 @@ class LocalImageGetter(var context:Context) : ImageGetter {
     override fun getDrawable(source: String): Drawable {
          var d:Drawable ? = null
         try {
-            d = context.resources.drawble(source !!.toInt())
+            d = context.resources.drawble(source.toInt())
             d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)
         } catch (e: Resources.NotFoundException){
             Log.e("log_tag", "Image not found. Check the ID.", e)

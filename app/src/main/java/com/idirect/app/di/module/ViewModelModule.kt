@@ -6,7 +6,6 @@ import com.idirect.app.di.DaggerViewModelFactory
 import com.idirect.app.di.ViewModelKey
 import com.idirect.app.ui.direct.DirectViewModel
 import com.idirect.app.ui.forward.ForwardViewModel
-import com.idirect.app.ui.posts.FragmentCollectionViewModel
 import com.idirect.app.ui.fullscreen.FullScreenViewModel
 import com.idirect.app.ui.home.HomeViewModel
 import com.idirect.app.ui.inbox.InboxViewModel
@@ -63,10 +62,6 @@ abstract class ViewModelModule {
     @ViewModelKey(PlayVideoViewModel::class)
     abstract fun playVideoViewModel(playVideoViewModel: PlayVideoViewModel):ViewModel
 
-    @Binds
-    @IntoMap
-    @ViewModelKey(FragmentCollectionViewModel::class)
-    abstract fun fragmentCollectionViewModel(fragmentCollectionViewModel: FragmentCollectionViewModel):ViewModel
 
     @Binds
     @IntoMap

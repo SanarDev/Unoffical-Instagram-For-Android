@@ -7,8 +7,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.ObservableField
 import androidx.lifecycle.MutableLiveData
 import com.idirect.app.core.BaseViewModel
-import com.idirect.app.datasource.model.User
-import com.idirect.app.ui.login.LoginActivity
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
 import com.sanardev.instagramapijava.InstaClient

@@ -113,17 +113,11 @@ class PlayVideoActivity : BaseActivity<ActivityPlayVideoBinding, PlayVideoViewMo
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-    }
     override fun onStop() {
         super.onStop()
         mPlayManager.stopPlay()
     }
 
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-    }
     private fun hideSystemUI() {
         // Enables regular immersive mode.
         // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.

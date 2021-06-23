@@ -95,7 +95,7 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
         val fullname = userBundle.fullname
         val isVerified = userBundle.isVerified
 
-        binding.txtUsername.setText(username,userId!!.toLong(),isVerified)
+        binding.txtUsername.setText(username, userId.toLong(),isVerified)
         binding.txtFullname.text = fullname
         mGlide.load(profileImageUrl).into(binding.imgProfile)
 
@@ -192,13 +192,13 @@ class UserProfileFragment : BaseFragment<FragmentUserProfileBinding, UserProfile
             it.spanSizeLookup =
             object : GridLayoutManager.SpanSizeLookup() {
                 override fun getSpanSize(position: Int): Int {
-                    return if (mAdapter.getItemViewType(position) == R.layout.layout_loading) it.getSpanCount() else 1
+                    return if (mAdapter.getItemViewType(position) == R.layout.layout_loading) it.spanCount else 1
                 }
             }
         }
     }
 
-    inner class PostsAdapter() : LoadingAdapter() {
+    inner class PostsAdapter : LoadingAdapter() {
         override fun objForPosition(holder: BaseViewHolder, position: Int): Any {
             val item = items[position]
             item as MediaOrAd

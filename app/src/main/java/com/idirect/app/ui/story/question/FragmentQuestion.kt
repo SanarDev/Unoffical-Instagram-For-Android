@@ -47,7 +47,7 @@ class FragmentQuestion(
         val drawable = BitmapDrawable(resources, BitmapUtils.fastblur(BitmapUtils.takeScreenShot(requireParentFragment().view),100))
         dialog!!.window!!.apply {
             setBackgroundDrawable(drawable)
-            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         }
     }
     override fun onCreateView(

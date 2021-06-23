@@ -53,7 +53,7 @@ class MediaUtils {
 
         @JvmStatic
         fun getMediaWidthAndHeight(filePath: String): IntArray {
-            val mimeType = getMimeType(filePath) ?: "image/jpeg"
+            val mimeType = getMimeType(filePath)
             if (mimeType.contains("image")) {
                 val options = BitmapFactory.Options()
                 options.inJustDecodeBounds = true

@@ -61,7 +61,7 @@ class DirectCommands(var client: Channel, var gson: Gson = Gson()) {
     ): String {
         return this.sendCommand("send_item", data.apply {
             put("item_type", itemType)
-        }, threadId, clientContext ?: UUID.randomUUID().toString())
+        }, threadId, clientContext)
 
     }
 

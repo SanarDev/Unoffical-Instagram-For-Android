@@ -11,5 +11,4 @@ data class Cookie (
     var adid:String,
     var csrftoken:String?=null,
     var sessionID:String
-){
-}
+)

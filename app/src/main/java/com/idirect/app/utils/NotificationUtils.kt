@@ -94,7 +94,7 @@ class NotificationUtils {
                 .putExtra("channel_name",channelName)
             val uniqueInt = (System.currentTimeMillis() and 0xfffffff).toInt()
             val broadcastIntent =
-                PendingIntent.getBroadcast(application.getApplicationContext(), uniqueInt, deleteIntent, PendingIntent.FLAG_CANCEL_CURRENT)
+                PendingIntent.getBroadcast(application.applicationContext, uniqueInt, deleteIntent, PendingIntent.FLAG_CANCEL_CURRENT)
 
 //
 //            val action: NotificationCompat.Action =
@@ -158,7 +158,7 @@ class NotificationUtils {
                 notificationManager.createNotificationChannel(channel)
             }
 
-            notificationBuilder.setDeleteIntent(broadcastIntent);
+            notificationBuilder.setDeleteIntent(broadcastIntent)
             notificationManager.notify(
                 notificationId /* ID of notification */,
                 notificationBuilder.build()

@@ -33,7 +33,7 @@ class InstagramRepository(
         }
         return InstaClient.getInstanceCurrentUser(application.applicationContext)
             .mediaProcessor
-            .getTimelinePosts()
+            .timelinePosts
             .map {
                 timelinePosts = it
                 return@map it
@@ -47,7 +47,7 @@ class InstagramRepository(
         }
         return InstaClient.getInstanceCurrentUser(application.applicationContext)
             .storyProcessor
-            .getTimelineStory()
+            .timelineStory
             .map {
                 stories = it
                 return@map it
@@ -125,7 +125,7 @@ class InstagramRepository(
         if (query.isNullOrBlank()) {
             return InstaClient.getInstanceCurrentUser(application.applicationContext)
                 .directProcessor
-                .getRecipient()
+                .recipient
                 .observeOn(AndroidSchedulers.mainThread())
         } else {
             return InstaClient.getInstanceCurrentUser(application.applicationContext)
@@ -404,7 +404,7 @@ class InstagramRepository(
 
     fun getUserInfoByUsername(username: String): Observable<IGUserInfoResponse> {
         return InstaClient.getInstanceCurrentUser(application.applicationContext)
-            .userProcessor.getUserInfoByUsername(username!!)
+            .userProcessor.getUserInfoByUsername(username)
             .observeOn(AndroidSchedulers.mainThread())
     }
 

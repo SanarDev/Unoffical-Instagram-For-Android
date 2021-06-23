@@ -39,7 +39,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
     @Throws(Exception::class)
     override fun channelInactive(ctx: ChannelHandlerContext) {
         fbnsService.onDisconnect()
-        Log.i(InstagramConstants.DEBUG_TAG,"Channel closed");
+        Log.i(InstagramConstants.DEBUG_TAG,"Channel closed")
     }
 
     private fun registerMqttClient(ctx: ChannelHandlerContext) {
@@ -63,7 +63,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
             val publishMessage =
                 MqttPublishMessage(header, MqttPublishVariableHeader(topicName, packetID), payload)
 
-            Log.i(InstagramConstants.DEBUG_TAG,"Publish $json on Topic $topicName with packetID $packetID");
+            Log.i(InstagramConstants.DEBUG_TAG,"Publish $json on Topic $topicName with packetID $packetID")
 
             ctx.writeAndFlush(publishMessage)
         } catch (e: IOException) {
@@ -88,15 +88,15 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
 
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
         val packet = msg as MqttMessage
-        when (packet!!.fixedHeader().messageType()) {
+        when (packet.fixedHeader().messageType()) {
             MqttMessageType.CONNACK -> {
                 ctx!!.pipeline().remove("decoder")
-                ctx!!.pipeline().remove("encoder")
+                ctx.pipeline().remove("encoder")
                 fbnsService.mUseCase.saveFbnsAuthData(packet.payload() as FbnsAuth)
-                registerMqttClient(ctx!!)
+                registerMqttClient(ctx)
             }
             MqttMessageType.PUBACK -> {
-                Log.i(InstagramConstants.DEBUG_TAG,"PubAck message ${(packet as MqttPubAckMessage).variableHeader().messageId()}");
+                Log.i(InstagramConstants.DEBUG_TAG,"PubAck message ${(packet as MqttPubAckMessage).variableHeader().messageId()}")
             }
             MqttMessageType.PINGRESP ->{
             }
@@ -105,7 +105,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
 
                 if (publishMessage.fixedHeader().qosLevel() == MqttQoS.AT_LEAST_ONCE) {
                     ctx!!.writeAndFlush(getMqttPubackMessage(publishMessage))
-                    Log.i(InstagramConstants.DEBUG_TAG,"PubAck ${publishMessage.variableHeader().packetId()}");
+                    Log.i(InstagramConstants.DEBUG_TAG,"PubAck ${publishMessage.variableHeader().packetId()}")
                 }
                 val payload = (publishMessage.payload() as ByteBuf)
                 val compressedData =
@@ -113,7 +113,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
                 val json = String(ZlibUtis.decompress(compressedData))
                 val topicName = publishMessage.variableHeader().topicName().toInt()
 
-                Log.i(InstagramConstants.DEBUG_TAG,"FBNS: Publish $json on Topic $topicName ${publishMessage.variableHeader().packetId()}");
+                Log.i(InstagramConstants.DEBUG_TAG,"FBNS: Publish $json on Topic $topicName ${publishMessage.variableHeader().packetId()}")
                 when (topicName) {
                     InstagramConstants.TopicIds.RegResp.id -> {
                         fbnsService.onRegisterResponse(json)
@@ -167,7 +167,7 @@ class NetworkHandler(private val fbnsService: FbnsService) : ChannelInboundHandl
         ctx: ChannelHandlerContext,
         cause: Throwable
     ) {
-        Log.i(InstagramConstants.DEBUG_TAG,"Exception ${cause.message}");
+        Log.i(InstagramConstants.DEBUG_TAG,"Exception ${cause.message}")
     }
 
 }

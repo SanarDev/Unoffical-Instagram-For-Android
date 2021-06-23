@@ -119,18 +119,18 @@ class InstaHashUtils {
 
         @JvmStatic
         fun getClientContext(): String {
-            var rnd = Random();
-            var str = "";
+            var rnd = Random()
+            var str = ""
             // 6600286272511816379
-            str += rnd.nextInt(9);
-            str += rnd.nextInt(9);
-            str += rnd.nextInt(9);
+            str += rnd.nextInt(9)
+            str += rnd.nextInt(9)
+            str += rnd.nextInt(9)
             //str += Rnd.Next(11, 99);
             str += (Math.random() * (9999 - 1000 + 1) + 1000).toInt()
             str += (Math.random() * (99999 - 11111 + 1) + 11111).toInt()
 
             str += (Math.random() * (6789 - 2222 + 1) + 2222).toInt()
-            return "668${str}";
+            return "668${str}"
         }
 
         @JvmStatic

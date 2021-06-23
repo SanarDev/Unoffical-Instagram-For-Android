@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.idirect.app.constants.InstagramConstants
-import com.idirect.app.datasource.remote.InstagramRemote
 import com.idirect.app.datasource.remote.HeaderInterceptor
 import com.idirect.app.utils.DisplayUtils
 import dagger.Module
@@ -55,10 +54,10 @@ class ApiModule {
             .client(okHttpClient)
             .build()
     }
-
-    @Provides
-    @Singleton
-    fun provideIbazdidApiService(retrofit: Retrofit): InstagramRemote {
-        return retrofit.create(InstagramRemote::class.java)
-    }
+//
+//    @Provides
+//    @Singleton
+//    fun provideIbazdidApiService(retrofit: Retrofit): InstagramRemote {
+//        return retrofit.create(InstagramRemote::class.java)
+//    }
 }

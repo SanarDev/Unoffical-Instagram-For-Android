@@ -64,7 +64,7 @@ public class FbnsPacketEncoder extends MessageToMessageEncoder<MqttMessage> {
         try {
 
             buf = bufferAllocator.buffer(fixedHeaderBufferSize + variableHeaderBufferSize);
-            buf.writeByte((int) packet.fixedHeader().messageType().value() << 4);
+            buf.writeByte(packet.fixedHeader().messageType().value() << 4);
             writeVariableLengthInt(buf, variablePartSize);
 
             // variable part

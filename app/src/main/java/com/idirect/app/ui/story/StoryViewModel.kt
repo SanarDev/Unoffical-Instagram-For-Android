@@ -6,15 +6,9 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.idirect.app.constants.InstagramConstants
 import com.idirect.app.core.BaseViewModel
-import com.idirect.app.datasource.model.Tray
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
-import com.sanardev.instagramapijava.InstaClient
 import com.sanardev.instagramapijava.response.BaseResponse
-import com.sanardev.instagramapijava.response.IGSendStoryReactionResponse
-import com.sanardev.instagramapijava.response.IGStoryMediaResponse
-import io.reactivex.android.schedulers.AndroidSchedulers
-import okhttp3.ResponseBody
 import javax.inject.Inject
 
 class StoryViewModel @Inject constructor(application: Application, val mUseCase: UseCase) :

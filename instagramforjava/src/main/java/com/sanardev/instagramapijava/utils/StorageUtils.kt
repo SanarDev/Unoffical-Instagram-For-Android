@@ -139,13 +139,13 @@ class StorageUtils {
 
         @JvmStatic
         fun clear(context: Context) {
-            removeFiles(context, COOKIE_DATA);
-            removeFiles(context, USER_DATA);
+            removeFiles(context, COOKIE_DATA)
+            removeFiles(context, USER_DATA)
         }
 
         @JvmStatic
         fun saveTwoFactorInfo(context: Context, username: String, twoFactorInfo: IGTwoFactorInfo) {
-            val fileName = username + "_"+TWO_FACTOR_INFO;
+            val fileName = username + "_"+TWO_FACTOR_INFO
             removeFiles(context,fileName)
             val gson = GsonBuilder().create()
             val json = gson.toJson(twoFactorInfo)
@@ -153,7 +153,7 @@ class StorageUtils {
         }
         @JvmStatic
         fun getTwoFactorInfo(context: Context, username: String): IGTwoFactorInfo? {
-            val fileName = username + "_"+TWO_FACTOR_INFO;
+            val fileName = username + "_"+TWO_FACTOR_INFO
             return readFile(context,fileName,IGTwoFactorInfo::class.java)
         }
 

@@ -52,7 +52,7 @@ class FbnsService : Service() {
     lateinit var mUseCase: UseCase
 
     override fun onCreate() {
-        AndroidInjection.inject(this);
+        AndroidInjection.inject(this)
         super.onCreate()
 
         sslContext =

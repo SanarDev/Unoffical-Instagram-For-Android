@@ -25,9 +25,9 @@ public class TextDrawable extends Drawable {
     private static final int MONOSPACE = 3;
 
     /* Resources for scaling values to the given device */
-    private Resources mResources;
+    private final Resources mResources;
     /* Paint to hold most drawing primitives for the text */
-    private TextPaint mTextPaint;
+    private final TextPaint mTextPaint;
     /* Layout is used to measure and draw the text */
     private StaticLayout mTextLayout;
     /* Alignment of the text inside its bounds */
@@ -37,7 +37,7 @@ public class TextDrawable extends Drawable {
     /* Stateful text color list */
     private ColorStateList mTextColors;
     /* Container for the bounds to be reported to widgets */
-    private Rect mTextBounds;
+    private final Rect mTextBounds;
     /* Text string to draw */
     private CharSequence mText = "";
 

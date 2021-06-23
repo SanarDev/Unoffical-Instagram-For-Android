@@ -5,16 +5,11 @@ import android.util.Log
 import androidx.lifecycle.MediatorLiveData
 import com.idirect.app.core.BaseViewModel
 import com.idirect.app.datasource.model.event.ConnectionStateEvent
-import com.idirect.app.datasource.model.response.InstagramLoggedUser
-import com.idirect.app.datasource.model.response.InstagramRecipients
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
-import com.sanardev.instagramapijava.InstaClient
 import com.sanardev.instagramapijava.model.login.IGLoggedUser
 import com.sanardev.instagramapijava.response.IGRecipientsResponse
-import io.reactivex.android.schedulers.AndroidSchedulers
 import org.greenrobot.eventbus.EventBus
-import java.util.logging.Handler
 import javax.inject.Inject
 
 class ForwardViewModel @Inject constructor(

@@ -59,16 +59,16 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
     override fun channelRead(ctx: ChannelHandlerContext?, msg: Any?) {
         EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTED))
         val packet = msg as MqttMessage
-        when (packet!!.fixedHeader().messageType()) {
+        when (packet.fixedHeader().messageType()) {
             MqttMessageType.CONNACK -> {
                 EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.CONNECTED))
-                Log.i(InstagramConstants.DEBUG_TAG, "RealTime ConnAck");
+                Log.i(InstagramConstants.DEBUG_TAG, "RealTime ConnAck")
                 ctx!!.pipeline().remove("encoder")
                 realTimeService.onConnAck()
                 Thread{
                     while (true){
                         Thread.sleep(20000)
-                        ctx!!.writeAndFlush(MqttMessage.PINGREQ)
+                        ctx.writeAndFlush(MqttMessage.PINGREQ)
                     }
                 }.start()
             }
@@ -77,10 +77,10 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                     InstagramConstants.DEBUG_TAG,
                     "RealTime PubAck message ${(packet as MqttPubAckMessage).variableHeader()
                         .messageId()}"
-                );
+                )
             }
             MqttMessageType.PINGRESP -> {
-                Log.i(InstagramConstants.DEBUG_TAG, "RealTime PingResp");
+                Log.i(InstagramConstants.DEBUG_TAG, "RealTime PingResp")
             }
             MqttMessageType.PUBLISH -> {
                 val publishMessage = packet as MqttPublishMessage
@@ -95,7 +95,7 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                     InstagramConstants.DEBUG_TAG,
                     "RealTime Publish ${String(json)} on Topic $topicName ${publishMessage.variableHeader()
                         .packetId()}"
-                );
+                )
                 when (topicName) {
                     InstagramConstants.RealTimeTopics.REGION_HINT.id->{
 //                        ctx!!.writeAndFlush(getMqttPubackMessage(publishMessage))
@@ -125,7 +125,7 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
                     Log.i(
                         InstagramConstants.DEBUG_TAG,
                         "RealTime PubAck ${publishMessage.variableHeader().packetId()}"
-                    );
+                    )
                 }
             }
         }
@@ -158,7 +158,7 @@ class NetworkHandler(private val realTimeService: RealTimeService) : ChannelInbo
         ctx: ChannelHandlerContext,
         cause: Throwable
     ) {
-        Log.i(InstagramConstants.DEBUG_TAG, "RealTime Exception ${cause.message}");
+        Log.i(InstagramConstants.DEBUG_TAG, "RealTime Exception ${cause.message}")
     }
 
 }

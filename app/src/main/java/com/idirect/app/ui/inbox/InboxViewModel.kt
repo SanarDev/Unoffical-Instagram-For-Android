@@ -5,6 +5,4 @@ import com.idirect.app.core.BaseViewModel
 import com.idirect.app.usecase.UseCase
 import javax.inject.Inject
 
-class InboxViewModel @Inject constructor(application: Application,var mUseCase: UseCase):BaseViewModel(application) {
-
-}
+class InboxViewModel @Inject constructor(application: Application,var mUseCase: UseCase):BaseViewModel(application)

@@ -24,6 +24,7 @@ import androidx.core.app.ActivityCompat.startPostponedEnterTransition
 import androidx.fragment.app.Fragment
 import com.idirect.app.utils.URLSpanNoUnderline
 import com.idirect.app.extentions.openUrl
+import java.util.*
 
 
 fun View.startWidthAnim(startSize: Int, endSize: Int, duration: Int = 300) {
@@ -83,10 +84,10 @@ fun TextView.setTextLinkHTML(
     html: String,
     haveUnderlineForLink: Boolean = false
 ) {
-    val htmlText = html.toLowerCase().replace("\n","<br/>").replace(
+    val htmlText = html.lowercase(Locale.getDefault()).replace("\n","<br/>").replace(
         REGEX_FIND_URL.toRegex(),
         "<a href=\"$0\">$0</a>"
-    );
+    )
     setTextHTML(context,htmlText,haveUnderlineForLink)
 }
 

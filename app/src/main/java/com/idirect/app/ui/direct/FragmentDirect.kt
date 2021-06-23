@@ -69,8 +69,10 @@ import com.vanniktech.emoji.EmojiPopup
 import com.vanniktech.emoji.EmojiTextView
 import com.vanniktech.emoji.ios.IosEmojiProvider
 import java.io.File
+import java.util.*
 import java.util.regex.Pattern
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 
 class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), ActionListener,
@@ -164,23 +166,18 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     binding.btnEmoji.setImageResource(R.drawable.ic_emoji)
                 }.setOnEmojiPopupShownListener {
                     binding.btnEmoji.setImageResource(R.drawable.ic_keyboard_outline)
-                }.build(binding.edtTextChat);
+                }.build(binding.edtTextChat)
 
         binding.btnVoice.setRecordView(binding.recordView)
         binding.btnVoice.isSoundEffectsEnabled = false
         binding.recordView.isSoundEffectsEnabled = false
-        binding.recordView.setCounterTimeColor(color(R.color.counter_voice_time_color));
-        binding.recordView.setSmallMicColor(color(R.color.voice_mic_color));
-        binding.recordView.setCustomSounds(0, 0, 0);
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                android.Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            binding.btnVoice.isListenForRecord = false
-        } else {
-            binding.btnVoice.isListenForRecord = true
-        }
+        binding.recordView.setCounterTimeColor(color(R.color.counter_voice_time_color))
+        binding.recordView.setSmallMicColor(color(R.color.voice_mic_color))
+        binding.recordView.setCustomSounds(0, 0, 0)
+        binding.btnVoice.isListenForRecord = ContextCompat.checkSelfPermission(
+            requireContext(),
+            android.Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
 
         shareViewModel.mutableLiveData.observe(viewLifecycleOwner, Observer {
             when (it.status) {
@@ -1501,7 +1498,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                 }
                 InstagramConstants.MessageType.ACTION_LOG.type -> {
                     val dataBinding = holder.binding as LayoutEventBinding
-                    if (item.actionLog.description.toLowerCase().contains("like")) {
+                    if (item.actionLog.description.lowercase(Locale.getDefault()).contains("like")) {
                         gone(dataBinding.txtEventDes)
                     } else {
                         visible(dataBinding.txtEventDes)
@@ -1542,7 +1539,7 @@ class FragmentDirect : BaseFragment<FragmentDirectBinding, DirectViewModel>(), A
                     )
                     dialog.dismiss()
                 }
-                dialog.window!!.setBackgroundDrawableResource(android.R.color.transparent);
+                dialog.window!!.setBackgroundDrawableResource(android.R.color.transparent)
                 dialog.setContentView(viewDataBinding.root)
                 dialog.setCancelable(true)
                 dialog.show()

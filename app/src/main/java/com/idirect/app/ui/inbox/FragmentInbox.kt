@@ -119,7 +119,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             for (index in adapter.items.indices) {
                 val thread = adapter.items[index]
                 if (thread is IGThread && thread.threadId == it.threadId) {
-                    adapter.items[index] = shareViewModel.getThreadById(it.threadId)!!
+                    adapter.items[index] = shareViewModel.getThreadById(it.threadId)
                     adapter.notifyItemChanged(index)
                     break
                 }
@@ -134,7 +134,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
             for (index in adapter.items.indices) {
                 val thread = adapter.items[index]
                 if (thread is IGThread && thread.threadId == it) {
-                    adapter.items[index] = shareViewModel.getThreadById(it)!!
+                    adapter.items[index] = shareViewModel.getThreadById(it)
                     adapter.notifyItemChanged(index)
                     break
                 }
@@ -288,7 +288,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 if (item.bundle != null && item.bundle["typing"] == true) {
                     dataBinding.profileDec.text = getString(R.string.typing)
                     dataBinding.profileDec.setTextColor(Color.WHITE)
-                    dataBinding.profileDec.setTypeface(null, Typeface.BOLD);
+                    dataBinding.profileDec.setTypeface(null, Typeface.BOLD)
                     mHandler.postDelayed({
                         item.bundle["typing"] = false
                         notifyDataSetChanged()
@@ -305,7 +305,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                             String.format(getString(R.string.new_message), unreadMessage)
                     }
                     dataBinding.profileDec.setTextColor(Color.WHITE)
-                    dataBinding.profileDec.setTypeface(null, Typeface.BOLD);
+                    dataBinding.profileDec.setTypeface(null, Typeface.BOLD)
                 } else {
                     val prefix = if (item.lastPermanentItem.userId == user.pk) {
                         "You: "
@@ -413,15 +413,15 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                     if (unreadMessage >= 1) {
                         dataBinding.lastMessageTime.setTextViewDrawableColor(Color.WHITE)
                         dataBinding.lastMessageTime.setTextColor(Color.WHITE)
-                        dataBinding.lastMessageTime.setTypeface(null, Typeface.BOLD);
+                        dataBinding.lastMessageTime.setTypeface(null, Typeface.BOLD)
                         dataBinding.profileDec.setTextColor(Color.WHITE)
-                        dataBinding.profileDec.setTypeface(null, Typeface.BOLD);
+                        dataBinding.profileDec.setTypeface(null, Typeface.BOLD)
                     } else {
                         dataBinding.lastMessageTime.setTextViewDrawableColor(Color.GRAY)
                         dataBinding.lastMessageTime.setTextColor(Color.GRAY)
-                        dataBinding.lastMessageTime.setTypeface(null, Typeface.NORMAL);
+                        dataBinding.lastMessageTime.setTypeface(null, Typeface.NORMAL)
                         dataBinding.profileDec.setTextColor(Color.GRAY)
-                        dataBinding.profileDec.setTypeface(null, Typeface.NORMAL);
+                        dataBinding.profileDec.setTypeface(null, Typeface.NORMAL)
                     }
                     dataBinding.lastMessageTime.visibility = View.VISIBLE
                     dataBinding.lastMessageTime.text =
@@ -473,7 +473,7 @@ class FragmentInbox : BaseFragment<FragmentInboxBinding, InboxViewModel>() {
                 dataBinding.imgIsOnline.visibility = View.VISIBLE
             } else {
                 dataBinding.profileLastActivityAt.setTextColor(Color.GRAY)
-                dataBinding.profileLastActivityAt.setTypeface(null, Typeface.NORMAL);
+                dataBinding.profileLastActivityAt.setTypeface(null, Typeface.NORMAL)
                 dataBinding.profileLastActivityAt.text = String.format(
                     getString(R.string.active_at),
                     TimeUtils.convertTimestampToDate(context!!, item.lastActivityAt)

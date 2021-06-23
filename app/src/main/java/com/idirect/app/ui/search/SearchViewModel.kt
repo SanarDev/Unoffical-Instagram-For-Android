@@ -2,16 +2,12 @@ package com.idirect.app.ui.search
 
 import android.app.Application
 import android.os.Handler
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.idirect.app.core.BaseViewModel
-import com.idirect.app.datasource.model.response.InstagramRecipients
 import com.idirect.app.usecase.UseCase
 import com.idirect.app.utils.Resource
-import com.sanardev.instagramapijava.InstaClient
 import com.sanardev.instagramapijava.response.IGRecipientsResponse
-import io.reactivex.android.schedulers.AndroidSchedulers
 import javax.inject.Inject
 
 class SearchViewModel @Inject constructor(application: Application, val mUseCase: UseCase) :

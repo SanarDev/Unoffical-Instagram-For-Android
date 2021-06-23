@@ -24,6 +24,8 @@ import com.idirect.app.utils.MediaUtils
 import com.idirect.app.extentions.toast
 import com.idirect.app.extentions.vibration
 import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class SelectImageDialog(var selectImageListener: SelectImageListener) : DialogFragment() {
@@ -40,7 +42,7 @@ class SelectImageDialog(var selectImageListener: SelectImageListener) : DialogFr
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.CustomDialog);
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.CustomDialog)
     }
 
     private lateinit var dataSourceFactory: DefaultDataSourceFactory
@@ -78,7 +80,7 @@ class SelectImageDialog(var selectImageListener: SelectImageListener) : DialogFr
             val mimeType = MediaUtils.getMimeType(file.path)
             val dataBinding = holder.binding as ItemSelectingImageBinding
             dataBinding.txtName.text = file.name
-            dataBinding.txtMimeType.text = mimeType?.toUpperCase()
+            dataBinding.txtMimeType.text = mimeType?.uppercase(Locale.getDefault())
             dataBinding.txtFilesize.text =
                 String.format(getString(R.string.size_kb), file.sizeInKb.toInt())
             val standardOverrideSize = DisplayUtils.getScreenWidth() / 2

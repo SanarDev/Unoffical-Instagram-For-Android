@@ -92,7 +92,7 @@ class RealTimeService : Service() {
                 context.startService(
                     Intent(value.action).setPackage("com.idirect.app")
                         .putExtra("data", value as Parcelable)
-                );
+                )
             } catch (e: Exception) {
                 return false
             } finally {
@@ -268,12 +268,12 @@ class RealTimeService : Service() {
             this.seqID = seqID
             this.snapShotAt = snapShotAt
 
-            val cookie = instaClient.getCookie();
+            val cookie = instaClient.cookie
             val user = instaClient.loggedUser
 
             val mqttotConnectionClientInfo =
                 MQTTotConnectionClientInfo()
-            mqttotConnectionClientInfo.userId = user!!.pk!!
+            mqttotConnectionClientInfo.userId = user!!.pk
             mqttotConnectionClientInfo.userAgent =
                 "Instagram ${InstagramConstants.APP_VERSION} Android (29/10; 408dpi; ${DisplayUtils.getScreenWidth()}x${DisplayUtils.getScreenHeight()}; Xiaomi/xiaomi; Mi A2; jasmine_sprout; qcom; en_US; 200396019)"
             mqttotConnectionClientInfo.clientCapabilities = 183
@@ -390,8 +390,8 @@ class RealTimeService : Service() {
                         GraphQLSubscriptions.getAppPresenceSubscription(),
                         GraphQLSubscriptions.getZeroProvisionSubscription(cookie.phoneID),
                         GraphQLSubscriptions.getDirectStatusSubscription(),
-                        GraphQLSubscriptions.getDirectTypingSubscription(user!!.pk!!.toString()),
-                        GraphQLSubscriptions.getAsyncAdSubscription(user!!.pk!!.toString())
+                        GraphQLSubscriptions.getDirectTypingSubscription(user!!.pk.toString()),
+                        GraphQLSubscriptions.getAsyncAdSubscription(user.pk.toString())
                     )
                 )
             }
@@ -404,7 +404,7 @@ class RealTimeService : Service() {
                     "sub",
                     arrayOf(
                         SkywalkerSubscriptions.directSub(user!!.pk.toString()),
-                        SkywalkerSubscriptions.liveSub(user!!.pk.toString())
+                        SkywalkerSubscriptions.liveSub(user.pk.toString())
                     )
                 )
             }
@@ -439,7 +439,7 @@ class RealTimeService : Service() {
         )
     }
 
-    public fun sendSubscribe(list: List<Pair<MqttQoS, String>>): Int {
+    fun sendSubscribe(list: List<Pair<MqttQoS, String>>): Int {
         val packetID = generatePacketID()
         val subscribePacketBuilder = MqttMessageBuilders.subscribe()
         for (item in list) {

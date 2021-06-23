@@ -6,10 +6,8 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
-import androidx.core.view.ViewCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.idirect.app.NavigationMainGraphDirections
@@ -17,19 +15,13 @@ import com.idirect.app.R
 import com.idirect.app.core.BaseAdapter
 import com.idirect.app.core.BaseFragment
 import com.idirect.app.databinding.FragmentSearchBinding
-import com.idirect.app.databinding.FragmentStoryBinding
 import com.idirect.app.databinding.LayoutExplorerUserBinding
-import com.idirect.app.datasource.model.Recipients
-import com.idirect.app.datasource.model.event.ConnectionStateEvent
 import com.idirect.app.extensions.gone
 import com.idirect.app.extensions.visible
 import com.idirect.app.extentions.hideKeyboard
 import com.idirect.app.ui.main.ShareViewModel
 import com.idirect.app.ui.userprofile.UserBundle
 import com.idirect.app.utils.Resource
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
-import org.greenrobot.eventbus.ThreadMode
 
 class FragmentSearch : BaseFragment<FragmentSearchBinding, SearchViewModel>() {
 

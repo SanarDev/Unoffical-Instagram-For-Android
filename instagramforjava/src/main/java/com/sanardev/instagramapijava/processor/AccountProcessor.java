@@ -113,8 +113,8 @@ public class AccountProcessor {
         request.setTwoFactorIndentifier(twoFactorInfo.getTwoFactorIdentifier());
         return igRequest.getRemote().twoFactorLogin(igRequest.getHeaders(),igRequest.getSignaturePayload(request))
                 .subscribeOn(Schedulers.io())
-                .map((Function<Response<IGLoginResponse>, IGLoginResponse>) igLoginResponseResponse -> {
-                    Response<IGLoginResponse> rs = (Response<IGLoginResponse>) igLoginResponseResponse;
+                .map(igLoginResponseResponse -> {
+                    Response<IGLoginResponse> rs = igLoginResponseResponse;
                     if(!rs.isSuccessful()){
                         IGLoginResponse errorBody = igRequest.getGson().fromJson(rs.errorBody().string(), (Type) IGLoginResponse.class);
                         return errorBody;

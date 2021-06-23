@@ -10,7 +10,7 @@ import okhttp3.OkHttpClient
 import java.lang.Exception
 
 
-open class Request() {
+open class Request {
 
     private val httpClient = OkHttpClient()
     private val gson = Gson()

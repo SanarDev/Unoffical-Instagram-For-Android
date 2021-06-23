@@ -91,7 +91,7 @@ class ShareViewModel @Inject constructor(
             if (it.apiError?.data != null) {
                 val gson = Gson()
                 val instagramInboxResult =
-                    gson.fromJson(it.apiError!!.data!!.string(), IGDirectsResponse::class.java)
+                    gson.fromJson(it.apiError.data!!.string(), IGDirectsResponse::class.java)
                 it.data = instagramInboxResult
             }
         } else if (it.status == Resource.Status.SUCCESS) {
@@ -134,10 +134,10 @@ class ShareViewModel @Inject constructor(
 
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
-            setAudioEncodingBitRate(16 * 44100);
-            setAudioSamplingRate(44100);
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB)
+            setAudioEncodingBitRate(16 * 44100)
+            setAudioSamplingRate(44100)
             setMaxDuration(60000)
             setOutputFile(currentVoiceFileName)
         }
@@ -204,7 +204,7 @@ class ShareViewModel @Inject constructor(
 //        if(mThread.messages == null){
 //            EventBus.getDefault().postSticky(ConnectionStateEvent(ConnectionStateEvent.State.NEED_TO_REALOD_DIRECT))
 //        }
-        val matcher = mPatternRegexUrl.matcher(text.toLowerCase(Locale.ROOT))
+        val matcher = mPatternRegexUrl.matcher(text.lowercase(Locale.ROOT))
         val message = if (matcher.find()) {
             val linkList = ArrayList<String>().toMutableList()
             for (index in 0..matcher.groupCount()) {
@@ -311,7 +311,7 @@ class ShareViewModel @Inject constructor(
 
 
     fun addMessage(threadId: String, msg: Message) {
-        val thread = getThreadById(threadId)!!
+        val thread = getThreadById(threadId)
         if (thread.messages.size == 0 && thread.threadId.contains("[[")) {
             return
         }
@@ -364,7 +364,7 @@ class ShareViewModel @Inject constructor(
                 this.clientContext = clientContext
                 this.localPath = item
                 this.threadId = threadId
-                this.senderId = user!!.pk!!
+                this.senderId = user!!.pk
             })
         }
         return uploadMedias
@@ -378,7 +378,7 @@ class ShareViewModel @Inject constructor(
         for (item in items) {
             var mimeType = MediaUtils.getMimeType(item.localPath) ?: "image/jpeg"
             val message = when {
-                mimeType!!.contains("image") -> {
+                mimeType.contains("image") -> {
                     MessageGenerator.imageMedia(
                         item.senderId,
                         item.threadId,
@@ -386,7 +386,7 @@ class ShareViewModel @Inject constructor(
                         item.localPath
                     )
                 }
-                mimeType!!.contains("video") -> {
+                mimeType.contains("video") -> {
                     MessageGenerator.videoMedia(
                         item.senderId,
                         item.threadId,
@@ -479,7 +479,7 @@ class ShareViewModel @Inject constructor(
     }
 
     fun getThreadProfilePic(threadId: String = currentIGThread!!.threadId!!): String {
-        return getThreadById(threadId)!!.users[0].profilePicUrl
+        return getThreadById(threadId).users[0].profilePicUrl
     }
 
     fun getTimeFromTimeStamps(time: Long): String {
@@ -492,7 +492,7 @@ class ShareViewModel @Inject constructor(
     fun getUserProfilePic(userId: Long, threadId: String = currentIGThread!!.threadId!!): String? {
         val thread = getThreadById(threadId)
         for (user in thread.users) {
-            if (user.pk!! == userId) {
+            if (user.pk == userId) {
                 return user.profilePicUrl
             }
         }
@@ -502,7 +502,7 @@ class ShareViewModel @Inject constructor(
     fun getUsername(userId: Long, threadId: String = currentIGThread!!.threadId!!): String? {
         val thread = getThreadById(threadId)
         for (user in thread.users) {
-            if (user.pk!! == userId) {
+            if (user.pk == userId) {
                 return user.username
             }
         }
@@ -510,7 +510,7 @@ class ShareViewModel @Inject constructor(
     }
 
     fun onReactionsResponse(payload: Payload) {
-        val thread = getThreadById(payload.threadId)!!
+        val thread = getThreadById(payload.threadId)
         for (message in thread.messages) {
             if (message.itemId == payload.itemId) {
 //                mActionListener?.onChangeMessage(
@@ -638,7 +638,7 @@ class ShareViewModel @Inject constructor(
                 thread.users = ArrayList<ThreadUser>().toMutableList().apply {
                     add(ThreadUser().apply {
                         this.profilePicUrl = loggedUser.profilePicUrl
-                        this.pk = loggedUser.pk!!
+                        this.pk = loggedUser.pk
                         this.fullName = loggedUser.fullName
                         this.username = loggedUser.username
                         this.isPrivate = loggedUser.isPrivate.toString()
@@ -857,7 +857,7 @@ class ShareViewModel @Inject constructor(
                 return thread.threadId
             }
         }
-        return "[[$pk]]";
+        return "[[$pk]]"
     }
 
     @SuppressLint("CheckResult")

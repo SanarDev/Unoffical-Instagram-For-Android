@@ -25,7 +25,7 @@ public class InstaClient {
     public final MediaProcessor mediaProcessor;
     public final UserProcessor userProcessor;
     public final DirectProcessor directProcessor;
-    private IGRequest igRequest;
+    private final IGRequest igRequest;
 
 
     public InstaClient(Context context, String username, String password) {
