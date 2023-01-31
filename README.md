@@ -1,5 +1,7 @@
 # Unoffical Instagram For Android
 
+This project was released 2 years ago and it's work with old private instagram api. So it's dosn't work now but you can see the code
+
 ## Features:
 - Login with username and password
 - Users posts
